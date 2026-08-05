@@ -1,0 +1,31 @@
+services:
+  db:
+    image: pgvector/pgvector:0.8.6-pg17-bookworm
+    environment:
+      POSTGRES_DB: papertrail
+      POSTGRES_USER: papertrail
+      POSTGRES_PASSWORD: papertrail
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U papertrail -d papertrail"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "5432:5432"
+    volumes:
+      - papertrail-postgres:/var/lib/postgresql/data
+
+  app:
+    build: .
+    environment:
+      PAPERTRAIL_DATABASE_URL: postgresql+psycopg://papertrail:papertrail@db:5432/papertrail
+      PAPERTRAIL_GROQ_API_KEY: ${GROQ_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "alembic upgrade head && uvicorn papertrail.api:app --host 0.0.0.0 --port 8000"]
+    ports:
+      - "8000:8000"
+
+volumes:
+  papertrail-postgres:

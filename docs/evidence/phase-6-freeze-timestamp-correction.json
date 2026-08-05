@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "corrected_at_utc": "2026-08-05T22:29:29Z",
+  "field": "frozen_at_utc",
+  "original_value": "2026-08-05T22:31:00Z",
+  "corrected_value": "2026-08-05T22:21:11.074192Z",
+  "basis": "Original eval/questions-v2.json filesystem modification time, converted from Unix time to UTC before this metadata-only correction.",
+  "scope": [
+    "eval/questions-v2.json",
+    "docs/evidence/phase-6-retrieval-evaluation-v2.json",
+    "docs/evidence/phase-6-rag-evaluation-v2.json",
+    "docs/evidence/phase-6-rag-evaluation-v2-reliable.json"
+  ],
+  "unchanged": "Question text, relevant IDs, retrieval rows, generated answers, errors, rankings, latencies, and aggregate metrics were not edited."
+}

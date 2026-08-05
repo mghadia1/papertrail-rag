@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-08-05T20:29:19Z",
+  "manifest": {
+    "path": "docs/evidence/corpus-manifest-1000.json",
+    "file_sha256": "9e85334b412b7b71e800e79c28eb09cccc69bc345287ad4027fcf744c3746309",
+    "paper_count": 1000,
+    "arxiv_ids_sha256": "7308d240f717df7c9b17a1dfb7140c68615a462298b42866b95bc17f93250146"
+  },
+  "replay_protocol": {
+    "database": "separately created and migrated empty PostgreSQL database",
+    "batch_size": 100,
+    "request_delay_seconds": 3.0,
+    "versioned_ids_only": true,
+    "batches": 10
+  },
+  "replay_result": {
+    "manifest_verified": true,
+    "paper_rows": 1000,
+    "chunk_rows": 2039,
+    "pgvector_extension_version": "0.8.6",
+    "arxiv_ids_sha256": "7308d240f717df7c9b17a1dfb7140c68615a462298b42866b95bc17f93250146"
+  },
+  "tests": {
+    "passed": 19,
+    "failed": 0
+  },
+  "packaged_api": {
+    "docker_build_passed": true,
+    "health_status": "ok",
+    "resume_eligible": false,
+    "milestone": "exact-corpus-replay"
+  },
+  "gate_status": "E2 complete",
+  "claim_boundary": "This proves exact corpus reconstruction and chunk-count reproducibility. It contains no embedding, search, retrieval-quality, or RAG result."
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-08-05T22:08:16Z",
+  "configuration": {
+    "keyword_query_function": "websearch_to_tsquery('english', query)",
+    "keyword_rank_function": "ts_rank_cd",
+    "keyword_index": "ix_chunks_search_vector_gin",
+    "rrf_k": 60,
+    "candidate_limit": 50,
+    "paper_deduplication": true
+  },
+  "smoke_query": "surgical action triplet instrument tissue interactions",
+  "expected_traceable_paper": {
+    "arxiv_id": "2608.02188v1",
+    "title": "SPIRIT: Spatio-temporal Pairwise Relational Modeling of Instrument-Tissue Interactions for Surgical Action Triplet Recognition"
+  },
+  "results": {
+    "vector_top_arxiv_id": "2608.02188v1",
+    "vector_top_cosine_similarity": 0.6056494351834406,
+    "keyword_top_arxiv_id": "2608.02188v1",
+    "keyword_top_ts_rank_cd": 0.06878018,
+    "hybrid_top_arxiv_id": "2608.02188v1",
+    "hybrid_top_rrf_score": 0.03278688524590164,
+    "hybrid_top_component_ranks": {"keyword": 1, "vector": 1}
+  },
+  "tests": {
+    "passed": 29,
+    "failed": 0,
+    "rrf_math_and_determinism_covered": true
+  },
+  "gate_status": "E4 functional gate complete",
+  "claim_boundary": "This smoke query verifies all three retrieval paths. It does not establish that hybrid retrieval is better than vector or keyword retrieval."
+}

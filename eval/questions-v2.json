@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "frozen_at_utc": "2026-08-05T22:21:11.074192Z",
+  "corpus_arxiv_ids_sha256": "7308d240f717df7c9b17a1dfb7140c68615a462298b42866b95bc17f93250146",
+  "development_source": "questions.json",
+  "change_rationale": "The v1 development results showed that all-term lexical matching retrieved almost none of the known items. V2 freezes OR-based lexical matching and replaces every previously observed held-out question before the second and final held-out evaluation.",
+  "heldout_retrieval_questions": [
+    {"id":"v2q21","split":"heldout","query":"Which learned pairwise preference metric ranks infrared-visible image fusion in a human-like way?","relevant_arxiv_ids":["2608.01301v2"]},
+    {"id":"v2q22","split":"heldout","query":"Find a framework covering principles, primitives, pooling, learning, and clustering for temporal graphs.","relevant_arxiv_ids":["2608.03696v1"]},
+    {"id":"v2q23","split":"heldout","query":"Which work argues that multimodal agents need deliberately designed environment distributions rather than simple scale?","relevant_arxiv_ids":["2608.03571v1"]},
+    {"id":"v2q24","split":"heldout","query":"What curriculum-based visual grounded reasoning method improves chart understanding?","relevant_arxiv_ids":["2608.02833v1"]},
+    {"id":"v2q25","split":"heldout","query":"Find the benchmark designed to make computational chemistry evaluation aware of laboratory constraints.","relevant_arxiv_ids":["2608.02595v1"]},
+    {"id":"v2q26","split":"heldout","query":"Which study evaluates large language model statistical reasoning across dimensions beyond answer accuracy?","relevant_arxiv_ids":["2608.03038v1"]},
+    {"id":"v2q27","split":"heldout","query":"What source-grounded benchmark tests legal reasoning across different jurisdictions?","relevant_arxiv_ids":["2608.01292v1"]},
+    {"id":"v2q28","split":"heldout","query":"Which functional resilience index measures the effect of fine-tuning on a language model?","relevant_arxiv_ids":["2608.03887v1"]},
+    {"id":"v2q29","split":"heldout","query":"Find an efficient video dataset distillation method based on cluster-guided prototype blending.","relevant_arxiv_ids":["2608.03269v1"]},
+    {"id":"v2q30","split":"heldout","query":"Which analysis finds that frontier language models choose extreme policies in idealized AI development races?","relevant_arxiv_ids":["2608.01193v1"]}
+  ],
+  "heldout_abstention_questions": [
+    {"id":"v2n11","split":"heldout","query":"How should a stoneware pottery glaze be mixed and fired?"},
+    {"id":"v2n12","split":"heldout","query":"How do I true a bent bicycle wheel using spoke tension?"},
+    {"id":"v2n13","split":"heldout","query":"What meter is used in Shakespearean blank verse?"},
+    {"id":"v2n14","split":"heldout","query":"How does yeast temperature change home wine fermentation?"},
+    {"id":"v2n15","split":"heldout","query":"What does a deductible mean in an automobile insurance policy?"}
+  ]
+}

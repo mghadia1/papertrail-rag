@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-08-05T20:09:10Z",
+  "source": {
+    "name": "arXiv Atom API",
+    "categories_requested": ["cs.LG", "cs.CL", "cs.CV"],
+    "requested_limit": 20,
+    "papers_returned": 20,
+    "arxiv_ids": [
+      "2608.04010v1",
+      "2608.04009v1",
+      "2608.04008v1",
+      "2608.04007v1",
+      "2608.04003v1",
+      "2608.04001v1",
+      "2608.03999v1",
+      "2608.03994v1",
+      "2608.03991v1",
+      "2608.03990v1",
+      "2608.03984v1",
+      "2608.03979v1",
+      "2608.03974v1",
+      "2608.03971v1",
+      "2608.03967v1",
+      "2608.03966v1",
+      "2608.03941v1",
+      "2608.03937v1",
+      "2608.03930v1",
+      "2608.03929v1"
+    ]
+  },
+  "database": {
+    "postgres_image": "pgvector/pgvector:0.8.6-pg17-bookworm",
+    "pgvector_extension_version": "0.8.6",
+    "paper_rows_after_first_ingest": 20,
+    "chunk_rows_after_first_ingest": 42,
+    "paper_rows_after_second_ingest": 20,
+    "chunk_rows_after_second_ingest": 42,
+    "indexes_verified": [
+      "ix_chunks_embedding_hnsw_cosine",
+      "ix_chunks_search_vector_gin"
+    ]
+  },
+  "tests": {
+    "passed": 12,
+    "failed": 0
+  },
+  "api_container": {
+    "endpoint": "/health",
+    "status": "ok",
+    "resume_eligible": false,
+    "milestone": "ingestion-scaffold"
+  },
+  "claim_boundary": "This record verifies ingestion, idempotency, schema migration, and index creation. It contains no retrieval or RAG quality result."
+}

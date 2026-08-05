@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-08-05T21:48:46Z",
+  "corpus": {
+    "papers": 1000,
+    "chunks": 2039,
+    "arxiv_ids_sha256": "7308d240f717df7c9b17a1dfb7140c68615a462298b42866b95bc17f93250146"
+  },
+  "embedding_run": {
+    "id": 1,
+    "status": "complete",
+    "model": "sentence-transformers/all-MiniLM-L6-v2",
+    "dimensions": 384,
+    "normalized": true,
+    "embedded_chunks": 2039,
+    "total_chunks": 2039,
+    "observed_vector_norm_min": 0.9999999352753326,
+    "observed_vector_norm_max": 1.0000001063836685
+  },
+  "semantic_smoke_queries": [
+    {
+      "query": "robot learning from demonstration for surgical manipulation",
+      "top_arxiv_id": "2608.01452v1",
+      "top_title": "DynamicManip: Enabling Dynamic Manipulation from a Single Static Demonstration",
+      "top_cosine_similarity": 0.5644141099206154
+    },
+    {
+      "query": "detecting hallucinations and verifying factual claims in language models",
+      "top_arxiv_id": "2608.01021v1",
+      "top_title": "Can Humans Dream of Electric Sheep? Human-Written Samples for Fine-Grained Vision-and-Language Hallucination Benchmarking",
+      "top_cosine_similarity": 0.6401834320803366
+    },
+    {
+      "query": "medical image segmentation with limited labeled data",
+      "top_arxiv_id": "2608.03511v1",
+      "top_title": "How Many Labels Are Enough? ALDA: Active Learning Deployment Advisor for Medical Image Classification",
+      "top_cosine_similarity": 0.5206592964733076
+    }
+  ],
+  "api_smoke": {
+    "endpoint": "/search?mode=vector",
+    "status_code": 200,
+    "query": "robot learning from demonstration for surgical manipulation",
+    "limit": 3,
+    "returned_results": 3,
+    "all_results_had_versioned_arxiv_ids_and_source_urls": true
+  },
+  "docker_smoke": {
+    "build_passed": true,
+    "pytorch_distribution": "official CPU-only wheel",
+    "health_milestone": "vector-search",
+    "resume_eligible": false,
+    "vector_query_status_code": 200,
+    "query": "detecting hallucinations in language models",
+    "top_arxiv_id": "2608.01021v1",
+    "top_cosine_similarity": 0.7046477550688082
+  },
+  "tests": {
+    "passed": 25,
+    "failed": 0
+  },
+  "gate_status": "E3 complete",
+  "claim_boundary": "These are functional smoke results, not labeled retrieval metrics, a vector-vs-keyword comparison, latency evidence, or RAG grounding evidence."
+}

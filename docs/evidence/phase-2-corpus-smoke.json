@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "recorded_on": "2026-08-05",
+  "source": "arXiv Atom API",
+  "selection": {
+    "categories_requested": ["cs.LG", "cs.CL", "cs.CV"],
+    "sort_by": "submittedDate",
+    "sort_order": "descending",
+    "requested_limit": 1000
+  },
+  "first_ingest": {
+    "papers_reported": 1000,
+    "chunks_reported": 2039
+  },
+  "second_ingest": {
+    "papers_reported": 1000,
+    "chunks_reported": 2039
+  },
+  "database_after_second_ingest": {
+    "paper_rows": 1000,
+    "chunk_rows": 2039,
+    "minimum_published_at": "2026-08-01T08:41:29+00:00",
+    "maximum_published_at": "2026-08-04T17:59:58+00:00",
+    "ordered_arxiv_ids_sha256": "7308d240f717df7c9b17a1dfb7140c68615a462298b42866b95bc17f93250146",
+    "hash_input": "arxiv_id values sorted ascending, one UTF-8 ID per line with a trailing newline"
+  },
+  "gate_status": "active",
+  "remaining_for_e2": [
+    "export the exact ordered arXiv ID manifest",
+    "add a cutoff- or manifest-based replay path"
+  ],
+  "claim_boundary": "This is a target-scale ingestion smoke test, not a retrieval-quality result or a completed reproducibility gate."
+}

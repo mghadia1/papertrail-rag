@@ -1,0 +1,308 @@
+{
+  "schema_version": 2,
+  "created_at_utc": "2026-08-05T22:28:28.472833Z",
+  "evaluation_set_frozen_at_utc": "2026-08-05T22:21:11.074192Z",
+  "generator_model": "llama-3.3-70b-versatile",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "frozen_abstain_threshold": 0.03239446668849102,
+  "heldout_answerable_questions": 10,
+  "heldout_out_of_domain_questions": 5,
+  "answerable_answer_rate": 0.8,
+  "answerable_abstain_rate": 0.2,
+  "out_of_domain_abstain_rate": 1.0,
+  "provider_or_enforcement_errors": 0,
+  "citation_grounding_rate_among_answers": 1.0,
+  "records": [
+    {
+      "question_id": "v2q21",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "The Learned Perceptual Image Fusion Measure (LPIFM) is the learned pairwise preference metric that ranks infrared-visible image fusion in a human-like way [2608.01301v2].",
+      "citations": [
+        "2608.01301v2"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.01301v2",
+        "2608.02769v1",
+        "2608.01355v1",
+        "2608.02059v1",
+        "2608.03107v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 1527.6341249700636
+    },
+    {
+      "question_id": "v2q22",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "The framework covering principles, primitives, pooling, learning, and clustering for temporal graphs can be found in [2608.03696v1]. This work focuses on learning and clustering on temporal graphs, with particular emphasis on the task of clustering, and frames the tension through three linked perspectives: principles, primitives, and pooling. \n\nThe principles perspective connects graph learning and community detection through shared spectral foundations and detectability thresholds in stochastic block model regimes. The primitives perspective makes spectral clustering and multislice modularity optimization tractable through GPU-accelerated temporal backends. The pooling perspective views principled community detection as a form of pooling in machine learning on graphs.\n\nWhile other papers, such as [2608.03695v1], [2608.00542v1], [2608.03015v1], and [2608.02128v1], discuss related topics like dynamic graph clustering, agentic graph token reasoning, graph signal processing, and multilevel message passing on coarsened graphs, they do not provide a comprehensive framework covering all the required aspects. Therefore, [2608.03696v1] is the most relevant paper for this question.",
+      "citations": [
+        "2608.03696v1",
+        "2608.03695v1",
+        "2608.00542v1",
+        "2608.03015v1",
+        "2608.02128v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.03696v1",
+        "2608.03695v1",
+        "2608.00542v1",
+        "2608.03015v1",
+        "2608.02128v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 1138.8007500208914
+    },
+    {
+      "question_id": "v2q23",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "The work that argues that multimodal agents need deliberately designed environment distributions rather than simple scale is [2608.03571v1]. This paper, titled \"Beyond Simply Environment Scaling: Designing Effective Environment Distributions for Multimodal Agent Learning\", finds that simply increasing the number of multimodal environments does not always benefit and proposes methods to build more effective training environment distributions.",
+      "citations": [
+        "2608.03571v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.03571v1",
+        "2608.02713v1",
+        "2608.01456v1",
+        "2608.00677v1",
+        "2608.00540v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 617.2232918906957
+    },
+    {
+      "question_id": "v2q24",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03252247488101534,
+      "answer": "The curriculum-based visual grounded reasoning method that improves chart understanding is CURV, as proposed in [2608.02833v1]. CURV develops intrinsic visual reasoning capabilities by reformulating chart question answering as multi-step visual grounded reasoning, where each step coordinates logical reasoning with dynamic visual grounding through spatial attention concentration.",
+      "citations": [
+        "2608.02833v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.02833v1",
+        "2608.03464v1",
+        "2608.01664v1",
+        "2608.02217v1",
+        "2608.01328v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 614.0556249301881
+    },
+    {
+      "question_id": "v2q25",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "The benchmark designed to make computational chemistry evaluation aware of laboratory constraints is onepot-Bench 0 [2608.02595v1].",
+      "citations": [
+        "2608.02595v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.02595v1",
+        "2608.03340v1",
+        "2608.03525v1",
+        "2608.04001v1",
+        "2608.01666v2"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 511.50741591118276
+    },
+    {
+      "question_id": "v2q26",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "The study that evaluates large language model statistical reasoning across dimensions beyond answer accuracy is [2608.03038v1]. This study demonstrates the value of a multidimensional evaluation by combining response accuracy, response behavior, structural topic modeling, and lexical similarity analysis to assess statistical reasoning in large language models.",
+      "citations": [
+        "2608.03038v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.03038v1",
+        "2608.03505v1",
+        "2608.03291v1",
+        "2608.01575v1",
+        "2608.03803v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 618.1096660438925
+    },
+    {
+      "question_id": "v2q27",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03252247488101534,
+      "answer": "The source-grounded benchmark that tests legal reasoning across different jurisdictions is CrossLex [2608.01292v1]. It is a benchmark for evaluating cross-jurisdictional legal reasoning in large language models across three jurisdictions: China, California, and Germany.",
+      "citations": [
+        "2608.01292v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.01292v1",
+        "2608.03340v1",
+        "2608.03898v1",
+        "2608.02442v1",
+        "2608.04001v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 509.2603750526905
+    },
+    {
+      "question_id": "v2q28",
+      "expected_answerable": true,
+      "abstained": true,
+      "top_score": 0.031746031746031744,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.03887v1",
+        "2608.03803v1",
+        "2608.01395v1",
+        "2608.03505v1",
+        "2608.03099v1"
+      ],
+      "citations_all_retrieved": false,
+      "error": null,
+      "latency_ms": 79.48033302091062
+    },
+    {
+      "question_id": "v2q29",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "Based on the provided excerpts, an efficient video dataset distillation method based on cluster-guided prototype blending is proposed in [2608.03269v1]. This method, called ProtoBlend, is a select-allocate-blend framework that addresses the challenges of selecting informative temporal segments, covering diverse intra-class variations, and increasing the information carried by each stored sample. It uses teacher-guided temporal clip selection and cluster-guided prototype allocation to construct effective distilled videos without gradient-based optimization [2608.03269v1].",
+      "citations": [
+        "2608.03269v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.03269v1",
+        "2608.03974v1",
+        "2608.03218v1",
+        "2608.01288v1",
+        "2608.03100v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 720.6547500099987
+    },
+    {
+      "question_id": "v2q30",
+      "expected_answerable": true,
+      "abstained": true,
+      "top_score": 0.03177805800756621,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.01395v1",
+        "2608.01193v1",
+        "2608.01436v1",
+        "2608.03044v1",
+        "2608.01717v1"
+      ],
+      "citations_all_retrieved": false,
+      "error": null,
+      "latency_ms": 103.4955841023475
+    },
+    {
+      "question_id": "v2n11",
+      "expected_answerable": false,
+      "abstained": true,
+      "top_score": 0.025003906860446942,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.03324v1",
+        "2608.03967v1",
+        "2608.00574v1",
+        "2608.01726v1",
+        "2608.00775v1"
+      ],
+      "citations_all_retrieved": false,
+      "error": null,
+      "latency_ms": 35.90216697193682
+    },
+    {
+      "question_id": "v2n12",
+      "expected_answerable": false,
+      "abstained": true,
+      "top_score": 0.02285930790603688,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.03745v1",
+        "2608.00722v1",
+        "2608.00554v1",
+        "2608.03113v1",
+        "2608.02483v1"
+      ],
+      "citations_all_retrieved": false,
+      "error": null,
+      "latency_ms": 39.86825002357364
+    },
+    {
+      "question_id": "v2n13",
+      "expected_answerable": false,
+      "abstained": true,
+      "top_score": 0.01639344262295082,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.01935v1",
+        "2608.03113v1",
+        "2608.02483v1",
+        "2608.02671v1",
+        "2608.03999v1"
+      ],
+      "citations_all_retrieved": false,
+      "error": null,
+      "latency_ms": 60.97274995408952
+    },
+    {
+      "question_id": "v2n14",
+      "expected_answerable": false,
+      "abstained": true,
+      "top_score": 0.03021353930031804,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.03507v1",
+        "2608.03854v1",
+        "2608.03525v1",
+        "2608.01506v1",
+        "2608.03720v1"
+      ],
+      "citations_all_retrieved": false,
+      "error": null,
+      "latency_ms": 62.31112498790026
+    },
+    {
+      "question_id": "v2n15",
+      "expected_answerable": false,
+      "abstained": true,
+      "top_score": 0.029906956136464335,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.02332v1",
+        "2608.01133v1",
+        "2608.02893v1",
+        "2608.02069v1",
+        "2608.02343v1"
+      ],
+      "citations_all_retrieved": false,
+      "error": null,
+      "latency_ms": 66.87679095193744
+    }
+  ],
+  "claim_boundary": "Citation grounding means every emitted versioned ID was in the retrieved set; it does not independently verify every natural-language statement."
+}

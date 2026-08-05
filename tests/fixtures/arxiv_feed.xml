@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:arxiv="http://arxiv.org/schemas/atom">
+  <entry>
+    <id>https://arxiv.org/abs/2401.01234v2</id>
+    <updated>2024-02-02T12:30:00Z</updated>
+    <published>2024-01-03T09:15:00Z</published>
+    <title>  Retrieval-Augmented   Models for Testing  </title>
+    <summary>We study semantic retrieval.\n The method uses learned embeddings.</summary>
+    <author><name>Ada Researcher</name></author>
+    <author><name>Grace Scientist</name></author>
+    <arxiv:primary_category term="cs.CL" />
+    <category term="cs.CL" />
+    <category term="cs.LG" />
+  </entry>
+  <entry>
+    <id>https://arxiv.org/abs/2401.09999v1</id>
+    <updated>2024-01-20T00:00:00Z</updated>
+    <published>2024-01-20T00:00:00Z</published>
+    <title>Vision Embeddings</title>
+    <summary>A compact vision-language retrieval abstract.</summary>
+    <author><name>Lin Example</name></author>
+    <arxiv:primary_category term="cs.CV" />
+    <category term="cs.CV" />
+  </entry>
+</feed>
+

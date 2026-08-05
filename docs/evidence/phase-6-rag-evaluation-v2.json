@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-08-05T22:25:18.196200Z",
+  "evaluation_set_frozen_at_utc": "2026-08-05T22:21:11.074192Z",
+  "generator_model": "llama-3.3-70b-versatile",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "frozen_abstain_threshold": 0.03239446668849102,
+  "heldout_answerable_questions": 10,
+  "heldout_out_of_domain_questions": 5,
+  "answerable_answer_rate": 0.6,
+  "answerable_abstain_rate": 0.2,
+  "out_of_domain_abstain_rate": 1.0,
+  "provider_or_enforcement_errors": 2,
+  "citation_grounding_rate_among_answers": 1.0,
+  "records": [
+    {
+      "question_id": "v2q21",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "The Learned Perceptual Image Fusion Measure (LPIFM) is the learned pairwise preference metric that ranks infrared-visible image fusion in a human-like way [2608.01301v2].",
+      "citations": [
+        "2608.01301v2"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.01301v2",
+        "2608.02769v1",
+        "2608.01355v1",
+        "2608.02059v1",
+        "2608.03107v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 1800.5996248684824
+    },
+    {
+      "question_id": "v2q22",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "The framework covering principles, primitives, pooling, learning, and clustering for temporal graphs can be found in [2608.03696v1]. This work focuses on learning and clustering on temporal graphs, with particular emphasis on the task of clustering, and frames the tension through three linked perspectives: principles, primitives, and pooling. \n\nThe principles perspective connects graph learning and community detection through shared spectral foundations and detectability thresholds in stochastic block model regimes. The primitives perspective makes spectral clustering and multislice modularity optimization tractable through GPU-accelerated temporal backends. The pooling perspective views principled community detection as a form of pooling in machine learning on graphs.\n\nWhile other papers, such as [2608.03695v1] and [2608.02128v1], also discuss graph clustering and community detection, [2608.03696v1] is the most relevant to the question as it explicitly covers the principles, primitives, pooling, learning, and clustering for temporal graphs.",
+      "citations": [
+        "2608.03696v1",
+        "2608.03695v1",
+        "2608.02128v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.03696v1",
+        "2608.03695v1",
+        "2608.00542v1",
+        "2608.03015v1",
+        "2608.02128v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 1021.8444999773055
+    },
+    {
+      "question_id": "v2q23",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "The work that argues that multimodal agents need deliberately designed environment distributions rather than simple scale is [2608.03571v1]. This paper, titled \"Beyond Simply Environment Scaling: Designing Effective Environment Distributions for Multimodal Agent Learning\", finds that simply increasing the number of multimodal environments does not always benefit and proposes methods to build more effective training environment distributions.",
+      "citations": [
+        "2608.03571v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.03571v1",
+        "2608.02713v1",
+        "2608.01456v1",
+        "2608.00677v1",
+        "2608.00540v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 821.5866659302264
+    },
+    {
+      "question_id": "v2q24",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03252247488101534,
+      "answer": "The CURV method, a curriculum-based visual grounded reasoning approach, improves chart understanding [2608.02833v1].",
+      "citations": [
+        "2608.02833v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.02833v1",
+        "2608.03464v1",
+        "2608.01664v1",
+        "2608.02217v1",
+        "2608.01328v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 602.7119169011712
+    },
+    {
+      "question_id": "v2q25",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "The benchmark designed to make computational chemistry evaluation aware of laboratory constraints is onepot-Bench 0 [2608.02595v1].",
+      "citations": [
+        "2608.02595v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.02595v1",
+        "2608.03340v1",
+        "2608.03525v1",
+        "2608.04001v1",
+        "2608.01666v2"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 538.6571669951081
+    },
+    {
+      "question_id": "v2q26",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": 0.03278688524590164,
+      "answer": "The study that evaluates large language model statistical reasoning across dimensions beyond answer accuracy is [2608.03038v1]. This study demonstrates the value of a multidimensional evaluation by combining response accuracy, response behavior, structural topic modeling, and lexical similarity analysis to assess statistical reasoning in large language models.",
+      "citations": [
+        "2608.03038v1"
+      ],
+      "retrieved_arxiv_ids": [
+        "2608.03038v1",
+        "2608.03505v1",
+        "2608.03291v1",
+        "2608.01575v1",
+        "2608.03803v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 804.069000063464
+    },
+    {
+      "question_id": "v2q27",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": null,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [],
+      "citations_all_retrieved": false,
+      "error": "HTTPStatusError: Client error '429 Too Many Requests' for url 'https://api.groq.com/openai/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429",
+      "latency_ms": 237.79395804740489
+    },
+    {
+      "question_id": "v2q28",
+      "expected_answerable": true,
+      "abstained": true,
+      "top_score": 0.031746031746031744,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.03887v1",
+        "2608.03803v1",
+        "2608.01395v1",
+        "2608.03505v1",
+        "2608.03099v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 81.12116693519056
+    },
+    {
+      "question_id": "v2q29",
+      "expected_answerable": true,
+      "abstained": false,
+      "top_score": null,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [],
+      "citations_all_retrieved": false,
+      "error": "HTTPStatusError: Client error '429 Too Many Requests' for url 'https://api.groq.com/openai/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429",
+      "latency_ms": 203.2641670666635
+    },
+    {
+      "question_id": "v2q30",
+      "expected_answerable": true,
+      "abstained": true,
+      "top_score": 0.03177805800756621,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.01395v1",
+        "2608.01193v1",
+        "2608.01436v1",
+        "2608.03044v1",
+        "2608.01717v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 104.84191589057446
+    },
+    {
+      "question_id": "v2n11",
+      "expected_answerable": false,
+      "abstained": true,
+      "top_score": 0.025003906860446942,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.03324v1",
+        "2608.03967v1",
+        "2608.00574v1",
+        "2608.01726v1",
+        "2608.00775v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 34.416249953210354
+    },
+    {
+      "question_id": "v2n12",
+      "expected_answerable": false,
+      "abstained": true,
+      "top_score": 0.02285930790603688,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.03745v1",
+        "2608.00722v1",
+        "2608.00554v1",
+        "2608.03113v1",
+        "2608.02483v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 40.65875010564923
+    },
+    {
+      "question_id": "v2n13",
+      "expected_answerable": false,
+      "abstained": true,
+      "top_score": 0.01639344262295082,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.01935v1",
+        "2608.03113v1",
+        "2608.02483v1",
+        "2608.02671v1",
+        "2608.03999v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 46.781959012150764
+    },
+    {
+      "question_id": "v2n14",
+      "expected_answerable": false,
+      "abstained": true,
+      "top_score": 0.03021353930031804,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.03507v1",
+        "2608.03854v1",
+        "2608.03525v1",
+        "2608.01506v1",
+        "2608.03720v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 45.02712516114116
+    },
+    {
+      "question_id": "v2n15",
+      "expected_answerable": false,
+      "abstained": true,
+      "top_score": 0.029906956136464335,
+      "answer": null,
+      "citations": [],
+      "retrieved_arxiv_ids": [
+        "2608.02332v1",
+        "2608.01133v1",
+        "2608.02893v1",
+        "2608.02069v1",
+        "2608.02343v1"
+      ],
+      "citations_all_retrieved": true,
+      "error": null,
+      "latency_ms": 51.04920803569257
+    }
+  ],
+  "claim_boundary": "Citation grounding means every emitted versioned ID was in the retrieved set; it does not independently verify every natural-language statement."
+}
