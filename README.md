@@ -7,9 +7,8 @@ Reciprocal Rank Fusion (RRF), and Groq generation with exact versioned-arXiv-ID
 citations and confidence-based abstention.
 
 **Resume status: not eligible.** The implementation and evaluation stages are
-complete, but Mayank must still pass the unaided explanation gate in
-[`docs/explanation-check.md`](docs/explanation-check.md). Publication is also a
-separate external step.
+complete and the repository is public, but Mayank must still pass the unaided
+explanation gate in [`docs/explanation-check.md`](docs/explanation-check.md).
 
 ## Verified system
 

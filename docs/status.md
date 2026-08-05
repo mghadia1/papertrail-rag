@@ -3,7 +3,7 @@
 Date: August 5, 2026
 
 - E1–E6: complete and locally verified.
-- E7 local hardening: complete; public-repository publication is still external.
+- E7: complete; public repository and GitHub Actions are verified.
 - E8: learning material complete; Mayank's unaided explanation check is pending.
 - Resume eligible: **no** until E8 is passed.
 - Corpus: 1,000 exact versioned arXiv IDs, 2,039 chunks, 2,039 normalized
