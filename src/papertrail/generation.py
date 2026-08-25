@@ -100,6 +100,9 @@ class AnswerResult:
     generator_model: str | None
     citations: tuple[str, ...]
     retrieved_arxiv_ids: tuple[str, ...]
+    entailment_verified: bool = False
+    faithfulness_score: float | None = None
+    ungrounded_claims: tuple[str, ...] = ()
 
 
 def cited_arxiv_ids(answer: str) -> tuple[str, ...]:
@@ -126,11 +129,14 @@ def answer_question(
     generator: Generator,
     threshold: float,
     top_k: int = 5,
+    retrieval_mode: str = "hybrid",
+    verify_entailment: bool = False,
+    min_faithfulness: float = 0.80,
 ) -> AnswerResult:
     if not 0 <= threshold <= 1:
         raise ValueError("abstain threshold must be between 0 and 1")
     hits = retrieve(
-        session, question, mode="hybrid", limit=top_k, encoder=encoder
+        session, question, mode=retrieval_mode, limit=top_k, encoder=encoder
     )
     retrieved_ids = tuple(str(hit["arxiv_id"]) for hit in hits)
     top_score = float(hits[0]["score"]) if hits else None
@@ -140,7 +146,7 @@ def answer_question(
             answer=None,
             abstained=True,
             abstain_reason="retrieval confidence below the validation-tuned threshold",
-            retrieval_mode="hybrid",
+            retrieval_mode=retrieval_mode,
             top_score=top_score,
             threshold=threshold,
             generator_model=None,
@@ -154,20 +160,53 @@ def answer_question(
     unsupported = sorted(set(citations) - set(retrieved_ids))
     if unsupported:
         raise ValueError(f"generated answer contains unsupported citations: {unsupported}")
+
+    faithfulness_score: float | None = None
+    ungrounded: tuple[str, ...] = ()
+    if verify_entailment:
+        from .entailment import evaluate_entailment
+
+        context_by_id = {str(hit["arxiv_id"]): str(hit["text"]) for hit in hits}
+        report = evaluate_entailment(
+            answer, context_by_id, min_faithfulness_threshold=min_faithfulness
+        )
+        faithfulness_score = report.faithfulness_score
+        ungrounded = report.ungrounded_claims
+        if not report.is_faithful:
+            return AnswerResult(
+                question=question,
+                answer=None,
+                abstained=True,
+                abstain_reason=f"answer failed NLI entailment faithfulness check (score: {report.faithfulness_score:.2f})",
+                retrieval_mode=retrieval_mode,
+                top_score=top_score,
+                threshold=threshold,
+                generator_model=generator.model_name,
+                citations=citations,
+                retrieved_arxiv_ids=retrieved_ids,
+                entailment_verified=True,
+                faithfulness_score=faithfulness_score,
+                ungrounded_claims=ungrounded,
+            )
+
     return AnswerResult(
         question=question,
         answer=answer,
         abstained=False,
         abstain_reason=None,
-        retrieval_mode="hybrid",
+        retrieval_mode=retrieval_mode,
         top_score=top_score,
         threshold=threshold,
         generator_model=generator.model_name,
         citations=citations,
         retrieved_arxiv_ids=retrieved_ids,
+        entailment_verified=verify_entailment,
+        faithfulness_score=faithfulness_score,
+        ungrounded_claims=ungrounded,
     )
 
 
 @lru_cache(maxsize=1)
 def get_generator() -> GroqGenerator:
     return GroqGenerator()
+

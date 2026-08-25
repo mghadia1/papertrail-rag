@@ -15,7 +15,7 @@ from .repository import (
 )
 
 
-SearchMode = Literal["vector", "keyword", "hybrid"]
+SearchMode = Literal["vector", "keyword", "hybrid", "hybrid_rerank"]
 
 
 def reciprocal_rank_fusion(
@@ -76,6 +76,7 @@ def retrieve(
     limit: int,
     encoder: Encoder | None = None,
     rrf_k: int = 60,
+    reranker: object | None = None,
 ) -> list[dict[str, object]]:
     if not 1 <= limit <= 50:
         raise ValueError("limit must be between 1 and 50")
@@ -93,12 +94,21 @@ def retrieve(
     vector_hits = vector_search(session, query_embedding, limit=candidate_limit)
     if mode == "vector":
         return distinct_papers(vector_hits, limit=limit)
-    if mode != "hybrid":
+    if mode not in {"hybrid", "hybrid_rerank"}:
         raise ValueError(f"unsupported search mode: {mode}")
     keyword_hits = keyword_search(session, query, limit=candidate_limit)
-    return distinct_papers(
+    fused_hits = distinct_papers(
         reciprocal_rank_fusion(
             {"keyword": keyword_hits, "vector": vector_hits}, k=rrf_k
         ),
-        limit=limit,
+        limit=max(limit * 2, 20) if mode == "hybrid_rerank" else limit,
     )
+    if mode == "hybrid":
+        return fused_hits[:limit]
+
+    # Two-stage rerank mode
+    from .reranking import LexicalSemanticReranker
+
+    active_reranker = reranker if reranker is not None else LexicalSemanticReranker()
+    return active_reranker.rerank(query, fused_hits, top_k=limit)
+
