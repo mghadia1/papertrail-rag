@@ -54,7 +54,9 @@ def build_parser() -> argparse.ArgumentParser:
     search = commands.add_parser("search", help="search embedded paper chunks")
     search.add_argument("query")
     search.add_argument(
-        "--mode", choices=("vector", "keyword", "hybrid"), default="hybrid"
+        "--mode",
+        choices=("vector", "keyword", "hybrid", "hybrid_rerank"),
+        default="hybrid",
     )
     search.add_argument("--limit", type=int, default=5)
     ask = commands.add_parser("ask", help="answer from hybrid-retrieved paper chunks")

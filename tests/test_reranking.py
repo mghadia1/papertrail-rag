@@ -49,8 +49,25 @@ def test_reranker_rejects_invalid_top_k():
         reranker.rerank("query", [{"chunk_id": 1}], top_k=0)
 
 
-def test_cross_encoder_fallback_works_when_model_absent():
-    reranker = CrossEncoderReranker(model_name="nonexistent-model-identifier")
+def _fail_sentence_transformers_import(monkeypatch):
+    """Force `from sentence_transformers import CrossEncoder` to fail."""
+    import builtins
+
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "sentence_transformers":
+            raise ImportError("simulated missing sentence_transformers")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+
+def test_cross_encoder_fallback_works_when_model_absent(monkeypatch):
+    _fail_sentence_transformers_import(monkeypatch)
+    reranker = CrossEncoderReranker(
+        model_name="cross-encoder/ms-marco-MiniLM-L-6-v2", allow_fallback=True
+    )
     candidates = [
         {
             "chunk_id": 1,
@@ -63,3 +80,23 @@ def test_cross_encoder_fallback_works_when_model_absent():
     reranked = reranker.rerank("molecule generation graph neural networks", candidates, top_k=1)
     assert len(reranked) == 1
     assert reranked[0]["arxiv_id"] == "2401.0001v1"
+    # Every result is stamped with the model that actually ran — the fallback, not
+    # the cross-encoder it stood in for.
+    assert reranked[0]["reranker"] == "cross-encoder/ms-marco-MiniLM-L-6-v2-fallback"
+    assert reranker.model_name == "cross-encoder/ms-marco-MiniLM-L-6-v2-fallback"
+
+
+def test_cross_encoder_default_raises_when_model_cannot_load(monkeypatch):
+    _fail_sentence_transformers_import(monkeypatch)
+    reranker = CrossEncoderReranker()  # allow_fallback defaults to False
+    candidates = [
+        {
+            "chunk_id": 1,
+            "arxiv_id": "2401.0001v1",
+            "title": "Graph Neural Networks for Molecule Generation",
+            "text": "Using GNNs to design new molecules.",
+            "score": 0.01,
+        }
+    ]
+    with pytest.raises(RuntimeError, match="allow_fallback is False"):
+        reranker.rerank("molecule generation", candidates, top_k=1)

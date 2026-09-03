@@ -79,8 +79,14 @@ class LexicalSemanticReranker:
 class CrossEncoderReranker:
     """Cross-encoder reranker leveraging sentence-transformers when available."""
 
-    def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2") -> None:
+    def __init__(
+        self,
+        model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
+        *,
+        allow_fallback: bool = False,
+    ) -> None:
         self.model_name = model_name
+        self.allow_fallback = allow_fallback
         self._model = None
         self._fallback = LexicalSemanticReranker(model_name=f"{model_name}-fallback")
 
@@ -89,8 +95,17 @@ class CrossEncoderReranker:
             try:
                 from sentence_transformers import CrossEncoder
                 self._model = CrossEncoder(self.model_name)
-            except Exception:
+            except Exception as exc:
+                if not self.allow_fallback:
+                    raise RuntimeError(
+                        f"cross-encoder reranker model {self.model_name!r} could not "
+                        "be loaded and allow_fallback is False; install the 'ml' extra "
+                        "or pass allow_fallback=True to use the lexical reranker"
+                    ) from exc
+                # Fall back to the deterministic lexical reranker, and relabel this
+                # instance so every result is stamped with the model that actually ran.
                 self._model = False
+                self.model_name = self._fallback.model_name
 
     def rerank(
         self, query: str, candidates: list[dict[str, object]], *, top_k: int
@@ -102,7 +117,10 @@ class CrossEncoderReranker:
 
         self._load_model()
         if not self._model:
-            return self._fallback.rerank(query, candidates, top_k=top_k)
+            fallback_results = self._fallback.rerank(query, candidates, top_k=top_k)
+            for item in fallback_results:
+                item["reranker"] = self.model_name
+            return fallback_results
 
         pairs = [[query, f"{cand.get('title', '')} {cand.get('text', '')}"] for cand in candidates]
         scores = self._model.predict(pairs)
@@ -112,6 +130,7 @@ class CrossEncoderReranker:
             item = dict(cand)
             item["rerank_score"] = float(score)
             item["score"] = float(score)
+            item["reranker"] = self.model_name
             scored_candidates.append(item)
 
         scored_candidates.sort(

@@ -106,9 +106,10 @@ def retrieve(
     if mode == "hybrid":
         return fused_hits[:limit]
 
-    # Two-stage rerank mode
-    from .reranking import LexicalSemanticReranker
+    # Two-stage rerank mode. Default to the real cross-encoder; it raises if the
+    # model cannot load rather than silently substituting the lexical reranker.
+    from .reranking import CrossEncoderReranker
 
-    active_reranker = reranker if reranker is not None else LexicalSemanticReranker()
+    active_reranker = reranker if reranker is not None else CrossEncoderReranker()
     return active_reranker.rerank(query, fused_hits, top_k=limit)
 

@@ -22,10 +22,13 @@ explanation gate in [`docs/explanation-check.md`](docs/explanation-check.md).
 - `/ask` retrieves five hybrid results, abstains below the development-selected
   threshold `0.03239446668849102`, and rejects absent or invented citations.
 - Groq retries 429 and transient 5xx responses with bounded backoff.
-- 41 local tests, a CPU-only Docker image, migrations, Compose, and CI.
+- 49 local tests, a CPU-only Docker image, migrations, Compose, and CI.
 - Evaluation reports independently recompute from raw rows and fail if summary
   metrics, citations, thresholds, question IDs, corpus hash, or chronology are
   edited inconsistently.
+
+A `hybrid_rerank` mode and a statement-level NLI check exist in code; neither has
+a published metric.
 
 ## Frozen evaluation result
 

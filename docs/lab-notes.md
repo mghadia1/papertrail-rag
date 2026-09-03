@@ -68,3 +68,59 @@ these numbers.
 
 **Checkpoint S:** ✅ database verified, cross-encoder loads, baseline reproduces
 exactly.
+
+---
+
+## 2026-09-03 — Phase H (Honesty fixes)
+
+**H1 — reranker fallback made explicit** (`src/papertrail/reranking.py`).
+- `CrossEncoderReranker.__init__` now takes `allow_fallback: bool = False`.
+- `_load_model` re-raises a `RuntimeError` naming the model when the load fails
+  and fallback is not allowed; only with `allow_fallback=True` does it drop to
+  the lexical reranker, and it relabels `self.model_name` to the `-fallback`
+  name so the substitution is visible.
+- `rerank` stamps `item["reranker"] = self.model_name` on **every** row, in both
+  the real and fallback paths.
+- Tests: updated `test_cross_encoder_fallback_works_when_model_absent` to pass
+  `allow_fallback=True` (and assert the row is stamped with the `-fallback`
+  name); added `test_cross_encoder_default_raises_when_model_cannot_load`, which
+  monkeypatches the `sentence_transformers` import to fail and asserts the
+  default path raises. Both use an import-failure monkeypatch so they are
+  offline and deterministic.
+
+**H2 — `hybrid_rerank` exposed on the CLI** (`cli.py` + `retrieval.py`).
+- Added `hybrid_rerank` to `search --mode` choices.
+- Pointed `retrieve()`'s rerank default at `CrossEncoderReranker` (was the
+  lexical reranker), so "rerank" means the real cross-encoder everywhere and
+  raises loudly if the model is missing instead of silently simulating it.
+- `papertrail search "diffusion planning" --mode hybrid_rerank` →
+  `reranker=cross-encoder/ms-marco-MiniLM-L-6-v2` on every row (scores 0.6262,
+  0.4801). The real model name shows.
+
+**H3 — docs corrected.**
+- README + `docs/status.md` test count: the files said **41** (workbook expected
+  48); actual is now **49** after the new test. Updated both to 49.
+- Added to both: "A `hybrid_rerank` mode and a statement-level NLI check exist in
+  code; neither has a published metric." Verified this is honest —
+  `src/papertrail/entailment.py` exists and no evidence file publishes a rerank
+  or entailment metric.
+
+**Environment gotcha (write this down):** `.venv-ml` uses a **non-editable**
+install. A path-style editable `.pth` is not honored in this venv (the project
+path contains a space — `auto job applier`), so `src/` edits do **not** take
+effect until `pip install . --no-deps` is re-run. Two editable attempts
+(default and `editable_mode=compat`) both failed to put `src` on `sys.path`;
+`PYTHONPATH=src` works but reinstalling non-editable is the clean path.
+
+**Verification:** `pytest` → **49 passed**. Post-edit, the frozen v2 retrieval
+baseline still reproduces **exactly** (the three evaluated modes never touch the
+rerank branch).
+
+**Checkpoint H:** ✅ tests green, README/status accurate, `search --mode
+hybrid_rerank` shows the real model name.
+
+**Interview note:** "I found a silent reranker fallback that could have
+mislabeled evidence — if the cross-encoder failed to load, it quietly scored
+with a lexical stand-in under the same name. I made the fallback opt-in
+(`allow_fallback`), made the default raise with the model name, and stamped the
+model that actually ran onto every result row."

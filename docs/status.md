@@ -17,8 +17,11 @@ Date: August 5, 2026
 - Held-out abstention: 8/10 answerable accepted and 5/5 out-of-domain refused.
 - Reliable RAG run: 8 answers, zero provider/enforcement errors, all emitted
   citations present in retrieved sets.
-- Verification: 41 local tests; evidence verifier passes all 90 retrieval rows
+- Verification: 49 local tests; evidence verifier passes all 90 retrieval rows
   and 15 RAG records; CPU-only Docker image builds.
+
+A `hybrid_rerank` mode and a statement-level NLI check exist in code; neither has
+a published metric.
 
 Claim boundary: title-derived known-item questions are not exhaustive relevance
 judgments or production traffic. Citation set membership is not statement-level
