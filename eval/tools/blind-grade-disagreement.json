@@ -1,0 +1,154 @@
+{
+  "papers": 690,
+  "exact_label_agreement": 0.9232,
+  "exact_label_disagreement": 0.0768,
+  "binary_relevance_agreement": 0.9348,
+  "binary_relevance_disagreement": 0.0652,
+  "cohen_kappa_3class": 0.7186,
+  "per_question": [
+    {
+      "id": "v3q002",
+      "pool": 42,
+      "exact_agreement": 1.0,
+      "binary_agreement": 1.0,
+      "draft_relevant": 5,
+      "blind_relevant": 5
+    },
+    {
+      "id": "v3q003",
+      "pool": 37,
+      "exact_agreement": 0.8649,
+      "binary_agreement": 0.8649,
+      "draft_relevant": 8,
+      "blind_relevant": 11
+    },
+    {
+      "id": "v3q005",
+      "pool": 42,
+      "exact_agreement": 1.0,
+      "binary_agreement": 1.0,
+      "draft_relevant": 2,
+      "blind_relevant": 2
+    },
+    {
+      "id": "v3q020",
+      "pool": 39,
+      "exact_agreement": 0.9231,
+      "binary_agreement": 0.9231,
+      "draft_relevant": 4,
+      "blind_relevant": 5
+    },
+    {
+      "id": "v3q021",
+      "pool": 31,
+      "exact_agreement": 0.9032,
+      "binary_agreement": 1.0,
+      "draft_relevant": 9,
+      "blind_relevant": 9
+    },
+    {
+      "id": "v3q023",
+      "pool": 40,
+      "exact_agreement": 0.975,
+      "binary_agreement": 0.975,
+      "draft_relevant": 9,
+      "blind_relevant": 10
+    },
+    {
+      "id": "v3q025",
+      "pool": 40,
+      "exact_agreement": 1.0,
+      "binary_agreement": 1.0,
+      "draft_relevant": 5,
+      "blind_relevant": 5
+    },
+    {
+      "id": "v3q032",
+      "pool": 37,
+      "exact_agreement": 0.9459,
+      "binary_agreement": 0.9459,
+      "draft_relevant": 4,
+      "blind_relevant": 4
+    },
+    {
+      "id": "v3q037",
+      "pool": 40,
+      "exact_agreement": 0.875,
+      "binary_agreement": 0.875,
+      "draft_relevant": 6,
+      "blind_relevant": 7
+    },
+    {
+      "id": "v3q042",
+      "pool": 37,
+      "exact_agreement": 0.7838,
+      "binary_agreement": 0.8649,
+      "draft_relevant": 9,
+      "blind_relevant": 8
+    },
+    {
+      "id": "v3q043",
+      "pool": 36,
+      "exact_agreement": 1.0,
+      "binary_agreement": 1.0,
+      "draft_relevant": 2,
+      "blind_relevant": 2
+    },
+    {
+      "id": "v3q050",
+      "pool": 40,
+      "exact_agreement": 0.925,
+      "binary_agreement": 0.925,
+      "draft_relevant": 2,
+      "blind_relevant": 5
+    },
+    {
+      "id": "v3q054",
+      "pool": 39,
+      "exact_agreement": 0.7436,
+      "binary_agreement": 0.7692,
+      "draft_relevant": 11,
+      "blind_relevant": 4
+    },
+    {
+      "id": "v3q061",
+      "pool": 39,
+      "exact_agreement": 0.9231,
+      "binary_agreement": 0.9231,
+      "draft_relevant": 5,
+      "blind_relevant": 4
+    },
+    {
+      "id": "v3q065",
+      "pool": 36,
+      "exact_agreement": 0.9167,
+      "binary_agreement": 0.9167,
+      "draft_relevant": 8,
+      "blind_relevant": 7
+    },
+    {
+      "id": "v3q067",
+      "pool": 36,
+      "exact_agreement": 0.9167,
+      "binary_agreement": 0.9444,
+      "draft_relevant": 7,
+      "blind_relevant": 7
+    },
+    {
+      "id": "v3q071",
+      "pool": 39,
+      "exact_agreement": 0.9744,
+      "binary_agreement": 0.9744,
+      "draft_relevant": 7,
+      "blind_relevant": 8
+    },
+    {
+      "id": "v3q073",
+      "pool": 40,
+      "exact_agreement": 0.925,
+      "binary_agreement": 0.925,
+      "draft_relevant": 5,
+      "blind_relevant": 2
+    }
+  ]
+}

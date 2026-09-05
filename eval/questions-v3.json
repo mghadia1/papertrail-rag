@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "frozen_at_utc": null,
+  "frozen_at_utc": "2026-09-05T18:52:02.108316Z",
   "corpus_arxiv_ids_sha256": "7308d240f717df7c9b17a1dfb7140c68615a462298b42866b95bc17f93250146",
   "sampling_seed": 20260903,
   "heldout_sampling_seed": 20260905,

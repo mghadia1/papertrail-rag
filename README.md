@@ -60,6 +60,20 @@ The first RAG run is intentionally preserved: two accepted questions hit Groq
 HTTP 429 responses, producing 6/10 answers and two provider errors. After bounded
 retry was added, the second separately named report completed with no errors.
 
+## v3 graded evaluation
+
+The v2 set above is saturated (every vector cell scores 1.00). v3 replaces it
+with graded relevance over paraphrase, lexical, pooled-topical, and two negative
+classes, evaluated across four modes including cross-encoder reranking. It is no
+longer saturated — development vector nDCG@10 is 0.876 overall and 0.699 on
+topical — and the retrievers separate by type: keyword collapses on paraphrase,
+and on held-out topical RRF fusion (0.683) scores below plain vector (0.776).
+Topical grades came from two independent model gradings (Cohen's kappa 0.719)
+with every disagreement hand-adjudicated. See
+[`docs/results.md`](docs/results.md) for the per-type table and
+[`docs/evidence/phase-8-retrieval-v3-baseline.json`](docs/evidence/phase-8-retrieval-v3-baseline.json)
+(verified, 312 rows).
+
 ## Run locally
 
 ```bash
@@ -95,6 +109,7 @@ not need a Groq key. The checked-in `.env.example` contains no secret.
 - [`docs/evidence/phase-6-rag-evaluation-v2-reliable.json`](docs/evidence/phase-6-rag-evaluation-v2-reliable.json) — retry-hardened run
 - [`docs/evidence/phase-6-freeze-timestamp-correction.json`](docs/evidence/phase-6-freeze-timestamp-correction.json) — auditable metadata-only correction
 - [`docs/evidence/phase-7-docker-api-smoke.json`](docs/evidence/phase-7-docker-api-smoke.json) — packaged health/search/ask smoke
+- [`docs/evidence/phase-8-retrieval-v3-baseline.json`](docs/evidence/phase-8-retrieval-v3-baseline.json) — frozen v3 graded, per-type, four modes
 
 Read [`docs/how-it-works.md`](docs/how-it-works.md),
 [`docs/results.md`](docs/results.md), and [`PROJECT_SPEC.md`](PROJECT_SPEC.md) for

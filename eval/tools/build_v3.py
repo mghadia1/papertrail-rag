@@ -132,27 +132,47 @@ HELDOUT: dict[int, tuple[str, str]] = {
 # Any pooled id not listed is grade 0. DEV grades are Claude-drafted (to be
 # re-graded blind by a human before freeze); HELD-OUT grades are added after
 # pooling the fresh held-out topical questions.
+# Adjudicated final grades. Every paper where the draft (Claude Opus 4.8) and the
+# blind re-grade (Claude Fable 5.1) disagreed was decided by hand against the
+# abstract (see eval/tools/adjudication.md). Kappa between the two gradings = 0.719
+# (0.709 over the fully-blind pools). This is a Claude-vs-Claude second opinion.
 GRADES: dict[str, dict[str, int]] = {
     # --- dev ---
     "2608.02123v1": {"2608.02123v1": 2, "2608.02989v1": 2, "2608.01651v1": 2, "2608.03447v1": 2, "2608.00881v1": 1},
-    "2608.01475v1": {"2608.01475v1": 2, "2608.01252v1": 2, "2608.00630v1": 2, "2608.01518v1": 2, "2608.01184v1": 2, "2608.01743v1": 2, "2608.03123v1": 1, "2608.01314v1": 1},
+    "2608.01475v1": {"2608.01475v1": 2, "2608.01252v1": 2, "2608.00630v1": 2, "2608.01518v1": 2, "2608.01184v1": 2, "2608.01743v1": 2, "2608.03123v1": 1, "2608.01630v1": 1, "2608.01672v1": 1, "2608.03855v1": 1, "2608.03874v1": 1},
     "2608.02830v1": {"2608.02830v1": 2, "2608.01575v1": 1},
-    "2608.01288v1": {"2608.01288v1": 2, "2608.01035v1": 1, "2608.01113v1": 1, "2608.03059v1": 1},
-    "2608.02820v1": {"2608.02820v1": 2, "2608.00583v1": 2, "2608.03291v1": 2, "2608.02089v1": 2, "2608.03745v1": 1, "2608.01388v1": 1, "2608.00732v1": 1, "2608.02271v1": 1, "2608.01085v1": 1},
+    "2608.01288v1": {"2608.01288v1": 2, "2608.01035v1": 1, "2608.03059v1": 1, "2608.03974v1": 1},
+    "2608.02820v1": {"2608.02820v1": 2, "2608.00583v1": 2, "2608.03291v1": 2, "2608.02089v1": 2, "2608.03745v1": 2, "2608.01388v1": 1, "2608.00732v1": 1, "2608.02271v1": 1, "2608.01085v1": 1},
     "2608.01334v1": {"2608.01334v1": 2, "2608.01988v1": 2, "2608.03096v1": 2, "2608.00559v1": 2, "2608.02160v1": 2, "2608.03008v1": 2, "2608.00716v1": 2, "2608.01258v1": 2, "2608.01046v1": 1},
     "2608.00573v1": {"2608.00573v1": 2, "2608.01784v1": 2, "2608.01536v1": 1, "2608.03036v1": 1, "2608.01651v1": 1},
-    "2608.03887v1": {"2608.03887v1": 2, "2608.01743v1": 2, "2608.01314v1": 1, "2608.03874v1": 1},
-    "2608.03562v1": {"2608.03562v1": 2, "2608.02509v1": 2, "2608.03069v1": 1, "2608.01556v1": 1, "2608.01151v1": 1, "2608.02034v1": 1},
-    "2608.01321v1": {"2608.01321v1": 2, "2608.01597v1": 2, "2608.03467v1": 2, "2608.04007v1": 2, "2608.01867v2": 2, "2608.01359v1": 1, "2608.02585v1": 1, "2608.01913v1": 1, "2608.01358v1": 1},
+    "2608.03887v1": {"2608.03887v1": 2, "2608.01743v1": 2, "2608.03874v1": 1, "2608.03855v1": 1},
+    "2608.03562v1": {"2608.03562v1": 2, "2608.02509v1": 2, "2608.03069v1": 1, "2608.01556v1": 1, "2608.02034v1": 1, "2608.01130v1": 1, "2608.03875v1": 1},
+    "2608.01321v1": {"2608.01321v1": 2, "2608.01597v1": 2, "2608.04007v1": 2, "2608.01359v1": 2, "2608.03223v1": 2, "2608.03467v1": 1, "2608.01867v2": 1},
     "2608.03218v1": {"2608.03218v1": 2, "2608.03269v1": 2},
-    "2608.03664v1": {"2608.03664v1": 2, "2608.03540v1": 2},
-    # --- held-out (graded from pools-heldout.json) ---
-    "2608.01565v1": {"2608.01565v1": 2, "2608.01269v2": 2, "2608.00585v1": 2, "2608.01468v1": 2, "2608.01311v1": 1, "2608.00658v1": 1, "2608.03860v1": 1, "2608.02678v1": 1, "2608.01630v1": 1, "2608.00765v1": 1, "2608.00712v1": 1},
-    "2608.03545v1": {"2608.03545v1": 2, "2608.04001v1": 1, "2608.02585v1": 1, "2608.01014v1": 1, "2608.02951v1": 1},
-    "2608.01660v1": {"2608.01660v1": 2, "2608.03918v1": 2, "2608.00714v1": 2, "2608.01980v1": 1, "2608.03083v1": 1, "2608.03112v1": 1, "2608.01169v1": 1, "2608.02078v1": 1},
-    "2608.02691v1": {"2608.02691v1": 2, "2608.00528v1": 1, "2608.02901v1": 1, "2608.01247v1": 1, "2608.00902v1": 1, "2608.01631v1": 1, "2608.03893v1": 1},
+    "2608.03664v1": {"2608.03664v1": 2, "2608.03540v1": 2, "2608.03107v1": 1},
+    # --- held-out ---
+    "2608.01565v1": {"2608.01565v1": 2, "2608.01269v2": 2, "2608.00585v1": 1, "2608.03527v1": 1},
+    "2608.03545v1": {"2608.03545v1": 2, "2608.04001v1": 1, "2608.01014v1": 1, "2608.03204v1": 1},
+    "2608.01660v1": {"2608.01660v1": 2, "2608.03918v1": 2, "2608.00714v1": 2, "2608.03083v1": 1, "2608.03112v1": 1, "2608.01169v1": 1, "2608.01271v1": 1},
+    "2608.02691v1": {"2608.02691v1": 2, "2608.00528v1": 1, "2608.02901v1": 1, "2608.01247v1": 1, "2608.00902v1": 1, "2608.01631v1": 1},
     "2608.02791v1": {"2608.02791v1": 2, "2608.03147v1": 2, "2608.01354v1": 2, "2608.01663v1": 1, "2608.02284v1": 1, "2608.03911v1": 1, "2608.02470v1": 1},
-    "2608.01338v1": {"2608.01338v1": 2, "2608.01201v1": 1, "2608.03084v1": 1, "2608.02449v1": 1, "2608.01535v1": 1},
+    "2608.01338v1": {"2608.01338v1": 2, "2608.02449v1": 1},
+}
+
+# Recorded in the evidence file for transparency about how the topical labels were
+# produced (item 4 of the review).
+TOPICAL_GRADE_PROVENANCE = {
+    "method": "two independent Claude gradings, then hand adjudication of every disagreement",
+    "draft_grader": "Claude Opus 4.8",
+    "blind_grader": "Claude Fable 5.1 (mode-blind shuffled sheet)",
+    "adjudicator": "Claude Opus 4.8 (per-abstract, all 53 disagreements)",
+    "cohen_kappa_3class_all_pools": 0.7186,
+    "cohen_kappa_3class_blind_pools_only": 0.7089,
+    "exact_label_agreement": 0.9232,
+    "disagreeing_papers": 53,
+    "non_blind_pools": ["v3q025", "v3q032", "v3q050"],
+    "caveat": "Claude-vs-Claude second opinion, not human inter-annotator agreement.",
+    "record": "eval/tools/adjudication.md",
 }
 
 
@@ -248,9 +268,11 @@ def main() -> int:
         "corpus_arxiv_ids_sha256": CORPUS_SHA,
         "sampling_seed": DEV_SEED,
         "heldout_sampling_seed": HELDOUT_SEED,
-        "authorship": ("Queries LLM-authored (Claude). Dev topical grades are Claude-drafted, "
-                       "to be re-graded blind by a human before freeze. Held-out authored from a "
-                       "disjoint fresh sample and never dry-run."),
+        "authorship": ("Queries LLM-authored (Claude). Topical grades were produced by two "
+                       "independent Claude gradings with every disagreement hand-adjudicated "
+                       "(see topical_grade_provenance). Held-out authored from a disjoint fresh "
+                       "sample and never dry-run."),
+        "topical_grade_provenance": TOPICAL_GRADE_PROVENANCE,
         "retrieval_questions": retrieval,
         "abstention_questions": abstention,
     }

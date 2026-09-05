@@ -359,6 +359,7 @@ def evaluate(
             "latency_warmups_discarded_per_mode": 1,
             "threshold_selected_on": "development positives and development negatives only",
             "threshold_tie_break": "balanced accuracy, then positive accept rate, then lower threshold",
+            "topical_grade_provenance": question_set.get("topical_grade_provenance"),
         }
         claim_boundary = (
             "Graded relevance over paraphrase, lexical, and pooled-topical queries "

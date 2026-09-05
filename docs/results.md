@@ -27,6 +27,42 @@ fusion is automatically superior.
 The 2 positive abstentions are false refusals under this label scheme. The
 grounding result verifies citation membership, not semantic entailment.
 
+## v3 graded evaluation (September 5, 2026)
+
+The v2 set was saturated (every vector cell 1.00). v3 replaces it with graded
+relevance over four question types — paraphrase (no title word appears in the
+query), lexical (natural sentences carrying rare terms), pooled topical, and two
+negative classes (out-of-domain and near-miss). 78 retrieval + 27 abstention
+questions; four modes including `hybrid_rerank`. Evidence:
+`docs/evidence/phase-8-retrieval-v3-baseline.json` (verified, 312 rows).
+
+nDCG@10 by type (graded gains `2**grade - 1`):
+
+| split · type | vector | keyword | hybrid | hybrid_rerank |
+|---|---:|---:|---:|---:|
+| dev · all | 0.876 | 0.759 | 0.879 | 0.942 |
+| dev · paraphrase | 0.883 | 0.695 | 0.890 | 0.964 |
+| dev · lexical | 1.000 | 0.977 | 1.000 | 1.000 |
+| dev · topical | 0.699 | 0.595 | 0.697 | 0.821 |
+| heldout · all | 0.894 | 0.762 | 0.913 | 0.951 |
+| heldout · paraphrase | 0.883 | 0.735 | 0.969 | 1.000 |
+| heldout · lexical | 1.000 | 1.000 | 1.000 | 1.000 |
+| heldout · topical | 0.776 | 0.497 | 0.683 | 0.789 |
+
+The types separate the retrievers: keyword collapses on paraphrase (no shared
+title vocabulary), and on **held-out topical, RRF hybrid (0.683) scored below
+plain vector (0.776)** — fusion hurt there. `hybrid_rerank` led every cell.
+Abstention balanced accuracy fell to 0.828 dev / 0.846 held-out (from v2's
+0.925 / 0.90) because the near-miss negatives — real ML topics verified absent
+from the corpus — are harder to refuse than out-of-domain ones.
+
+Topical grades were produced by two independent Claude gradings (Opus 4.8 draft,
+Fable 5.1 blind), Cohen's kappa **0.719** (0.709 on the fully-blind pools), with
+all 53 disagreements hand-adjudicated (`eval/tools/adjudication.md`). This is a
+model-vs-model second opinion, not human inter-annotator agreement. The held-out
+split was authored from a sample disjoint from development and was not dry-run
+before freeze.
+
 ## Protocol history
 
 The first report is retained because it showed keyword Recall@5 of 0.05 on

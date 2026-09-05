@@ -203,11 +203,53 @@ is that the **held-out split was observed** in the dry-run. Actions taken:
   rewrites (easier for dense retrieval than terse user queries).
 - Held-out topical pooled fresh (`pool.py --ungraded` → `pools-heldout.json`,
   229 papers) and graded.
-- **Still open (gates freeze): Mayank wants the topical pools re-graded BLIND by a
-  human**, with the disagreement rate against the Claude draft grades recorded in
-  the evidence file. I cannot be that independent grader — I authored the draft
-  grades this session, so I am anchored and cannot grade blind. Raised this to
-  him. Nothing frozen; 0g not yet run.
+- **Blind re-grade + adjudication + freeze (2026-09-05).** Mayank had a second,
+  independent Claude session (**Claude Fable 5.1**) grade the 18 topical pools
+  blind from the shuffled sheet (`blind-grades.json`). Recomputed agreement with
+  `score_blind_grades.py`: **Cohen kappa 0.7186** over 690 pooled papers (0.7089
+  over the 573 papers in the 15 fully-blind pools; three pools — v3q025, v3q032,
+  v3q050 — were not fully blind for that grader, noted in the JSON). This is a
+  Claude-vs-Claude second opinion, **not** human inter-annotator agreement, and
+  is labeled that way. **53 papers disagreed.** I adjudicated **every one by
+  hand** against its abstract (`eval/tools/adjudication.md`): the draft had been
+  too generous on generic-RAG (v3q054: 11→4 relevant), SLAM/driving (v3q073:
+  5→2), and general-SR (v3q050); the blind grader caught two papers the draft
+  missed (CheMatE 2608.03855 — abstract literally says "catastrophically
+  forgetting"; self-distilled reward shaping 2608.03223) and one upgrade
+  (2608.03745). Final labels are the adjudicated ones; the raw kappa is recorded
+  in the frozen file's `topical_grade_provenance` and the evidence protocol.
+- **FROZEN** `eval/questions-v3.json` at 2026-09-05T18:52:02Z (renamed from the
+  draft; `frozen_at_utc` set).
+
+**Checkpoint 0 — closed (2026-09-05).** Official 0g run on the frozen set →
+`docs/evidence/phase-8-retrieval-v3-baseline.json`; `verify-evidence
+--kind retrieval --questions eval/questions-v3.json` → **verified, 312 rows**
+(78×4 modes). The schema-3 verifier recomputes every per-row metric from ranked
+ids + grades, checks each row's coverage against the question file, confirms each
+topical row's ranked ids stay inside its judged pool, and recomputes per-type
+aggregates.
+
+Frozen per-type nDCG@10 (dev): vector all **0.876**, topical **0.699**,
+paraphrase 0.883, lexical 1.000; keyword paraphrase **0.695**; hybrid_rerank all
+0.942. Held-out: vector topical **0.776** vs hybrid topical **0.683** —
+**fusion hurt on held-out topical**, and keyword topical collapsed to 0.497.
+Abstention balanced accuracy 0.828 dev / 0.846 held-out (v2 was 0.925/0.90; the
+near-miss negatives are the reason). The revised Checkpoint 0 condition (per-type
+nDCG discrimination, not the coarse Recall@5 gate) is met: v2 was a flat 1.00 on
+every vector cell; v3 is not, and the four retrievers separate by type.
+
+**Interview notes.**
+1. "My first benchmark was title-derived and saturated — every retriever scored
+   1.00. I rebuilt it with paraphrase (no title words), lexical, and pooled
+   topical queries so retrievers fail in different places: keyword dies on
+   paraphrase, and on held-out topical RRF fusion actually scored below plain
+   vector."
+2. "Grades came from two independent model gradings; they agreed at kappa 0.72,
+   and I adjudicated all 53 disagreements by hand — I keep the raw kappa on
+   record and labelled it model-vs-model, not human, agreement."
+3. "I caught that my held-out split had been observed in a dry-run, so I threw it
+   out and re-authored it from a fresh disjoint sample, the way v1's observed
+   held-out was replaced for v2."
 
 **0f — harness generalized for schema 3 (done before authoring, all green).**
 Everything is schema-branched so the frozen v2/v1 evidence keeps verifying
