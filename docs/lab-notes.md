@@ -149,6 +149,39 @@ model that actually ran onto every result row."
 - Ran it: 90 papers, seed 20260903. Corpus is August-2026 arXiv ML papers
   (ids `2608.*`).
 
+**0c–0e — authored the draft (2026-09-05), pending human review.**
+- 78 retrieval queries + 27 negatives → `eval/questions-v3.draft.json`
+  (`frozen_at_utc` left null). Counts match the workbook: paraphrase 24/12,
+  lexical 16/8, topical 12/6; OOD negatives 15 (reused), near-miss 12.
+- All 36 paraphrase queries pass the strict no-title-word checker.
+- 12 near-miss negatives verified absent from the corpus by grep (sarcasm,
+  fake-news, hate-speech, crowd-counting, lane-detection, sound-event, stock,
+  load-forecasting, traffic-signal RL, drone-racing, crop-yield, handwriting).
+- 18 topical pools built mode-blind and shuffled (`pool.py` → `pools.json`,
+  ~680 papers) and graded by an LLM (Claude), disclosed. Every graded id lies in
+  its judged pool; the full pool is stored per question for the verifier.
+- Tooling: `build_v3.py`, `check_no_title_words.py`, `pool.py`,
+  `make_review_doc.py`.
+
+**Dry-run on the draft (not frozen), 4 modes.** Environment note: Docker Desktop
+had shut down between sessions, dropping the DB mid-run once ("server closed the
+connection unexpectedly"); relaunched Docker, re-verified the manifest
+(`7308d240…`), re-ran clean.
+
+Per-type nDCG@10 (dev): vector all **0.874** (was a flat 1.00 in v2), paraphrase
+0.883, topical **0.687**, lexical 1.000. Recall@5 (dev): vector paraphrase 0.958,
+lexical 1.000, topical 0.917; keyword paraphrase **0.750**; hybrid_rerank 1.000
+across the board. Abstention balanced-accuracy fell to 0.828 dev / 0.810 held-out
+(v2 was 0.925/0.90) — the near-miss negatives are genuinely harder.
+
+Reading: the set is **no longer saturated** and retrievers fail in different
+places (keyword dies on paraphrase; vector/hybrid weak on topical; rerank wins).
+Checkpoint 0's explicit gate — dev paraphrase **or** lexical vector Recall@5
+below 0.9 — is **not quite met** (0.958 / 1.000); the discrimination shows in
+nDCG, not that coarse recall gate. Handed the draft to Mayank to review the query
+wording and topical grades before any hardening or freeze (his call, 2026-09-05).
+Nothing frozen yet.
+
 **0f — harness generalized for schema 3 (done before authoring, all green).**
 Everything is schema-branched so the frozen v2/v1 evidence keeps verifying
 byte-for-byte; only schema-3 sets get the new behavior.
