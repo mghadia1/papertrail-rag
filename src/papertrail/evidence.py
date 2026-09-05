@@ -9,7 +9,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .evaluation import MODES, _aggregate, _choose_threshold
+from .evaluation import (
+    LEGACY_MODES,
+    _aggregate,
+    _aggregate_by_type,
+    _choose_threshold,
+    ndcg_at,
+    recall_at,
+    reciprocal_rank,
+)
 from .generation import cited_arxiv_ids
 from .manifest import CorpusManifest
 
@@ -26,24 +34,7 @@ def _verify_freeze_precedes_report(report: dict[str, Any]) -> None:
         raise ValueError("evaluation freeze timestamp is later than report creation")
 
 
-def verify_retrieval_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]:
-    report = json.loads(path.read_text(encoding="utf-8"))
-    _verify_freeze_precedes_report(report)
-    if report.get("corpus_arxiv_ids_sha256") != manifest.arxiv_ids_sha256:
-        raise ValueError("retrieval evidence corpus hash does not match manifest")
-    rows = report.get("per_question", [])
-    if len(rows) != 90:
-        raise ValueError(f"retrieval evidence must contain 90 raw rows; found {len(rows)}")
-    for split, expected in (("development", 20), ("heldout", 10)):
-        for mode in MODES:
-            selected = [row for row in rows if row["split"] == split and row["mode"] == mode]
-            if len(selected) != expected:
-                raise ValueError(f"expected {expected} {split}/{mode} rows; found {len(selected)}")
-            calculated = _aggregate(selected)
-            published = report["aggregates"][split][mode]
-            for key, value in calculated.items():
-                _close(float(value), published[key], f"aggregates.{split}.{mode}.{key}")
-
+def _verify_abstention(report: dict[str, Any]) -> None:
     abstention = report["abstention"]
     selected = _choose_threshold(
         abstention["development_positive_scores"],
@@ -61,6 +52,113 @@ def verify_retrieval_evidence(path: Path, manifest: CorpusManifest) -> dict[str,
     _close(heldout_positive, abstention["heldout_positive_accept_rate"], "heldout positive accept rate")
     _close(heldout_negative, abstention["heldout_negative_abstain_rate"], "heldout negative abstain rate")
     _close((heldout_positive + heldout_negative) / 2, abstention["heldout_balanced_accuracy"], "heldout balanced accuracy")
+
+
+def _verify_retrieval_evidence_v3(
+    report: dict[str, Any], question_set: dict[str, Any] | None
+) -> dict[str, Any]:
+    rows = report.get("per_question", [])
+    if not rows:
+        raise ValueError("schema-3 retrieval evidence has no raw rows")
+    modes = sorted({row["mode"] for row in rows})
+
+    # 1. Recompute every per-row metric from ranked ids + graded relevance.
+    for row in rows:
+        graded = {str(k): int(v) for k, v in row["relevant"].items()}
+        ranked = [str(identifier) for identifier in row["ranked_arxiv_ids"]]
+        tag = f"{row['question_id']}/{row['mode']}"
+        _close(recall_at(ranked, graded, 5), row["recall_at_5"], f"{tag} recall_at_5")
+        _close(recall_at(ranked, graded, 10), row["recall_at_10"], f"{tag} recall_at_10")
+        _close(reciprocal_rank(ranked, graded), row["reciprocal_rank"], f"{tag} mrr")
+        _close(ndcg_at(ranked, graded, 10), row["ndcg_at_10"], f"{tag} ndcg_at_10")
+
+    # 2. If the question set is supplied, derive the expected coverage from it
+    #    (replaces the hard-coded 90/20/10) and check the pooled-topical rows only
+    #    ranked ids that were actually judged.
+    if question_set is not None:
+        for split in ("development", "heldout"):
+            expected_ids = sorted(
+                q["id"]
+                for q in question_set["retrieval_questions"]
+                if q["split"] == split
+            )
+            for mode in modes:
+                got = sorted(
+                    row["question_id"]
+                    for row in rows
+                    if row["split"] == split and row["mode"] == mode
+                )
+                if got != expected_ids:
+                    raise ValueError(
+                        f"{split}/{mode} rows do not match the question set ids"
+                    )
+        pools = {
+            q["id"]: set(q["pool"])
+            for q in question_set["retrieval_questions"]
+            if q.get("pool")
+        }
+        for row in rows:
+            pool = pools.get(row["question_id"])
+            if pool is not None and not set(row["ranked_arxiv_ids"]).issubset(pool):
+                raise ValueError(
+                    f"ranked ids for {row['question_id']} fall outside its judged pool"
+                )
+
+    # 3. Recompute the per-type and "all" aggregates and check the published block.
+    for split in ("development", "heldout"):
+        for mode in modes:
+            slice_rows = [
+                row for row in rows if row["split"] == split and row["mode"] == mode
+            ]
+            if not slice_rows:
+                continue
+            published = report["aggregates"][split][mode]
+            for type_key, metrics in _aggregate_by_type(slice_rows).items():
+                if type_key not in published:
+                    raise ValueError(
+                        f"aggregates.{split}.{mode} is missing type '{type_key}'"
+                    )
+                for key, value in metrics.items():
+                    _close(
+                        float(value),
+                        published[type_key][key],
+                        f"aggregates.{split}.{mode}.{type_key}.{key}",
+                    )
+
+    _verify_abstention(report)
+    if report.get("protocol", {}).get("rrf_k") != 60:
+        raise ValueError("retrieval evidence does not use frozen RRF k=60")
+    return {"verified": True, "kind": "retrieval", "raw_rows": len(rows), "modes": modes}
+
+
+def verify_retrieval_evidence(
+    path: Path,
+    manifest: CorpusManifest,
+    *,
+    question_set: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    report = json.loads(path.read_text(encoding="utf-8"))
+    _verify_freeze_precedes_report(report)
+    if report.get("corpus_arxiv_ids_sha256") != manifest.arxiv_ids_sha256:
+        raise ValueError("retrieval evidence corpus hash does not match manifest")
+    if int(report.get("evaluation_schema_version", 0)) >= 3:
+        return _verify_retrieval_evidence_v3(report, question_set)
+
+    # Schema 1/2: the original fixed-shape known-item check, preserved exactly.
+    rows = report.get("per_question", [])
+    if len(rows) != 90:
+        raise ValueError(f"retrieval evidence must contain 90 raw rows; found {len(rows)}")
+    for split, expected in (("development", 20), ("heldout", 10)):
+        for mode in LEGACY_MODES:
+            selected = [row for row in rows if row["split"] == split and row["mode"] == mode]
+            if len(selected) != expected:
+                raise ValueError(f"expected {expected} {split}/{mode} rows; found {len(selected)}")
+            calculated = _aggregate(selected)
+            published = report["aggregates"][split][mode]
+            for key, value in calculated.items():
+                _close(float(value), published[key], f"aggregates.{split}.{mode}.{key}")
+
+    _verify_abstention(report)
     if report.get("protocol", {}).get("rrf_k") != 60:
         raise ValueError("retrieval evidence does not use frozen RRF k=60")
     return {"verified": True, "kind": "retrieval", "raw_rows": len(rows)}

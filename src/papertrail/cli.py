@@ -216,7 +216,14 @@ def main() -> int:
     if args.command == "verify-evidence":
         manifest = CorpusManifest.read(args.manifest)
         if args.kind == "retrieval":
-            result = verify_retrieval_evidence(args.report, manifest)
+            question_set = (
+                load_question_set(args.questions, manifest)
+                if args.questions is not None
+                else None
+            )
+            result = verify_retrieval_evidence(
+                args.report, manifest, question_set=question_set
+            )
         else:
             if args.questions is None:
                 raise SystemExit("--questions is required for RAG evidence")

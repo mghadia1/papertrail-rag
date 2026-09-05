@@ -124,3 +124,50 @@ mislabeled evidence — if the cross-encoder failed to load, it quietly scored
 with a lexical stand-in under the same name. I made the fallback opt-in
 (`allow_fallback`), made the default raise with the model name, and stamped the
 model that actually ran onto every result row."
+
+---
+
+## 2026-09-05 — Phase 0 (Evaluation v3), part 1: assumptions + sampling
+
+**0a — the three hard-coded assumptions I am about to break, confirmed in code:**
+1. `evidence.verify_retrieval_evidence` hard-codes **90** raw rows
+   (`evidence.py:35`), **20** dev / **10** held-out per mode (`:37`), and
+   `protocol.rrf_k == 60` (`:64`).
+2. `evaluation.MODES` is a fixed 3-tuple `("vector","keyword","hybrid")`
+   (`evaluation.py:21`); `load_question_set` accepts only schema 1/2 and asserts
+   exactly 30 retrieval questions / 20 dev / 10 held-out / 10+5 negatives
+   (`:58`, `:76-100`).
+3. The question file's relevance is a **flat `relevant_arxiv_ids` list with no
+   grades** (`evaluation.py:86,174`), and `ndcg_at` uses **binary** gains
+   (`:35-45`). There is no `recall_at(...,10)` recorded (only `recall_at_5`).
+
+**0b — deterministic sampler** (`eval/tools/sample_papers.py`).
+- Sorts the manifest IDs, then `random.Random(20260903).sample(ids, 90)`.
+- Joins title + abstract from the DB, writes `eval/tools/sample.md` (a reading
+  sheet with a `type:`/`query:` slot per paper) and `eval/tools/sample.json`
+  (the 90 ids in sampled order, for the freeze to reference).
+- Ran it: 90 papers, seed 20260903. Corpus is August-2026 arXiv ML papers
+  (ids `2608.*`).
+
+**0f — harness generalized for schema 3 (done before authoring, all green).**
+Everything is schema-branched so the frozen v2/v1 evidence keeps verifying
+byte-for-byte; only schema-3 sets get the new behavior.
+- `evaluation.py`: `MODES` is now the 4-tuple (adds `hybrid_rerank`), with
+  `LEGACY_MODES` = the original three used for schema ≤2. `ndcg_at` is graded
+  (`gain = 2**grade - 1`) and reduces to the old binary formula when handed a
+  set, so `test_retrieval_metrics_have_known_answers` still passes. Schema-3
+  rows carry `type`, graded `relevant`, and `recall_at_10`; aggregates nest as
+  `aggregates[split][mode]["all"]` and `[...][<type>]`.
+- `load_question_set` accepts schema 3: graded `relevant` maps, typed
+  questions, grades validated ∈ {1,2}, relevant ids in corpus, pool ⊇ graded
+  ids, counts **derived** from the file (no fixed 30/20/10).
+- `evidence.py`: the retrieval verifier branches on `evaluation_schema_version`.
+  Schema ≤2 keeps the fixed 90/20/10 flat check. Schema 3 recomputes **every
+  per-row metric** from ranked ids + grades, derives coverage from the
+  `--questions` file, checks each topical row's ranked ids ⊆ its judged `pool`,
+  and recomputes the per-type + "all" aggregates. CLI now passes `--questions`
+  into the retrieval verifier.
+- Tests: added graded-nDCG known answer (a=2,b=1 ranked [b,a] → 0.7967) and a
+  schema-3 loader round trip + grade-range rejection. `pytest` → **51 passed**.
+- Regression: the frozen **v2 and v1** retrieval evidence still verify (with and
+  without `--questions`).
