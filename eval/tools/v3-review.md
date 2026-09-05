@@ -1,6 +1,6 @@
 # v3 question set — review draft (NOT frozen)
 
-Queries and (pending) topical grades drafted by an LLM (Claude); review before freeze.
+Queries LLM-authored (Claude). Dev topical grades are Claude-drafted, to be re-graded blind by a human before freeze. Held-out authored from a disjoint fresh sample and never dry-run.
 
 Sampling seed 20260903. 78 retrieval questions, 27 abstention questions.
 
@@ -61,73 +61,73 @@ Sampling seed 20260903. 78 retrieval questions, 27 abstention questions.
 **v3q035** — an onboard learned codec for Earth-observation spacecraft that spends bytes on cloud-free ground rather than clouds without sending a cloud map, plus a deadline-aware scheduler for brief intermittent ground contacts
   - answer: `2608.01457v1` — Clear-Weighted Bit Allocation for Satellite Downlinks
 
-**v3q066** — estimating action values from logged interaction data by swapping the symmetric several-back temporal-difference loss for an asymmetric one, which counters the pessimistic bias that grows with longer horizons
+**v3q045** — estimating action values from logged interaction data by swapping the symmetric several-back temporal-difference loss for an asymmetric one, which counters the pessimistic bias that grows with longer horizons
   - answer: `2608.02034v1` — Upper-Expectile Multi-Step Q-Learning for Off-Policy Reinforcement Learning
 
-**v3q067** — predicting future scene descriptors for self-driving robots entirely in latent space and reading task outputs straight from those predictions, dropping the heavy module that usually maps states to tasks
+**v3q046** — predicting future scene descriptors for self-driving robots entirely in latent space and reading task outputs straight from those predictions, dropping the heavy module that usually maps states to tasks
   - answer: `2608.02428v1` — DF$^3$: World Modeling via Decoder-Free Feature Forecasting in Autonomous Navigation
 
-**v3q070** — a training-free way to shrink redundant audio and visual sequences for combined-sensory chat systems, pruning structurally before the network and consolidating semantically inside it to hold accuracy at tiny budgets
+**v3q048** — a training-free way to shrink redundant audio and visual sequences for combined-sensory chat systems, pruning structurally before the network and consolidating semantically inside it to hold accuracy at tiny budgets
   - answer: `2608.03812v1` — OmniPack: Unified Token Compression for Efficient Omni-modal Large Language Models
 
-**v3q071** — a review of patient-specific heart-and-vessel computer models that update with clinical measurements, contrasting mechanistic simulations with scalable learned and hybrid graph methods for diagnosis and therapy planning
+**v3q049** — a review of patient-specific heart-and-vessel computer models that update with clinical measurements, contrasting mechanistic simulations with scalable learned and hybrid graph methods for diagnosis and therapy planning
   - answer: `2608.02135v1` — Cardiovascular Digital Twins from Physics Based to Data Driven Approaches
 
-**v3q073** — a feed-forward Gaussian scene reconstructor that separates shape modeling from color detail into two branches, letting it work without known camera poses and render crisper novel views
+**v3q051** — a feed-forward Gaussian scene reconstructor that separates shape modeling from color detail into two branches, letting it work without known camera poses and render crisper novel views
   - answer: `2608.01186v1` — QuerySplat: Decoupling Geometry and Appearance Representations in 3DGS Prediction
 
-**v3q075** — toughening learned near-duplicate image matchers so adversarial tweaks cannot slip past, with no model re-fitting: randomized smoothing at match time plus an imperceptible mark added to reference images before release
+**v3q052** — toughening learned near-duplicate image matchers so adversarial tweaks cannot slip past, with no model re-fitting: randomized smoothing at match time plus an imperceptible mark added to reference images before release
   - answer: `2608.03101v1` — Double Down on Defense: Strengthening Deep Perceptual Hashes against Evasion Attacks without Retraining
 
 
 ## development · lexical (16)
 
-**v3q006** — LocAnyMed-200K medical visual grounding dataset F1@IoU 0.50
+**v3q006** — medical visual grounding trained on the LocAnyMed-200K dataset
   - answer: `2608.03322v1` — LocAnyMed: Vision-Language Grounding for Multimodal Medical Images
 
-**v3q008** — Weixin Pay billion-scale credit fraud detection graph neural network overlapping subgraphs
+**v3q008** — billion-scale credit fraud detection on Weixin Pay using graph neural networks
   - answer: `2608.02168v1` — Empowering Credit Risk Detection in Weixin Pay with Billion-Scale Deep Graph Learning
 
-**v3q009** — TIDES longitudinal bilingual English Korean dataset next-speaker prediction AMI Meeting Corpus
+**v3q009** — next-speaker prediction on the TIDES bilingual multi-party conversation dataset
   - answer: `2608.01724v1` — TIDES: A Longitudinal Bilingual Dataset for Modeling Multi-Party Social Dynamics
 
-**v3q011** — Kolmogorov-Arnold Network versus MLP for faster-than-Nyquist BPSK detection bit error rate
+**v3q011** — Kolmogorov-Arnold Networks for faster-than-Nyquist signaling detection
   - answer: `2608.02062v1` — A Comparative Analysis of MLP and Kolmogorov-Arnold Networks (KAN) for Faster-than-Nyquist (FTN) Signaling Detection
 
-**v3q017** — Predictive Enhancement Calibration virtual contrast breast MRI FLUX latent flow transformer MAMA100
+**v3q017** — virtual contrast enhancement for breast MRI using a FLUX latent flow transformer
   - answer: `2608.03612v1` — Predictive Enhancement Calibration for Latent Breast MRI Virtual Contrast Enhancement
 
-**v3q022** — physics-flavored CNN-Transformer for engineered skeletal muscle contraction Duchenne muscular dystrophy force-time
+**v3q022** — a physics-flavored network parametrizing contraction dynamics of engineered skeletal muscle tissues
   - answer: `2608.03927v1` — A Physics-Flavored Transformer Network for Parametrizing Contraction Dynamics of Engineered Skeletal Muscle Tissues
 
-**v3q024** — Fourier motion modeling 4D Gaussian Splatting N3V Google Immersive dynamic novel view
+**v3q024** — Fourier motion modeling for dynamic 4D Gaussian Splatting on the N3V benchmark
   - answer: `2608.01958v1` — FAST-GS: Frequency Aware Space-time Gaussian Splatting for Photorealistic Dynamic Novel View Synthesis
 
-**v3q029** — offline top-K logits fused chunked KL loss knowledge distillation 32768 tokens H200 GPU
+**v3q029** — efficient LLM distillation with offline top-K logits and a fused chunked KL loss
   - answer: `2608.03796v1` — Efficient Knowledge Distillation for LLMs: Offline Top-K Logits and a Fused Chunked KL Loss
 
-**v3q034** — Swimm3R underwater Beta Splitting medium-aware SfM Barbados dataset WaterSplatting PSNR
+**v3q034** — underwater 3D reconstruction results on the Barbados dataset compared with WaterSplatting
   - answer: `2608.00950v1` — Swimm3R: Splatting with Medium-aware SfM for Underwater 3D Reconstruction
 
-**v3q036** — SALT subspace-aligned centroid-residual ultra-low-rank LoRA serving vLLM Llama-3.2-3B PCIe
+**v3q036** — ultra-low-rank LoRA serving with subspace-aligned centroid-residual training in vLLM
   - answer: `2608.03579v1` — Pin Once, Swap Light: Subspace-Aligned Centroid-Residual Training for Efficient Ultra-LoRA Serving
 
-**v3q042** — SAKI score-aware low-rank key indexing KV cache LLaMA 3.1 8B Qwen 2.5 7B top-64 recall
+**v3q038** — score-aware low-rank key indexing for long-context KV cache compression (SAKI)
   - answer: `2608.03228v1` — SAKI: Score-Aware Low-Rank Key Indexing for Long-Context KV Retrieval
 
-**v3q044** — WAM-Diff2 autoregressive-to-diffusion distillation autonomous driving VLA FlashInfer CUDA Graphs speedup
+**v3q039** — autoregressive-to-diffusion distillation for an efficient autonomous-driving VLA
   - answer: `2608.01035v1` — WAM-Diff2: Hierarchical AR-to-Diffusion Distillation for Highly Efficient Autonomous Driving VLA
 
-**v3q050** — GUI-Lens coarse-to-fine cropping GUI grounding OCR UI components GPT-5.5
+**v3q040** — coarse-to-fine cropping for GUI grounding with general-purpose VLMs
   - answer: `2608.03270v1` — GUI-Lens: Coarse-to-Fine Cropping for GUI Grounding with General-Purpose VLMs
 
-**v3q057** — conditional diffusion synthetic histopathology modified Frechet Inception Distance aggregated Jaccard index nuclei segmentation
+**v3q041** — evaluating conditional diffusion for synthetic histopathology with pathology-specific FID
   - answer: `2608.03990v1` — Assessment of Conditional Diffusion Model for Synthetic Histopathology Image Generation
 
-**v3q063** — paired recipient evaluation deceased donor kidney transplant survival SRTR concordance index
+**v3q044** — paired-recipient evaluation of survival prediction for deceased-donor kidney transplants using SRTR data
   - answer: `2608.03017v1` — Paired Recipient-based Evaluation of Survival Prediction for Deceased Donor Kidney Transplants
 
-**v3q068** — ShielDroid hybrid Android malware detection Random Forest Multilayer Perceptron 97.5% accuracy
+**v3q047** — hybrid Android malware detection combining Random Forest and a multilayer perceptron
   - answer: `2608.03250v1` — ShielDroid: A Hybrid Approach Integrating Machine and Deep Learning for Android Malware Detection
 
 
@@ -203,7 +203,7 @@ Sampling seed 20260903. 78 retrieval questions, 27 abstention questions.
   - grade 1: `2608.01314v1` — Remember-R1: Mitigating Long-Context Visual Forgetting through Reinforcement Learning
   - grade 1: `2608.03874v1` — ContinualSkillBench: Can LLM Agents Truly Evolve Their Capabilities?
 
-**v3q038** — robustness and uncertainty in reinforcement learning objectives under misspecified rewards or utilities
+**v3q037** — robustness and uncertainty in reinforcement learning objectives under misspecified rewards or utilities
   - seed: `2608.03562v1` · pool size 40
   - grade 2: `2608.02509v1` — Optimizing Minimax Regret in Uncertain MDPs with Small Sets of Policies
   - grade 2: `2608.03562v1` — Robust General Utility for Reinforcement Learning
@@ -212,7 +212,7 @@ Sampling seed 20260903. 78 retrieval questions, 27 abstention questions.
   - grade 1: `2608.02034v1` — Upper-Expectile Multi-Step Q-Learning for Off-Policy Reinforcement Learning
   - grade 1: `2608.03069v1` — Revisiting TD Target Aggregation under Uncertainty in Q-Learning
 
-**v3q058** — process-level reward and credit assignment for search-augmented or tool-using reasoning agents
+**v3q042** — process-level reward and credit assignment for search-augmented or tool-using reasoning agents
   - seed: `2608.01321v1` · pool size 37
   - grade 2: `2608.01321v1` — BiCAA: Bidirectional Credit Assignment for Search-Augmented Agent
   - grade 2: `2608.01597v1` — HindSearch: Trajectory-Level Hindsight Critique for Search-Augmented Reinforcement Learning
@@ -224,12 +224,12 @@ Sampling seed 20260903. 78 retrieval questions, 27 abstention questions.
   - grade 1: `2608.01913v1` — Diagnosing Search Behavior and Failure Modes in Long-Horizon Search Agents
   - grade 1: `2608.02585v1` — GradCuit: Credit-Assigned Gradient Flow Enables Robust and Interpretable Test-Time Latent Reasoning
 
-**v3q061** — dataset distillation that compresses a training set into a small synthetic set for pretrained encoders
+**v3q043** — dataset distillation that compresses a training set into a small synthetic set for pretrained encoders
   - seed: `2608.03218v1` · pool size 36
   - grade 2: `2608.03218v1` — Self-Supervised Representation-Guided Generative Dataset Distillation
   - grade 2: `2608.03269v1` — Efficient Video Dataset Distillation via Cluster-Guided Prototype Blending
 
-**v3q072** — super-resolution of medical or pathology images that preserves fine cellular structure
+**v3q050** — super-resolution of medical or pathology images that preserves fine cellular structure
   - seed: `2608.03664v1` · pool size 40
   - grade 2: `2608.03540v1` — S$^3$-Diff: Structural Semantic Synergy Diffusion Model for High Fidelity Super Resolution of Pathological Images
   - grade 2: `2608.03664v1` — Morphology-Aware Implicit Super-Resolution Network for Pathological Images
@@ -237,124 +237,132 @@ Sampling seed 20260903. 78 retrieval questions, 27 abstention questions.
 
 ## heldout · paraphrase (12)
 
-**v3q037** — a three-way cancer prognosis model that turns sparse tabular patient records into text embeddings and uses them as an anchor to align pathology and genomic signals through cross-attention and a distribution-matching objective
-  - answer: `2608.03247v1` — CIGTSurv: Clinical Information Guided Tri-modal Survival Prediction with Local Prototype Association and Global Feature Alignment
+**v3q055** — a message-passing operator for networks whose edges carry both a sign and an orientation, moving information only where node-potential gaps agree with the arrow, improving node classification and link prediction
+  - answer: `2608.00836v1` — Nonlinear Laplacians Improve Signed-Directed Graph Learning
 
-**v3q039** — a content-policy method for prompt-to-picture diffusion applied at inference that reads the predicted denoised frame to catch banned material and then tweaks a low-rank residual in the conditioning to suppress it, leaving weights unchanged
-  - answer: `2608.03284v1` — Test-Time Scaling for Safe Text-Guided Image Generation via Intermediate Clean Estimates
+**v3q056** — testing the belief that shorter prompts help when the needed information is kept, by either trimming the middle or dropping only the irrelevant parts, and showing naive middle-removal merely measures how often it spares the answer
+  - answer: `2608.03297v1` — Distractor-Aware Truncation: Disentangling Context-Length Effects from Signal Loss in Long-Context LLM Benchmarks
 
-**v3q040** — a stochastic form of low-dimensional adapter adaptation that samples structured variations along the leading components of shared adapters to give reliable predictive uncertainty while matching the deterministic transform in expectation
-  - answer: `2608.01142v2` — EulerLoRA: Rank-Driven Jump Dynamics for Calibrated Parameter-Efficient Fine-Tuning
+**v3q057** — a formal account of when a metric reads healthy while the model is actually broken, spanning gamed reward models at fit time and unmonitored production faults, with a taxonomy validated on real incidents
+  - answer: `2608.02786v1` — Evaluation Blindness: How Silent Measurement Failures Corrupt AI Systems from Training to Deployment
 
-**v3q041** — using a vision-language model's grounding to synthesize varied foregrounds and backgrounds and to inject representation noise, improving scarce-label recognition of items when training and evaluation distributions differ sharply
-  - answer: `2608.01348v1` — Prompt-Driven Simulation with Feature Perturbation for Cross-Domain Few-Shot Object Detection
+**v3q058** — a training-free method and dataset for judging which of several same-category objects sits nearest a reference item in one photo, estimating floor-plane distances with uncertainty-aware prompting
+  - answer: `2608.01709v1` — SpatialQuery: Benchmarking Geometry-Grounded Multi-Instance Spatial Reasoning in Vision-Language Models
 
-**v3q046** — an interactive guessing game revealing chatbots gather evidence poorly across dialogue rounds for explanation-forming reasoning: many commit before using clues, others exhaust their budget without converging
-  - answer: `2608.03388v1` — Don't Let Me Ask for It: LLMs Show Deficiencies in Active Multi-Turn Information Acquisition for Abductive Inference
+**v3q059** — checking whether medical claims are true, false, or misleading by pulling trusted passages from WHO and a national disease-control agency and classifying with a fine-tuned encoder, tested on Nigerian fact-checks
+  - answer: `2608.02310v1` — An Evidence-Grounded Retrieval-Augmented Transformer Framework for Health Misinformation Verification
 
-**v3q048** — making inter-assistant social relations explicit in prompts and finding they mainly push teams toward agreement, helping when consensus is rewarded but not reliably improving accuracy in objective question debates
-  - answer: `2608.03239v1` — Relational Priors as Convergence Pressure in LLM-Based Multi-Agent Systems
+**v3q062** — scaling specific feed-forward units in a chatbot to reproduce dementia-like speech changes such as reduced idea density and worse recall, showing units found from clinical transcripts causally shape behavior
+  - answer: `2608.03067v1` — Activation-Guided Neuron Intervention to Induce Alzheimer's-Related Computational Language Phenotypes in a Large Language Model
 
-**v3q051** — quantifying how well annotators agree when they give free-form open-ended labels for life-science passages, comparing embedding, large-language-model, and entailment-based soft reliability scores
-  - answer: `2608.03529v1` — Consensus Measures for Unstructured Biomedical Text Annotations
+**v3q064** — synthesizing audio-driven expressive portrait video that mixes implicit semantic features with explicit blendshape priors to give precise, continuous control over expression intensity without losing texture detail
+  - answer: `2608.00663v1` — Geometry-guided Emotion Modulation for Controllable and Photorealistic Emotional Talking Face Generation
 
-**v3q052** — deriving gaze-like attention labels from finished operations by combining deformation-constrained organ tracking with instrument paths, powering an assistive camera that pre-frames relevant regions and eases the operator's mental load
-  - answer: `2608.02471v1` — Action-grounded tissue affordance enables anticipatory auto-framing that lowers surgeon cognitive workload during laparoscopic surgery
+**v3q069** — a training-free fix for text-to-image models that merge or drop objects, correcting the initial attention allocation once so overlapping subjects separate, rather than steering the whole sampling path
+  - answer: `2608.03135v1` — Rectify Then Diffuse: Disentangling Concepts Before Denoising Trajectory Unfolds
 
-**v3q053** — an analysis of how the training objective for image generators — raw pixels versus autoencoder latents versus self-supervised features — shifts the modeling burden across context inference and per-token denoising
-  - answer: `2608.00626v1` — Where Does Generative Difficulty Reside? An Empirical Study of Target Representations
+**v3q072** — learning end-to-end which higher-order structures like cycles and cliques to add to a graph model, instead of fixing them beforehand with an unsupervised rule, improving node and graph classification
+  - answer: `2608.01160v1` — Differentiable Lifting for Topological Neural Networks
 
-**v3q054** — speeding up decoding of networks that blend full and linear-recurrent layers by rewriting the recurrence into a branch-structured closed form and a GPU kernel that checks all draft nodes at once with far less transient state memory
-  - answer: `2608.01651v1` — Bole: Efficient Tree Speculation for Hybrid-Attention Language Models
+**v3q074** — predicting sustained high-water plateaus for early warning by combining readings from many monitoring gages with bounded corrections that keep each site's local time-series forecast as a stable anchor
+  - answer: `2608.01775v1` — Multi-Source Dynamic Graph Learning for Compound-Flood Forecasting in Managed Coastal Systems
 
-**v3q055** — a low-latency causal clip reviser that generates chunk by chunk, preserving source fidelity and long-horizon temporal consistency without future frames or a fixed duration, at roughly thirty frames per second
-  - answer: `2608.03974v1` — JoyAI-Video-Edit: Real-Time Open-Ended Video Editing with Autoregressive Diffusion
+**v3q077** — correcting coarse- and fine-mesh numerical solutions with a small learned corrector to price multi-asset financial derivatives faster, demonstrated on Black-Scholes and Heston barrier contracts with little high-fidelity data
+  - answer: `2608.02778v1` — Neural Networks with Local Converging Inputs for Efficient Options Pricing Models
 
-**v3q059** — a terminal benchmark that hides tool meanings so assistants must learn behavior by trial and error, showing they fall back to exhaustive probing under mapping drift despite recorded cues to the following action
-  - answer: `2608.02358v1` — ScrambleToolBench: Agents Search Exhaustively Even When Their Own Map Points to the Next Step
+**v3q078** — estimating how many overlapping decaying sinusoids fill a plate-reverb impulse response by predicting mode tallies in several spectral ranges with a tree regressor, then fitting decay and gain on grids via an all-pole model
+  - answer: `2608.00667v1` — Band-Count Dense Modal Estimation with Fixed-Frequency Differentiable Resonator Refinement
 
 
 ## heldout · lexical (8)
 
-**v3q043** — LLM-Guided Retrieval molecular perturbation response Tahoe-100M single-cell atlas unseen cell line
-  - answer: `2608.01734v1` — LLM-Guided Retrieval for Prediction of Molecular Perturbation Responses
+**v3q053** — near-real-time object removal attacks on video perception evaluated on the South Carolina Connected Vehicle Testbed
+  - answer: `2608.02806v1` — Fast Object Removal Attacks on Safety-Critical Video-based Perception Systems
 
-**v3q045** — standalone DINOv3 DINO.txt training-free open-vocabulary segmentation remote sensing UDD5 DOTA LoveDA
-  - answer: `2608.03023v1` — Standalone DINOv3 for Training-Free Open-Vocabulary Semantic Segmentation in Remote Sensing
+**v3q060** — monocular panoramic SLAM using a frozen geometry foundation model for loop closure (HALO-SLAM)
+  - answer: `2608.00925v1` — Look Up and Look Back: Hidden Attention and Latent Orientation in a Frozen Foundation Model for Panoramic SLAM
 
-**v3q056** — MARBERT emoji pragmatics Arabic digital discourse Facebook politeness respect solidarity F1
-  - answer: `2608.01174v1` — Does Machine "know" interpersonal pragmatics? Evidence from MARBERT's learning of emoji pragmatics in Arabic digital discourse
+**v3q063** — zero-shot humanoid motion tracking on the Unitree G1 with robot-native motion generation
+  - answer: `2608.01410v1` — GenTrack: Physical Alignment for Robot-Native Motion Generation and Zero-Shot Humanoid Tracking
 
-**v3q060** — writing-system-level tokenizer adaptation byte-level BPE Ukrainian Nemotron GPT-OSS merge ordering
-  - answer: `2608.00582v1` — Writing-System-Level Tokenizer Adaptation for Byte-Level BPE
+**v3q066** — the Observatorio Lazaro database tracking anglicism usage in the Spanish press
+  - answer: `2608.00713v1` — Observatorio Lazaro: A self-populating database of anglicism usage in the Spanish press
 
-**v3q062** — OSSDD OpenSARShip Sentinel-1 ship detection dataset VV VH polarization Faster R-CNN FCOS DETR
-  - answer: `2608.01963v1` — OSSDD - a New Open Dataset for Sentinel-1 Ship Detection
+**v3q068** — estimating plate-reverb parameters for Task A of the DAFx Parameter Estimation Challenge
+  - answer: `2608.00656v1` — Simulation-Based Plate-Reverb Parameter Estimation from a Single Impulse Response
 
-**v3q065** — nGPT normalized Transformer hypersphere Mamba-2 Mixture-of-Experts 14B GatedAdamW training recipe
-  - answer: `2608.01284v1` — Training nGPT
+**v3q070** — neuro-symbolic biomedical relation extraction evaluated on DDI and ChemProt (ANCHOR-RE)
+  - answer: `2608.03154v1` — ANCHOR-RE: An Agentic Neuro-Symbolic Framework for Grounded Biomedical Relation Extraction
 
-**v3q074** — OliveGemma PaliGemma-2-3B LoRA Mediterranean European diet food recognition MedGR ODIN VIPPSTAR
-  - answer: `2608.03428v1` — OliveGemma: A 3 Billion Visual Language Model for Recognising the Mediterranean & European Diet
+**v3q075** — physics-guided deep learning for patient-specific microwave ablation planning of liver tumors
+  - answer: `2608.03086v1` — Automatic Patient-Specific Microwave Ablation Planning Accelerated by a Physics-Guided Deep Learning Model
 
-**v3q078** — condition-number barrier sparse least squares Axiotis Sviridenko Small-Set Expansion Hypothesis Gemini agentic proof
-  - answer: `2608.02588v1` — The Condition-Number Barrier in Sparse Least Squares
+**v3q076** — a machine-readable catalogue and handwriting-recognition accuracy measure for the Tsiolkovsky archive, fond 555
+  - answer: `2608.03617v1` — A machine-readable catalogue of the Tsiolkovsky papers (fond 555, Archive of the Russian Academy of Sciences), and a way to measure how well its handwriting can be read
 
 
 ## heldout · topical (6)
 
-**v3q047** — benchmarks that evaluate controllable video generation models as world models beyond visual quality
-  - seed: `2608.02603v1` · pool size 38
-  - grade 2: `2608.02603v1` — WorldExam: Benchmarking World Models from Apparent Appearance to Inherent Reactivity
-  - grade 1: `2608.00617v1` — Diagnosing Under-Development of Irreversible Processes in Video Generation
-  - grade 1: `2608.01127v2` — MiniWorld: Democratizing the Training of Video World Models from Scratch
-  - grade 1: `2608.02953v1` — RealWeather: Realistic and Scene-Faithful Weather Translation with Driving World Models
+**v3q054** — graph-structured retrieval-augmented generation for complex multi-document question answering
+  - seed: `2608.01565v1` · pool size 39
+  - grade 2: `2608.00585v1` — Verification Without Sufficiency: Per-Chunk Filtering Fails on Multi-Hop RAG, and Decomposition Repairs It
+  - grade 2: `2608.01269v2` — ACE-GraphRAG: Agentic Context Engineering for Hierarchical GraphRAG
+  - grade 2: `2608.01468v1` — Retrieval Augmented Biomedical Question Answering with Weak Question Recovery and Neural Reranking for BioASQ Task 14b
+  - grade 2: `2608.01565v1` — DocNavRAG: Document-Structured Graph RAG with Stateful Evidence Construction for Complex Document Question Answering
+  - grade 1: `2608.00658v1` — Select-And-Extract: A Lightweight Plugin for Retrieval-Augmented Generation
+  - grade 1: `2608.00712v1` — Exploiting Intrinsic Duality for Multi-Hop Question Generation
+  - grade 1: `2608.00765v1` — RAGOCR: Optical Compression of Retrieval-Augmented Text via Visual Representation
+  - grade 1: `2608.01311v1` — RH-RAG: Trustworthy Long-Form Generation for Privacy-Constrained Settings
+  - grade 1: `2608.01630v1` — RING: Retrieval-Internalized Generation for Continual Large-Scale Knowledge Injection
+  - grade 1: `2608.02678v1` — DenialRAG: Single-Document RAG Poisoning via Embedded Parametric Denial
+  - grade 1: `2608.03860v1` — SciRet: A Compute-Aware Empirical Study of Retrieval and Reranking for Scientific RAG
+
+**v3q061** — test-time reinforcement learning for LLM reasoning using majority-vote pseudo-labels
+  - seed: `2608.03545v1` · pool size 39
+  - grade 2: `2608.03545v1` — Hi-TTRL: Regulating Consensus with Hints for Test-Time Reinforcement Learning
+  - grade 1: `2608.01014v1` — Cloud-ScPO: Hidden-State Geometry for Semi-Supervised Preference Optimization in LLM Reasoning
+  - grade 1: `2608.02585v1` — GradCuit: Credit-Assigned Gradient Flow Enables Robust and Interpretable Test-Time Latent Reasoning
+  - grade 1: `2608.02951v1` — SP3O: Reinforcement Learning from Segment Preferences without Reward Modeling
+  - grade 1: `2608.04001v1` — Test-Time Scaling in Reasoning LLMs: Inference Regimes, Evaluation, and Reproducibility
+
+**v3q065** — evidence frame selection for long-video question answering under a fixed token budget
+  - seed: `2608.01660v1` · pool size 36
+  - grade 2: `2608.00714v1` — Coverage-Driven Adaptive Keyframe Selection for Video Understanding
+  - grade 2: `2608.01660v1` — Ground, Cover, and Refine: Evidence-Centric Frame Selection for Long-Video Question Answering
+  - grade 2: `2608.03918v1` — When and Where to Look: Adaptive Visual Evidence Scheduling for Efficient Long Video Understanding
+  - grade 1: `2608.01169v1` — Think in Sets for Streaming Video Token Compression
+  - grade 1: `2608.01980v1` — AdaThinkV: Adaptive Thinking for Token-Efficient Video Reasoning
+  - grade 1: `2608.02078v1` — CAVE: Competence-Aware Visual Boundary Evidence Alignment for Video Temporal Grounding
+  - grade 1: `2608.03083v1` — GSTEP: Global Spatio-Temporal Density-Driven Visual Token Pruning for Efficient Video Large Language Models
+  - grade 1: `2608.03112v1` — Adaptive Two-Stage Visual Token Pruning for Efficient Inference in Video-Language Models
+
+**v3q067** — ultra-low-bit KV-cache quantization for long-context LLM inference
+  - seed: `2608.02691v1` · pool size 36
+  - grade 2: `2608.02691v1` — Output-Aware Rotation for INT2 KV-Cache Quantization
+  - grade 1: `2608.00528v1` — S$^4$R: Selective Sampling, Subspaces, and Sparse Reconstruction for Compressed Long-Context KV Caching
+  - grade 1: `2608.00902v1` — Practical Online KV Cache Compaction for LLM Agents: An Empirical Study
+  - grade 1: `2608.01247v1` — RestoreKV: Recovering Full-Cache Behavior Under Aggressive Query-Agnostic KV Cache Eviction
+  - grade 1: `2608.01631v1` — Does Accuracy Equal Evidence? Reasoning Faithfulness under KV Cache Compression
+  - grade 1: `2608.02901v1` — AnchorKV: Anchor-Residual KV Cache Compression
+  - grade 1: `2608.03893v1` — Cross-Model KV Cache Transfer in LLM Families: A Closed-Form Linear Mapping for Prefill Reuse
+
+**v3q071** — MLLM-based referring and reasoning image segmentation with efficient mask prediction
+  - seed: `2608.02791v1` · pool size 39
+  - grade 2: `2608.01354v1` — PixVL: Self-Supervised Training of Pixel-Level MLLMs via a Unified Mask--Text Consistency Cycle
+  - grade 2: `2608.02791v1` — Better, Stronger, Faster, and Broader: Structured All-Mask Prediction for MLLM-Based Segmentation
+  - grade 2: `2608.03147v1` — CROSS: Cascaded Distillation and Dual-Constraint Grounding for Remote Sensing Referring Segmentation
+  - grade 1: `2608.01663v1` — Few-Shot Concept Prompt Learning for Segmentation Foundation Models via Visual Grounding
+  - grade 1: `2608.02284v1` — EOVSAM: Efficient Open-Vocabulary Segmentation with SAM 3 in One Pass
+  - grade 1: `2608.02470v1` — Grounding Agentic VLMs with Dedicated Segmentation for Fine-Grained Vehicle Damage Assessment
+  - grade 1: `2608.03911v1` — UniEvo-RS: Omni-Prompt Unified Remote Sensing Segmentation with Representative Exemplar-Driven Prototype Evolution
+
+**v3q073** — online high-definition map construction for autonomous driving from multi-modal inputs
+  - seed: `2608.01338v1` · pool size 40
+  - grade 2: `2608.01338v1` — Driver2Map: Imitating Human Driving for Online High-Definition Map Construction
+  - grade 1: `2608.01201v1` — PRISM: Privileged Probabilistic Latent Supervision for End-to-End Autonomous Driving Motion Planning
+  - grade 1: `2608.01535v1` — STAR-VLM: Spatiotemporal Grounding Vision-Language Models for Motion and Velocity Estimation via Automotive Radar Supervision
+  - grade 1: `2608.02449v1` — MoRAL: Sensor-Grounded BEV Reasoning for Compact VLMs toward Edge-Oriented Autonomous Driving
   - grade 1: `2608.03084v1` — SUV: Future Scene Understanding as Video Generation for End-to-End Driving
-  - grade 1: `2608.03211v1` — CrossScope: A Role-Asymmetric World Model for Joint Dual-Scope Surgical Video Prediction
-
-**v3q049** — sparse-view or few-shot 3D Gaussian Splatting reconstruction and super-resolution
-  - seed: `2608.02206v1` · pool size 27
-  - grade 2: `2608.01588v1` — D^2-4DGS: Dual-Depth Guided Sparse-Camera 4D Gaussian Splatting
-  - grade 2: `2608.02145v1` — UniqueSplat: View-conditioned 3D Gaussian Splatting for Generalizable 3D Reconstruction
-  - grade 2: `2608.02191v1` — DerainSplat: Feed-Forward Clean 3D Gaussian Splatting from Sparse Rainy Views
-  - grade 2: `2608.02206v1` — CLEAR: Conflict-aware Learning via Evidence-guided Adaptive Routing for Unified Sparse-View 3D Gaussian Super-Resolution
-  - grade 2: `2608.02437v2` — InfiniSplat: Implicit Gaussian Decoding for Large-Baseline Monocular View Synthesis
-  - grade 1: `2608.00950v1` — Swimm3R: Splatting with Medium-aware SfM for Underwater 3D Reconstruction
-  - grade 1: `2608.01178v1` — DynActiveGS: Active Gaussian Splatting for Dynamic Scene Reconstruction
-  - grade 1: `2608.01186v1` — QuerySplat: Decoupling Geometry and Appearance Representations in 3DGS Prediction
-  - grade 1: `2608.01659v1` — StreamSplat: Streaming Feed-Forward 3D Gaussian Splatting
-  - grade 1: `2608.01958v1` — FAST-GS: Frequency Aware Space-time Gaussian Splatting for Photorealistic Dynamic Novel View Synthesis
-
-**v3q064** — black-box detection of hallucination in large vision-language models using consistency signals
-  - seed: `2608.03817v1` · pool size 42
-  - grade 2: `2608.01207v1` — It's the Decoding Format, Not the Perturbation: Auditing Consistency-Based Selection for Vision-Language Test-Time Scaling
-  - grade 2: `2608.03817v1` — UHP Detection: LVLMs have their Unique Hallucination Pattern in the Consistency Space
-  - grade 1: `2608.01021v1` — Can Humans Dream of Electric Sheep? Human-Written Samples for Fine-Grained Vision-and-Language Hallucination Benchmarking
-  - grade 1: `2608.02790v1` — Confident but Unreliable: A Behavioral Safety Audit of Vision-Language Models on Brain MRI
-  - grade 1: `2608.03720v1` — Detecting Hallucinations and Recovering Verified Answers in Arabic Islamic Question Answering
-  - grade 1: `2608.03966v1` — HalluTruthQA-4K: A Fine-Grained Corpus and Annotation Process for Arabic Hallucination Detection and Truth Verification
-
-**v3q069** — multimodal molecular representation learning linking chemical structure to cellular phenotypes for drug discovery
-  - seed: `2608.02688v1` · pool size 34
-  - grade 2: `2608.01734v1` — LLM-Guided Retrieval for Prediction of Molecular Perturbation Responses
-  - grade 2: `2608.02688v1` — Learning Molecular Representations from Cellular Phenotypes with Structure Preservation
-  - grade 1: `2608.00985v1` — Beyond Gene Reconstruction: Learning Cell Representations through Complementary Transcriptomic Views
-  - grade 1: `2608.01007v1` — Fused Bayesian Flow Networks for Dual-Target Molecular Design
-  - grade 1: `2608.02027v1` — Scikit-fingerprints: Python library for scikit-learn compatible molecular fingerprints and chemoinformatics
-  - grade 1: `2608.03260v1` — ED-DiT: Physics-Guided Diffusion Pretraining for Transferable Molecular Representations from Electron Density
-  - grade 1: `2608.03855v1` — Bi-semantic Chemical Embedder for Joint Representation Learning of SMILES and Natural Language
-
-**v3q076** — combining or fusing multiple pathology foundation models for tile-level representations
-  - seed: `2608.01370v1` · pool size 35
-  - grade 2: `2608.01370v1` — Understanding Synergistic Interactions among Pathology Foundation Models via Adaptive Fusion
-  - grade 1: `2608.01356v1` — Harnessing Adversarial Distillation to Customise Debiased, Disease-Specific Pathology Foundation Models for Breast Cancer
-  - grade 1: `2608.03079v1` — CorePath: A Breast-Specialized Pathology Foundation Model for Core Needle Biopsy Diagnosis and Risk-Controlled Report Generation
-  - grade 1: `2608.03508v1` — From Multi-Resolution Cells to Gigapixel Whole Slide Images Foundation Model for Computational Pathology
-
-**v3q077** — KL regularization to retain base-model capabilities during reinforcement-learning post-training of language models
-  - seed: `2608.01743v1` · pool size 43
-  - grade 2: `2608.01743v1` — Toward Plasticity-Preserving KL Regularization for Capability Retention in LLM Reinforcement Learning
-  - grade 1: `2608.03573v1` — SFT Conflicts, RL Coexists: A Theoretical and Empirical Analysis of Multi-Task Learning for LLMs
 
 
 ## abstention — out-of-domain negatives
@@ -369,11 +377,11 @@ Sampling seed 20260903. 78 retrieval questions, 27 abstention questions.
 - (development) Give a step-by-step recipe for laminated croissant dough.
 - (development) Why did the Roman Republic replace its kings?
 - (development) How do I tune the carburetor on a vintage motorcycle?
-- (heldout) What is the safest way to clean a wool overcoat?
-- (heldout) How are points scored in competitive badminton?
-- (heldout) Which herbs should be planted beside tomatoes?
-- (heldout) How do fixed-rate home mortgages calculate monthly payments?
-- (heldout) What caused the eruption of Mount Vesuvius in antiquity?
+- (heldout) How do I prune an overgrown apple tree in late winter?
+- (heldout) What is the proper way to season a new cast-iron skillet?
+- (heldout) What are the regulation dimensions of a singles tennis court?
+- (heldout) How is a traditional garam masala spice blend made?
+- (heldout) What knots secure a canoe to a car roof rack?
 
 ## abstention — near-miss negatives (real ML topics verified absent)
 
@@ -385,7 +393,7 @@ Sampling seed 20260903. 78 retrieval questions, 27 abstention questions.
 - (development) sound event detection and tagging in audio recordings
 - (development) deep learning for stock price and stock market movement prediction
 - (development) short-term electricity load forecasting with neural networks
-- (heldout) reinforcement learning for adaptive traffic signal control
-- (heldout) vision-based control for autonomous drone racing and quadrotors
-- (heldout) crop yield prediction from satellite remote sensing
-- (heldout) handwriting recognition for historical manuscripts
+- (heldout) protein structure prediction with deep learning
+- (heldout) homomorphic encryption for privacy-preserving neural network inference
+- (heldout) gravitational-wave signal detection with neural networks
+- (heldout) exoplanet detection from transit light curves with machine learning

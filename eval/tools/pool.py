@@ -25,17 +25,25 @@ from papertrail.embedding import get_encoder
 from papertrail.models import Paper
 from papertrail.retrieval import retrieve
 
+import sys
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 DRAFT = ROOT / "eval" / "questions-v3.draft.json"
-OUT = HERE / "pools.json"
-SEED = 20260903
+# Default pools every topical question; pass --ungraded to pool only topical
+# questions whose relevance is not yet assigned (used for the fresh held-out set,
+# so the already-graded dev pools in pools.json are left untouched).
+UNGRADED_ONLY = "--ungraded" in sys.argv
+OUT = HERE / ("pools-heldout.json" if UNGRADED_ONLY else "pools.json")
+SEED = 20260905 if UNGRADED_ONLY else 20260903
 MODES = ("vector", "keyword", "hybrid", "hybrid_rerank")
 
 
 def main() -> int:
     payload = json.loads(DRAFT.read_text(encoding="utf-8"))
     topical = [q for q in payload["retrieval_questions"] if q["type"] == "topical"]
+    if UNGRADED_ONLY:
+        topical = [q for q in topical if not q.get("relevant")]
     encoder = get_encoder()
     rng = random.Random(SEED)
     pools: dict[str, dict] = {}

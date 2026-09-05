@@ -192,10 +192,20 @@ papertrail verify-evidence --kind retrieval --report docs/evidence/phase-8-retri
   --manifest docs/evidence/corpus-manifest-1000.json --questions eval/questions-v3.json
 ```
 
-**Checkpoint 0:** per-type table in the notebook. Success condition: vector
-Recall@5 on dev `paraphrase` or `lexical` is below 0.9. If everything is still
-1.00, your paraphrases reuse title vocabulary; tighten the no-title-word rule
-and write harder ones, but only on the dev split. Held-out stays frozen.
+**Checkpoint 0:** per-type table in the notebook. Success condition: the
+retrievers separate on dev nDCG@10 by type (no cell is a flat 1.00 for every
+mode, and at least one type ranks the modes differently from another). Recall@5
+is too coarse to be the gate with one relevant paper per query.
+
+Two protocol rules, learned the hard way on 2026-09-05:
+
+- Run the dry-run on the **development split only**. Never retrieve against
+  held-out before the freeze. If held-out numbers were observed, replace the
+  held-out questions with fresh ones (the v2 precedent) and do not dry-run them.
+- Never edit a query *because* a specific retriever got it right or wrong.
+  Edits before freezing must come from reading the query (wording, form,
+  a wrong label), not from the dry-run table. Otherwise the benchmark is
+  tuned against a retriever, which is the opposite of what it is for.
 
 **Interview note:** "My first benchmark was title-derived and saturated. I
 built one with paraphrase, lexical, and pooled topical queries so different

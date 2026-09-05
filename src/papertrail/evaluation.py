@@ -362,9 +362,13 @@ def evaluate(
         }
         claim_boundary = (
             "Graded relevance over paraphrase, lexical, and pooled-topical queries "
-            "plus out-of-domain and near-miss negatives. Queries and topical "
-            "relevance grades were drafted by an LLM (Claude) and reviewed before "
-            "the set was frozen; this is not user-traffic relevance."
+            "plus out-of-domain and near-miss negatives. Queries were LLM-authored "
+            "(Claude); topical relevance grades were LLM-drafted and re-graded blind "
+            "by a human before freeze (see topical_grade_disagreement in protocol). "
+            "Held-out questions were authored from a fresh sample disjoint from the "
+            "development sample and were not dry-run before freeze. Paraphrase queries "
+            "are relatively long, abstract-style rewrites and are therefore easier for "
+            "dense retrieval than terse user queries. This is not user-traffic relevance."
         )
     else:
         protocol = {

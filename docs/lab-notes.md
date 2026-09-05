@@ -182,6 +182,33 @@ nDCG, not that coarse recall gate. Handed the draft to Mayank to review the quer
 wording and topical grades before any hardening or freeze (his call, 2026-09-05).
 Nothing frozen yet.
 
+**Mayank's review (2026-09-05) and the revisions I applied.** He read the draft,
+tooling, notes, and commit. Verdict: do **not** harden queries (that gate was his
+heuristic and would tune the benchmark to a specific retriever); the real problem
+is that the **held-out split was observed** in the dry-run. Actions taken:
+- **Do not harden.** He replaced Checkpoint 0's wording in the workbook with a
+  per-type nDCG condition; the 0.958 stands.
+- **Held-out replaced.** Discarded the 26 held-out questions + 9 held-out
+  negatives that were dry-run, and re-authored them from a **fresh 40-paper
+  sample disjoint from dev** (`sample_papers_heldout.py`, seed 20260905). No
+  dry-run is run on the new held-out. Dev split (52 Q + 18 neg) kept.
+- **Lexical rewritten.** The keyword-soup lexical queries are a form problem
+  visible without results, so all 16 dev lexical (and the 8 fresh held-out
+  lexical) are now single natural sentences carrying one or two rare terms.
+- **Near-miss absence re-confirmed by grep** for load-forecasting, sarcasm,
+  stock (dev) and protein-structure, homomorphic-encryption, gravitational-wave,
+  exoplanet (held-out): all 0 hits across the 1,000 titles+abstracts.
+- **Dry-run preserved** to `docs/evidence/phase-8-retrieval-v3-DRAFT-unfrozen.json`.
+- **Claim boundary** now records that paraphrases are long, abstract-style
+  rewrites (easier for dense retrieval than terse user queries).
+- Held-out topical pooled fresh (`pool.py --ungraded` → `pools-heldout.json`,
+  229 papers) and graded.
+- **Still open (gates freeze): Mayank wants the topical pools re-graded BLIND by a
+  human**, with the disagreement rate against the Claude draft grades recorded in
+  the evidence file. I cannot be that independent grader — I authored the draft
+  grades this session, so I am anchored and cannot grade blind. Raised this to
+  him. Nothing frozen; 0g not yet run.
+
 **0f — harness generalized for schema 3 (done before authoring, all green).**
 Everything is schema-branched so the frozen v2/v1 evidence keeps verifying
 byte-for-byte; only schema-3 sets get the new behavior.
