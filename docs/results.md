@@ -92,6 +92,30 @@ scan` column). Latencies include per-call connection setup (a fresh session per
 call), so read them only relative to each other within this file (A10); an
 EXPLAIN ANALYZE execution-only comparison was exact ~10 ms vs index ~2 ms.
 
+## Phase 1b — abstention gate signals (September 6, 2026)
+
+Eight candidate confidence signals over all 105 v3 questions (78 answerable, 27
+negatives). Signals selected on development by AUROC; held-out reported once with
+the frozen development threshold. Evidence:
+`docs/evidence/phase-8-gate-signals.json` and
+`docs/evidence/phase-8-gate-selection.json` (verified, `--kind gate`). Held-out
+n: 26 answerable, 5 out-of-domain, 4 near-miss.
+
+| signal | dev AUROC | HO false-refuse /26 | HO false-answer near /4 | HO bal-acc |
+|---|--:|--:|--:|--:|
+| rrf_top (current gate) | 0.876 | 0.308 (8) | 0.000 (0) | 0.846 |
+| cos_top | 0.993 | 0.077 (2) | 0.500 (2) | 0.850 |
+| cos_mean_top3 (chosen) | 0.998 | 0.038 (1) | 0.500 (2) | 0.870 |
+| kw_top | 0.947 | 0.231 (6) | 0.000 (0) | 0.885 |
+| ce_margin | 0.811 | 0.154 (4) | 0.000 (0) | 0.923 |
+
+The current `rrf_top` gate refuses **8 of 26** answerable held-out questions whose
+relevant paper sat at hybrid rank 1 or 2 — a rank-quantization artifact, not
+missing evidence. The AUROC-chosen `cos_mean_top3` removes almost all false
+refusals and raises balanced accuracy, but it answers 2 of the 4 near-miss
+negatives, so it is not adopted without review (brief rule D8). No default was
+changed in this phase.
+
 ## Protocol history
 
 The first report is retained because it showed keyword Recall@5 of 0.05 on

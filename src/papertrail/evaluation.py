@@ -36,6 +36,24 @@ def _as_grades(relevant: "set[str] | dict[str, int]") -> dict[str, int]:
     return {str(identifier): 1 for identifier in relevant}
 
 
+def auroc(positive_scores: list[float], negative_scores: list[float]) -> float:
+    """Rank-sum AUROC: P(random positive scores above random negative), ties 0.5.
+
+    Higher scores are assumed more confident (answerable). O(n·m); the gate study
+    has at most ~90 positives × ~27 negatives, so the quadratic form is fine.
+    """
+    if not positive_scores or not negative_scores:
+        raise ValueError("auroc needs at least one positive and one negative score")
+    wins = 0.0
+    for p in positive_scores:
+        for n in negative_scores:
+            if p > n:
+                wins += 1.0
+            elif p == n:
+                wins += 0.5
+    return wins / (len(positive_scores) * len(negative_scores))
+
+
 def chunk_recall(approx_ids: list[int], exact_ids: list[int], k: int) -> float:
     """Chunk-level index recall@k against an exact ground truth.
 

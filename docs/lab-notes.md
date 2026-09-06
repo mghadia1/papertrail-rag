@@ -353,3 +353,56 @@ are within-file relative only (A10).
 
 **Post-run:** tests 54 passed; frozen v2 (90 rows) and v3 (312 rows) evidence
 still verify; new `phase-8-hnsw-recall.json` verifies.
+
+---
+
+## 2026-09-06 — Phase 1b (D1–D4): abstention gate study
+
+Pre-run: 54→ tests passing; DB up, manifest verified; package reinstalled; v2/v3/
+hnsw evidence verify.
+
+**D1** `eval/tools/gate_signals.py` → `docs/evidence/phase-8-gate-signals.json`:
+8 candidate signals for all 105 v3 questions (78 answerable, 27 negatives),
+both splits. Reranker that ran = `cross-encoder/ms-marco-MiniLM-L-6-v2` (asserted
+not a fallback, A6). Counts: dev 52 answerable / 18 neg; held-out 26 answerable /
+5 ood / 4 near.
+
+**D2/D3** `eval/tools/score_gate.py` → `docs/evidence/phase-8-gate-selection.json`
+(verified, `--kind gate`). Development AUROC and the held-out picture:
+
+| signal | dev AUROC | dev balAcc | HO false-refuse (answerable, /26) | HO false-answer near (/4) | HO balAcc |
+|---|--:|--:|--:|--:|--:|
+| rrf_top (current) | 0.876 | 0.828 | 0.308 (8) | 0.000 (0) | 0.846 |
+| cos_top | 0.993 | 0.971 | 0.077 (2) | 0.500 (2) | 0.850 |
+| cos_margin | 0.765 | 0.725 | 0.308 | 0.750 | 0.568 |
+| **cos_mean_top3** (chosen) | **0.998** | 0.981 | 0.038 (1) | 0.500 (2) | 0.870 |
+| kw_top | 0.947 | 0.894 | 0.231 | 0.000 | 0.885 |
+| ce_top | 0.904 | 0.850 | 0.077 | 0.500 | 0.850 |
+| ce_margin | 0.811 | 0.784 | 0.154 | 0.000 | 0.923 |
+| ce_sigmoid_top | 0.904 | 0.850 | 0.077 | 0.500 | 0.850 |
+
+**The rank-quantization bug, in plain words:** `rrf_top` is a sum of `1/(k+rank)`
+over the lists a paper appears in, so it can take only a few discrete values near
+the threshold. A paper the vector search ranks #1 but keyword ranks low (or
+misses) gets a *lower* `rrf_top` than a paper ranked ~1 in both, even though it
+was clearly retrieved. Headline: **the current `rrf_top` gate refuses 8 of 26
+answerable held-out questions whose relevant paper sat at hybrid rank 1 or 2** —
+they were retrieved and then refused on score quantization, not on missing
+evidence.
+
+**Design choice:** selection is by dev AUROC (D2), which picks `cos_mean_top3`
+(0.998) — the mean of the top-3 vector cosines, a smooth continuous score with
+none of RRF's rank steps.
+
+**Failure mode / the D8 trade-off (why I am stopping):** `cos_mean_top3` fixes
+the false refusals (0.038 vs 0.308) and lifts held-out balanced accuracy
+(0.870 vs 0.846), **but it answers 2 of the 4 held-out near-miss negatives**
+(false-answer near 0.500 vs rrf_top's 0.000). Per brief rule D8, a default change
+is allowed only if it does not raise the near-miss false-answer rate; this trades
+one for the other, so I STOP and present. Also notable: `ce_margin` has the best
+held-out balanced accuracy (0.923) and never answers a near-miss (0.000), but its
+dev AUROC (0.811) lost the AUROC-only selection — a sign the selection metric
+does not see the near-miss asymmetry. Small n on held-out (A11): near = 4.
+
+**Post-run:** 56 tests pass; v2/v3/hnsw evidence still verify; gate evidence
+verifies. No gate code (D5) or default (D8) changed — awaiting Mayank.

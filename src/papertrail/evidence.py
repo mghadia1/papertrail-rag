@@ -15,11 +15,17 @@ from .evaluation import (
     _aggregate_by_type,
     _choose_threshold,
     _percentile,
+    auroc,
     chunk_recall,
     ndcg_at,
     recall_at,
     reciprocal_rank,
 )
+
+# Tie-break ordering for the gate selection rule (must match score_gate.py).
+_GATE_SIGNAL_COST = {"cos_top": 0, "cos_margin": 0, "cos_mean_top3": 0,
+                     "kw_top": 1, "rrf_top": 1,
+                     "ce_top": 2, "ce_margin": 2, "ce_sigmoid_top": 2}
 from .generation import cited_arxiv_ids
 from .manifest import CorpusManifest
 
@@ -203,6 +209,46 @@ def verify_hnsw_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]
     _close(_percentile(exact_vals, 0.50), report["summary"]["exact"]["latency_p50_ms"], "exact p50")
     _close(_percentile(exact_vals, 0.95), report["summary"]["exact"]["latency_p95_ms"], "exact p95")
     return {"verified": True, "kind": "hnsw", "rows": len(rows)}
+
+
+def verify_gate_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]:
+    """Recompute the abstention-gate selection (D2/D3) from its embedded rows."""
+    report = json.loads(path.read_text(encoding="utf-8"))
+    _verify_freeze_precedes_report(report)
+    if report.get("corpus_arxiv_ids_sha256") != manifest.arxiv_ids_sha256:
+        raise ValueError("gate evidence corpus hash does not match manifest")
+    model = report.get("reranker_model", "")
+    if not model or model.endswith("-fallback"):
+        raise ValueError("gate evidence reranker model missing or a fallback (A6)")
+    rows = report.get("rows", [])
+    signals = report["protocol"]["signals"]
+    dev = report["development"]
+
+    for sig in signals:
+        pos = [r[sig] for r in rows if r["split"] == "development" and r["is_answerable"]]
+        neg = [r[sig] for r in rows if r["split"] == "development" and not r["is_answerable"]]
+        _close(auroc(pos, neg), dev[sig]["auroc"], f"dev auroc {sig}")
+        chosen = _choose_threshold(pos, neg)
+        _close(chosen["threshold"], dev[sig]["threshold"], f"dev threshold {sig}")
+        _close(chosen["development_balanced_accuracy"], dev[sig]["dev_balanced_accuracy"], f"dev balacc {sig}")
+
+    expected = sorted(
+        signals,
+        key=lambda s: (-dev[s]["auroc"], -dev[s]["dev_balanced_accuracy"], _GATE_SIGNAL_COST.get(s, 9), s),
+    )[0]
+    if report["chosen_signal"] != expected:
+        raise ValueError(f"chosen_signal {report['chosen_signal']!r} does not follow the selection rule (expected {expected!r})")
+
+    held = [r for r in rows if r["split"] == "heldout"]
+    pos_h = [r for r in held if r["is_answerable"]]
+    neg_h = [r for r in held if not r["is_answerable"]]
+    for sig in signals:
+        thr = dev[sig]["threshold"]
+        accept = statistics.fmean(r[sig] >= thr for r in pos_h)
+        abstain = statistics.fmean(r[sig] < thr for r in neg_h)
+        _close(1.0 - accept, report["heldout"][sig]["false_refusal_rate_answerable"], f"ho refuse {sig}")
+        _close((accept + abstain) / 2, report["heldout"][sig]["balanced_accuracy"], f"ho balacc {sig}")
+    return {"verified": True, "kind": "gate", "rows": len(rows), "chosen_signal": report["chosen_signal"]}
 
 
 def verify_rag_evidence(
