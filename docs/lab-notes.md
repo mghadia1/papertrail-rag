@@ -239,17 +239,23 @@ nDCG discrimination, not the coarse Recall@5 gate) is met: v2 was a flat 1.00 on
 every vector cell; v3 is not, and the four retrievers separate by type.
 
 **Interview notes.**
+Honesty note (A16): the labels were produced by models, not by me. These lines
+are only defensible once I (Mayank) have actually read `eval/tools/adjudication.md`
+and can argue the calls; until then they describe what the tooling did, not what
+I did.
 1. "My first benchmark was title-derived and saturated — every retriever scored
-   1.00. I rebuilt it with paraphrase (no title words), lexical, and pooled
+   1.00. It was rebuilt with paraphrase (no title words), lexical, and pooled
    topical queries so retrievers fail in different places: keyword dies on
-   paraphrase, and on held-out topical RRF fusion actually scored below plain
-   vector."
-2. "Grades came from two independent model gradings; they agreed at kappa 0.72,
-   and I adjudicated all 53 disagreements by hand — I keep the raw kappa on
-   record and labelled it model-vs-model, not human, agreement."
-3. "I caught that my held-out split had been observed in a dry-run, so I threw it
-   out and re-authored it from a fresh disjoint sample, the way v1's observed
-   held-out was replaced for v2."
+   paraphrase, and on the 6 held-out topical questions RRF fusion scored below
+   plain vector."
+2. "Grades came from two independent model gradings that agreed at kappa 0.72;
+   the draft model then adjudicated all 53 disagreements per abstract. The raw
+   kappa is on record and it is labelled model-vs-model, not human, agreement.
+   I reviewed the adjudication record before standing behind the labels."
+   (Only say the last sentence once it is true.)
+3. "A dry-run had touched the held-out split, so it was thrown out and
+   re-authored from a fresh disjoint sample, the way v1's observed held-out was
+   replaced for v2."
 
 **0f — harness generalized for schema 3 (done before authoring, all green).**
 Everything is schema-branched so the frozen v2/v1 evidence keeps verifying
@@ -273,3 +279,32 @@ byte-for-byte; only schema-3 sets get the new behavior.
   schema-3 loader round trip + grade-range rejection. `pytest` → **51 passed**.
 - Regression: the frozen **v2 and v1** retrieval evidence still verify (with and
   without `--questions`).
+
+---
+
+## 2026-09-05 — Part B + Phase 1: HNSW recall study
+
+Working from the execution brief (`docs/retrieval-upgrade-brief.md`), which
+supersedes the workbook.
+
+**Pre-run (A19):** git on 8f18e1e; DB healthy, manifest verified (1000 IDs,
+sha 7308d240…), 2039/2039 chunks embedded; package reinstalled (non-editable —
+the editable `.pth` is not honored because the repo path contains a space);
+`pytest` **51 passed**; frozen v2 (90 rows) and v3 (312 rows) evidence verify.
+
+**Part B — attribution + qualification fixes (no evidence change).**
+- Corrected the adjudication attribution everywhere in the tracked docs: it was
+  the **draft model (Claude Opus 4.8)** re-deciding, not "a third model" and not
+  a human. Removed "by hand"/"hand-adjudicated" from README, `results.md`,
+  `adjudication.md`, and the lab-notes interview lines (A16: those read as
+  *human* work).
+- Qualified the held-out topical finding with its count ("the 6 held-out topical
+  questions") in README and `results.md` (A11, B2).
+- Fixed the interview note so it does not have Mayank claim he adjudicated; the
+  models did, and the line is only true once he has read `adjudication.md`.
+- **Frozen-file caveat:** `eval/questions-v3.json` and
+  `phase-8-retrieval-v3-baseline.json` still carry the earlier
+  `topical_grade_provenance.method` phrase "then hand adjudication…". They are
+  frozen (A2) / evidence (A3) and are **not** edited; the same block names
+  `adjudicator: "Claude Opus 4.8"`, so it is attributed to the model, not a
+  human. `build_v3.py` source was corrected for any future regen.

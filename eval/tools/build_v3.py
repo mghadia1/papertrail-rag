@@ -162,7 +162,7 @@ GRADES: dict[str, dict[str, int]] = {
 # Recorded in the evidence file for transparency about how the topical labels were
 # produced (item 4 of the review).
 TOPICAL_GRADE_PROVENANCE = {
-    "method": "two independent Claude gradings, then hand adjudication of every disagreement",
+    "method": "two independent Claude gradings, then per-abstract adjudication of every disagreement by the draft model",
     "draft_grader": "Claude Opus 4.8",
     "blind_grader": "Claude Fable 5.1 (mode-blind shuffled sheet)",
     "adjudicator": "Claude Opus 4.8 (per-abstract, all 53 disagreements)",

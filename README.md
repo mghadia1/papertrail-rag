@@ -67,9 +67,10 @@ with graded relevance over paraphrase, lexical, pooled-topical, and two negative
 classes, evaluated across four modes including cross-encoder reranking. It is no
 longer saturated — development vector nDCG@10 is 0.876 overall and 0.699 on
 topical — and the retrievers separate by type: keyword collapses on paraphrase,
-and on held-out topical RRF fusion (0.683) scores below plain vector (0.776).
-Topical grades came from two independent model gradings (Cohen's kappa 0.719)
-with every disagreement hand-adjudicated. See
+and on the 6 held-out topical questions RRF fusion (0.683) scored below plain
+vector (0.776). Topical grades came from two independent model gradings (Claude
+Opus 4.8 draft, Claude Fable 5.1 blind; Cohen's kappa 0.719); the draft model
+then adjudicated every disagreement, recorded in `eval/tools/adjudication.md`. See
 [`docs/results.md`](docs/results.md) for the per-type table and
 [`docs/evidence/phase-8-retrieval-v3-baseline.json`](docs/evidence/phase-8-retrieval-v3-baseline.json)
 (verified, 312 rows).

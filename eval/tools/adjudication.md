@@ -7,8 +7,9 @@ mode-blind sheet). Cohen's kappa (3-class) = **0.719** over 690 pooled papers
 v3q025, v3q032, v3q050 — were not fully blind for the second grader). This is a
 Claude-vs-Claude second opinion, **not** human inter-annotator agreement.
 
-Every one of the **53 disagreeing papers** was then adjudicated by hand (Claude
-Opus 4.8, this session) reading each abstract against the query. Decisions
+Every one of the **53 disagreeing papers** was then adjudicated by a further model
+pass (Claude Opus 4.8, this session) reading each abstract against the query. No
+human has reviewed these decisions yet. Decisions
 (d=draft, b=blind, →=final):
 
 ## v3q003 — continual/online plasticity & forgetting

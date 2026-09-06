@@ -50,16 +50,18 @@ nDCG@10 by type (graded gains `2**grade - 1`):
 | heldout · topical | 0.776 | 0.497 | 0.683 | 0.789 |
 
 The types separate the retrievers: keyword collapses on paraphrase (no shared
-title vocabulary), and on **held-out topical, RRF hybrid (0.683) scored below
-plain vector (0.776)** — fusion hurt there. `hybrid_rerank` led every cell.
+title vocabulary), and on **the 6 held-out topical questions, RRF hybrid (0.683)
+scored below plain vector (0.776)** — fusion hurt on that small set.
+`hybrid_rerank` led every cell.
 Abstention balanced accuracy fell to 0.828 dev / 0.846 held-out (from v2's
 0.925 / 0.90) because the near-miss negatives — real ML topics verified absent
 from the corpus — are harder to refuse than out-of-domain ones.
 
 Topical grades were produced by two independent Claude gradings (Opus 4.8 draft,
-Fable 5.1 blind), Cohen's kappa **0.719** (0.709 on the fully-blind pools), with
-all 53 disagreements hand-adjudicated (`eval/tools/adjudication.md`). This is a
-model-vs-model second opinion, not human inter-annotator agreement. The held-out
+Fable 5.1 blind), Cohen's kappa **0.719** (0.709 on the fully-blind pools); the
+draft model (Opus 4.8) then adjudicated all 53 disagreements per abstract
+(`eval/tools/adjudication.md`). This is a model-vs-model second opinion, not human
+inter-annotator agreement, and no human has reviewed the labels yet. The held-out
 split was authored from a sample disjoint from development and was not dry-run
 before freeze.
 
