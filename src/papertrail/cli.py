@@ -80,6 +80,10 @@ def build_parser() -> argparse.ArgumentParser:
     rag_eval.add_argument("--questions", type=Path, required=True)
     rag_eval.add_argument("--manifest", type=Path, required=True)
     rag_eval.add_argument("--output", type=Path, required=True)
+    rag_eval.add_argument("--gate-signal", default="rrf_top")
+    rag_eval.add_argument("--abstain-threshold", type=float, default=None,
+                          help="override the abstain threshold (use the chosen signal's frozen dev threshold)")
+    rag_eval.add_argument("--verify-entailment", action="store_true")
     evidence = commands.add_parser(
         "verify-evidence", help="recompute and verify a retrieval or RAG report"
     )
@@ -213,14 +217,21 @@ def main() -> int:
         manifest = CorpusManifest.read(args.manifest)
         question_set = load_question_set(args.questions, manifest)
         settings = get_settings()
+        threshold = (
+            args.abstain_threshold
+            if args.abstain_threshold is not None
+            else settings.abstain_threshold
+        )
         with session_scope() as session:
             report = evaluate_rag(
                 session,
                 question_set=question_set,
                 encoder=get_encoder(),
                 generator=get_generator(),
-                threshold=settings.abstain_threshold,
+                threshold=threshold,
                 output_path=args.output,
+                gate_signal_name=args.gate_signal,
+                verify_entailment=args.verify_entailment,
             )
         print(json.dumps({key: value for key, value in report.items() if key != "records"}))
         return 0

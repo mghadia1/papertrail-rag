@@ -429,3 +429,26 @@ Mayank's decision on the D3 table: keep `rrf_top`, do D5+D6 only, no default fli
   updated the threshold-validation message test. **59 passed.**
 - **STOP before D7** (two-gate RAG eval) — it needs `GROQ_API_KEY`, which is not
   set here (confirmed: `ask` can't even build the generator without it).
+
+**Phase 1b D7 (2026-09-06): BLOCKED by a decommissioned Groq model.**
+Ran the three held-out RAG evaluations after the key was provided. Every
+generation call returned **HTTP 404** — the configured `groq_model`
+`llama-3.3-70b-versatile` is no longer served by Groq (confirmed: the key works,
+`GET /v1/models` returns 200 but the list no longer contains it). The three runs
+are preserved as `phase-8-rag-*-model404.json` (uncommitted); the harness'
+error-capture worked (18/27/27 provider errors recorded, not silently dropped —
+A6/A5).
+- **The gate half of D7 is still valid** because the gate decides before any
+  generation call: run 1 (`rrf_top`, prod threshold) refused **8** answerable
+  held-out at hybrid rank 1–2 and abstained on all negatives; run 2
+  (`cos_mean_top3`) refused **1** and answered **2/4** near-miss negatives —
+  end-to-end confirmation of the D3 table.
+- **The generation half is blocked**: answerable_answer_rate 0.0, citation
+  grounding 0.0, entailment_refusals 0 — all artifacts of the 404, not findings.
+- **Broader operational finding:** papertrail's live `ask`/`/ask` generation is
+  currently non-functional against Groq until the model is updated. Available
+  chat models now include `openai/gpt-oss-120b`, `openai/gpt-oss-20b`,
+  `qwen/qwen3.8-27b`, `qwen/qwen3.6-27b`, `groq/compound`.
+- `docs/status.md` and `PROJECT_SPEC.md` still claim "Groq/Llama 3.3 70B" — that
+  claim is now stale and must change with the model.
+- STOP for a model decision (config default + portfolio claim change, A18).

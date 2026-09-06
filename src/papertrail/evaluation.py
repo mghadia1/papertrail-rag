@@ -445,6 +445,13 @@ def evaluate(
     return report
 
 
+def _rank_of_relevant(retrieved_ids: list[str], relevant: set[str]) -> int | None:
+    for rank, identifier in enumerate(retrieved_ids, start=1):
+        if identifier in relevant:
+            return rank
+    return None
+
+
 def evaluate_rag(
     session: Session,
     *,
@@ -453,6 +460,9 @@ def evaluate_rag(
     generator: Generator,
     threshold: float,
     output_path: Path,
+    gate_signal_name: str = "rrf_top",
+    verify_entailment: bool = False,
+    min_faithfulness: float = 0.80,
 ) -> dict[str, Any]:
     records: list[dict[str, Any]] = []
     positives = [
@@ -467,6 +477,7 @@ def evaluate_rag(
     ]
     for expected_answerable, items in ((True, positives), (False, negatives)):
         for item in items:
+            relevant = set(item.get("relevant") or item.get("relevant_arxiv_ids") or [])
             started = time.perf_counter()
             try:
                 result = answer_question(
@@ -476,16 +487,30 @@ def evaluate_rag(
                     generator=generator,
                     threshold=threshold,
                     top_k=5,
+                    gate_signal_name=gate_signal_name,
+                    verify_entailment=verify_entailment,
+                    min_faithfulness=min_faithfulness,
+                )
+                rank = (
+                    _rank_of_relevant(list(result.retrieved_arxiv_ids), relevant)
+                    if expected_answerable
+                    else None
                 )
                 records.append(
                     {
                         "question_id": item["id"],
+                        "type": item.get("type"),
                         "expected_answerable": expected_answerable,
                         "abstained": result.abstained,
                         "top_score": result.top_score,
+                        "gate_score": result.gate_score,
                         "answer": result.answer,
                         "citations": list(result.citations),
                         "retrieved_arxiv_ids": list(result.retrieved_arxiv_ids),
+                        "retrieved_rank_of_relevant": rank,
+                        "entailment_verified": result.entailment_verified,
+                        "faithfulness_score": result.faithfulness_score,
+                        "entailment_refused": bool(result.abstained and result.entailment_verified),
                         "citations_all_retrieved": bool(result.answer and result.citations)
                         and set(result.citations).issubset(result.retrieved_arxiv_ids),
                         "error": None,
@@ -496,12 +521,18 @@ def evaluate_rag(
                 records.append(
                     {
                         "question_id": item["id"],
+                        "type": item.get("type"),
                         "expected_answerable": expected_answerable,
                         "abstained": False,
                         "top_score": None,
+                        "gate_score": None,
                         "answer": None,
                         "citations": [],
                         "retrieved_arxiv_ids": [],
+                        "retrieved_rank_of_relevant": None,
+                        "entailment_verified": False,
+                        "faithfulness_score": None,
+                        "entailment_refused": False,
                         "citations_all_retrieved": False,
                         "error": f"{type(error).__name__}: {error}",
                         "latency_ms": (time.perf_counter() - started) * 1000,
@@ -509,6 +540,8 @@ def evaluate_rag(
                 )
     positive_records = [row for row in records if row["expected_answerable"]]
     negative_records = [row for row in records if not row["expected_answerable"]]
+    ood = [row for row in negative_records if row.get("type") == "negative_ood"]
+    near = [row for row in negative_records if row.get("type") == "negative_near"]
     generated = [
         row for row in positive_records if not row["abstained"] and row["answer"]
     ]
@@ -518,6 +551,8 @@ def evaluate_rag(
         "evaluation_set_frozen_at_utc": question_set["frozen_at_utc"],
         "generator_model": generator.model_name,
         "embedding_model": encoder.model_name,
+        "gate_signal": gate_signal_name,
+        "verify_entailment": verify_entailment,
         "frozen_abstain_threshold": threshold,
         "heldout_answerable_questions": len(positive_records),
         "heldout_out_of_domain_questions": len(negative_records),
@@ -527,9 +562,16 @@ def evaluate_rag(
         "answerable_abstain_rate": statistics.fmean(
             float(row["abstained"]) for row in positive_records
         ),
+        "answerable_refused_at_rank_1or2": sum(
+            row["abstained"] and row["retrieved_rank_of_relevant"] in (1, 2)
+            for row in positive_records
+        ),
         "out_of_domain_abstain_rate": statistics.fmean(
             float(row["abstained"]) for row in negative_records
         ),
+        "negative_ood_abstain_rate": statistics.fmean(float(row["abstained"]) for row in ood) if ood else 0.0,
+        "negative_near_abstain_rate": statistics.fmean(float(row["abstained"]) for row in near) if near else 0.0,
+        "entailment_refusals": sum(bool(row["entailment_refused"]) for row in records),
         "provider_or_enforcement_errors": sum(bool(row["error"]) for row in records),
         "citation_grounding_rate_among_answers": (
             statistics.fmean(float(row["citations_all_retrieved"]) for row in generated)

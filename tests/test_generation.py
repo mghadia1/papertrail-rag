@@ -168,7 +168,11 @@ def test_groq_retries_rate_limits_without_exposing_key(monkeypatch) -> None:
     monkeypatch.setenv("GROQ_API_KEY", "test-secret")
     monkeypatch.setattr(generation.httpx, "post", fake_post)
     monkeypatch.setattr(generation.time, "sleep", lambda seconds: None)
-    generator = generation.GroqGenerator()
+    # Force the env fallback so the test is hermetic even when a real key is
+    # configured in .env (settings.groq_api_key is preferred otherwise).
+    from papertrail.config import Settings
+
+    generator = generation.GroqGenerator(Settings(groq_api_key=None))
 
     assert generator.generate(question="q", context="c").startswith("Answer")
     assert len(requests) == 2

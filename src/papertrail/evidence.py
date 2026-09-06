@@ -259,14 +259,18 @@ def verify_rag_evidence(
     if report.get("evaluation_set_frozen_at_utc") != question_set.get("frozen_at_utc"):
         raise ValueError("RAG evidence freeze timestamp does not match the question set")
     records = report.get("records", [])
-    if len(records) != 15:
-        raise ValueError(f"RAG evidence must contain 15 raw records; found {len(records)}")
     expected_ids = {
         item["id"]
         for key in ("retrieval_questions", "abstention_questions")
         for item in question_set[key]
         if item["split"] == "heldout"
     }
+    # Count derived from the question set (was hard-coded 15 for v2's held-out;
+    # v3 held-out is larger).
+    if len(records) != len(expected_ids):
+        raise ValueError(
+            f"RAG evidence must contain {len(expected_ids)} records; found {len(records)}"
+        )
     actual_ids = [row["question_id"] for row in records]
     if len(actual_ids) != len(set(actual_ids)) or set(actual_ids) != expected_ids:
         raise ValueError("RAG evidence question IDs do not match the frozen held-out set")
@@ -302,4 +306,23 @@ def verify_rag_evidence(
     }
     for key, value in calculated.items():
         _close(float(value), report[key], key)
+
+    # D7 metrics, present only on the two-gate evaluation files; recompute if present.
+    if "answerable_refused_at_rank_1or2" in report:
+        _close(
+            sum(row["abstained"] and row.get("retrieved_rank_of_relevant") in (1, 2) for row in positives),
+            report["answerable_refused_at_rank_1or2"], "answerable_refused_at_rank_1or2",
+        )
+    if "entailment_refusals" in report:
+        _close(
+            sum(bool(row.get("entailment_refused")) for row in records),
+            report["entailment_refusals"], "entailment_refusals",
+        )
+    for split_key, subset in (
+        ("negative_ood_abstain_rate", [r for r in negatives if r.get("type") == "negative_ood"]),
+        ("negative_near_abstain_rate", [r for r in negatives if r.get("type") == "negative_near"]),
+    ):
+        if split_key in report:
+            recomputed = statistics.fmean(float(r["abstained"]) for r in subset) if subset else 0.0
+            _close(recomputed, report[split_key], split_key)
     return {"verified": True, "kind": "rag", "raw_records": len(records)}
