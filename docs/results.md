@@ -116,6 +116,27 @@ refusals and raises balanced accuracy, but it answers 2 of the 4 near-miss
 negatives, so it is not adopted without review (brief rule D8). No default was
 changed in this phase.
 
+## Phase 1b D7 — two-gate RAG on held-out (September 6, 2026)
+
+Held-out RAG generation with `openai/gpt-oss-120b` (Groq retired the previous
+`llama-3.3-70b-versatile`). Three runs, each verified (`--kind rag`, 35 records):
+`docs/evidence/phase-8-rag-{rrf_top,cos_mean_top3,cos_mean_top3-entail}.json`.
+
+| gate (threshold) | answered/26 | refuse@rank1-2 | ood abstain | near abstain | entailment refusals | grounding |
+|---|--:|--:|--:|--:|--:|--:|
+| rrf_top (0.0324, current) | 13 (0.50) | 8 | 1.00 | 1.00 | 0 | 1.00 |
+| cos_mean_top3 (0.4628) | 17 (0.65) | 1 | 0.78 | 0.50 | 0 | 1.00 |
+| cos_mean_top3 + entailment | 0 (0.00) | 15 | 0.78 | 0.50 | 15 | n/a |
+
+Reading: the current `rrf_top` gate leaves 13/26 answerable questions unanswered
+and refuses 8 whose relevant paper was at hybrid rank 1-2; `cos_mean_top3` answers
+17/26 and refuses only 1, but it also answers 2 of the 4 absent-topic (near-miss)
+queries — the trade-off that keeps `rrf_top` as the default. Citation grounding is
+1.00 under both gates. The statement-level NLI entailment gate at 0.80 refuses
+every `gpt-oss-120b` answer (faithfulness 0.0-0.5) and needs recalibration for
+this model before it is usable. `gpt-oss-120b` also omitted the required citation
+format on 5-12 answers, which the citation gate correctly refused.
+
 ## Protocol history
 
 The first report is retained because it showed keyword Recall@5 of 0.05 on

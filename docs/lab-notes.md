@@ -452,3 +452,46 @@ A6/A5).
 - `docs/status.md` and `PROJECT_SPEC.md` still claim "Groq/Llama 3.3 70B" — that
   claim is now stale and must change with the model.
 - STOP for a model decision (config default + portfolio claim change, A18).
+
+**Phase 1b D7 (2026-09-06): two-gate RAG evaluation, rerun on openai/gpt-oss-120b.**
+Mayank picked `openai/gpt-oss-120b` to replace the decommissioned Llama-3.3.
+Set via `.env` override for the runs (the config-default change is a separate
+commit, A7). One smoke call confirmed grounded, cited output first. Three
+held-out runs, all verified (`--kind rag`, 35 records each):
+
+| gate (threshold) | answered/26 | refuse@rank1-2 | ood abstain | near abstain | entail refusals | no-cite refusals | grounding |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| rrf_top (0.0324, current) | 13 (0.50) | 8 | 1.00 | 1.00 | 0 | 5 | 1.00 |
+| cos_mean_top3 (0.4628) | 17 (0.65) | 1 | 0.78 | 0.50 | 0 | 10 | 1.00 |
+| cos_mean_top3 + entailment | 0 (0.00) | 15 | 0.78 | 0.50 | 15 | 12 | 0.00 |
+
+**Findings.**
+1. The rank-quantization refusals are real end-to-end: `rrf_top` answers only
+   13/26 and refuses 8 answerable questions whose relevant paper sat at hybrid
+   rank 1-2; `cos_mean_top3` answers 17/26 and refuses just 1 — confirming D3.
+2. The D8 trade-off is real end-to-end: `cos_mean_top3` emits answers for 2 of
+   the 4 near-miss (absent-topic) queries (near abstain 0.50) where `rrf_top`
+   refuses all — the reason the default stays `rrf_top`.
+3. **Citation grounding is 1.00** among every emitted answer under both gates:
+   each emitted versioned ID was in the retrieved set (membership, not
+   entailment).
+4. **Model migration:** `gpt-oss-120b` omits the `[id]` citation format more than
+   Llama did, so the citation gate refuses 5-12 answers as uncited (working as
+   designed; the "provider_or_enforcement_errors" here are all the no-citation
+   ValueError, not Groq outages). The system prompt likely needs model-specific
+   citation tuning — noted, not changed.
+5. **Entailment at 0.80 refuses every answer** (faithfulness 0.0-0.5). The
+   statement-level NLI gate is incompatible with `gpt-oss-120b`'s elaborative
+   answers at that threshold; it needs recalibration before it is usable. Honest,
+   striking result — kept as-is.
+
+Harness bug found and fixed: an entailment-refused record carried the discarded
+answer's citations while `answer` was null; the record now emits no citations
+when no answer is emitted (verifier caught it). Also added a verifier
+consistency check that the gate threshold was actually applied per record, and a
+`--abstain-threshold` flag to `verify-evidence` so the alternative-gate files
+verify against their own frozen threshold.
+
+**Post-run:** 60 tests pass; frozen v2 RAG evidence still verifies; all three D7
+files verify. Config default still `llama-3.3` at this point (changed next
+commit). D7 done; Phase 1b complete.

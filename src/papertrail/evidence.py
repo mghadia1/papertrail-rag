@@ -289,6 +289,18 @@ def verify_rag_evidence(
         if bool(row["citations_all_retrieved"]) != grounded:
             raise ValueError(f"published grounding flag disagrees for {row['question_id']}")
 
+    # Internal consistency: the gate must have been applied at the declared
+    # threshold (only present on schema-3 gate runs, which carry gate_score).
+    frozen = report["frozen_abstain_threshold"]
+    for row in records:
+        gate_score = row.get("gate_score")
+        if gate_score is None or row["error"]:
+            continue
+        if gate_score < frozen and not row["abstained"]:
+            raise ValueError(f"{row['question_id']} scored below threshold but was not abstained")
+        if gate_score >= frozen and row["abstained"] and not row.get("entailment_refused"):
+            raise ValueError(f"{row['question_id']} passed the gate but abstained without an entailment refusal")
+
     positives = [row for row in records if row["expected_answerable"]]
     negatives = [row for row in records if not row["expected_answerable"]]
     generated = [row for row in positives if not row["abstained"] and row["answer"]]

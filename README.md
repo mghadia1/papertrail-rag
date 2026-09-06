@@ -85,6 +85,16 @@ at the default `ef_search=40` (chunk-level recall@10 0.990, recall@50 0.998 once
 at the low default ef and otherwise runs an exact scan, so the ANN index buys
 little here — an honest "not yet worth it at 2k vectors" result.
 
+## Abstention-gate study
+
+The confidence gate reads a rank-quantized RRF score, which refuses 8 of 26
+held-out questions whose relevant paper was retrieved at rank 1-2; a continuous
+`cos_mean_top3` gate cuts that to 1 but answers 2 of 4 absent-topic queries, so
+the default stays `rrf_top` (the gate is now configurable). See
+[`docs/results.md`](docs/results.md) and the verified
+`docs/evidence/phase-8-gate-*.json` / `phase-8-rag-*.json`. Every emitted answer's
+citations were in its retrieved set (grounding 1.00).
+
 ## Run locally
 
 ```bash

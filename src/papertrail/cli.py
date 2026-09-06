@@ -91,6 +91,8 @@ def build_parser() -> argparse.ArgumentParser:
     evidence.add_argument("--report", type=Path, required=True)
     evidence.add_argument("--manifest", type=Path, required=True)
     evidence.add_argument("--questions", type=Path)
+    evidence.add_argument("--abstain-threshold", type=float, default=None,
+                          help="expected RAG abstain threshold (defaults to the config value)")
     return parser
 
 
@@ -254,10 +256,15 @@ def main() -> int:
             if args.questions is None:
                 raise SystemExit("--questions is required for RAG evidence")
             question_set = load_question_set(args.questions, manifest)
+            expected_threshold = (
+                args.abstain_threshold
+                if args.abstain_threshold is not None
+                else get_settings().abstain_threshold
+            )
             result = verify_rag_evidence(
                 args.report,
                 question_set=question_set,
-                expected_threshold=get_settings().abstain_threshold,
+                expected_threshold=expected_threshold,
             )
         print(json.dumps(result))
         return 0

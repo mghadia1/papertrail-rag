@@ -505,7 +505,9 @@ def evaluate_rag(
                         "top_score": result.top_score,
                         "gate_score": result.gate_score,
                         "answer": result.answer,
-                        "citations": list(result.citations),
+                        # No emitted answer (threshold or entailment refusal) => no
+                        # emitted citations, so the record stays parse-consistent.
+                        "citations": list(result.citations) if result.answer else [],
                         "retrieved_arxiv_ids": list(result.retrieved_arxiv_ids),
                         "retrieved_rank_of_relevant": rank,
                         "entailment_verified": result.entailment_verified,
