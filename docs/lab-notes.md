@@ -495,3 +495,10 @@ verify against their own frozen threshold.
 **Post-run:** 60 tests pass; frozen v2 RAG evidence still verifies; all three D7
 files verify. Config default still `llama-3.3` at this point (changed next
 commit). D7 done; Phase 1b complete.
+
+**Default model fix (2026-09-06, separate commit per A7).** Changed the config
+default `groq_model` from the retired `llama-3.3-70b-versatile` to
+`openai/gpt-oss-120b`, and corrected the stale "Groq/Llama 3.3 70B" claims in
+`docs/status.md` and `PROJECT_SPEC.md`. Verified live: `papertrail ask` now
+answers with citations (model `openai/gpt-oss-120b`), so `ask`/`/ask` is
+functional again. Evidence for the choice: `docs/evidence/phase-8-rag-*.json`.

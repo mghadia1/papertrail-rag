@@ -10,7 +10,8 @@ Date: August 5, 2026
   MiniLM vectors.
 - Retrieval: vector, keyword, and deterministic `k=60` hybrid RRF through CLI
   and FastAPI.
-- Generation: Groq/Llama 3.3 70B, retrieved-ID citation enforcement,
+- Generation: Groq `openai/gpt-oss-120b` (Groq retired the earlier Llama 3.3 70B
+  on/before 2026-09; see docs/lab-notes.md), retrieved-ID citation enforcement,
   validation-selected abstention, and bounded transient-error retry.
 - Held-out known-item retrieval: vector Recall@5/MRR/nDCG 1.00/1.00/1.00;
   hybrid 1.00/0.95/0.963; keyword 0.90/0.85/0.886.

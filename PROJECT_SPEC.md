@@ -67,7 +67,7 @@ This is not just LLM-API glue — the ML content you can defend in an interview:
    Hybrid retriever: vector top-k  ⊕  full-text top-k
                      │  fused by Reciprocal Rank Fusion (k=60)
                      ▼
-   RAG generator (Groq / Llama 3) → answer + inline [1][2] citations
+   RAG generator (Groq / openai gpt-oss-120b) → answer + inline [1][2] citations
                      │  abstains if fused top score < validation-tuned threshold
                      ▼
         FastAPI  /search  /ask  /health   (+ Docker, CI)
@@ -80,8 +80,8 @@ This is not just LLM-API glue — the ML content you can defend in an interview:
 - **Embeddings:** `sentence-transformers` (e.g. `all-MiniLM-L6-v2`, CPU-friendly, free)
 - **Keyword search:** PostgreSQL full-text (`tsvector` + GIN, `ts_rank_cd`)
 - **Fusion:** Reciprocal Rank Fusion
-- **Generation:** Groq free tier (Llama 3) — the provider `experiment-orchestrator` already
-  uses — $0.00
+- **Generation:** Groq free tier (`openai/gpt-oss-120b`; the earlier Llama 3.3 70B
+  was retired by Groq) — $0.00
 - **Data:** arXiv API (real, public) — or the public arXiv metadata snapshot on Kaggle
 - **Ops:** Docker + docker-compose (app + Postgres), pytest, GitHub Actions CI
 - **Stretch:** a learned re-ranker or KMeans topic clustering; Redis + background ingest
