@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     groq_api_url: str = "https://api.groq.com/openai/v1/chat/completions"
     groq_model: str = "llama-3.3-70b-versatile"
     abstain_threshold: float = 0.03239446668849102
+    abstain_signal: str = "rrf_top"
 
 
 @lru_cache(maxsize=1)

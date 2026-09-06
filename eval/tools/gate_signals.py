@@ -26,14 +26,13 @@ the real cross-encoder, not a fallback (A6).
 from __future__ import annotations
 
 import json
-import math
-import statistics
 from datetime import UTC, datetime
 from pathlib import Path
 
 from papertrail.database import session_scope
 from papertrail.embedding import get_encoder
 from papertrail.evaluation import load_question_set
+from papertrail.gate import signal_from_hits
 from papertrail.manifest import CorpusManifest
 from papertrail.repository import keyword_search, vector_search
 from papertrail.retrieval import retrieve
@@ -53,26 +52,20 @@ def _rank_of_relevant(session, query, encoder, relevant: set[str]) -> int | None
 
 
 def _signals(session, query, encoder) -> tuple[dict, str]:
+    # Same retrievals for every signal; the study and production
+    # (answer_question) both compute via gate.signal_from_hits so they agree.
     emb = encoder.encode([query], batch_size=1)[0]
     hybrid = retrieve(session, query, mode="hybrid", limit=5, encoder=encoder)
     vhits = vector_search(session, emb, limit=50)
     khits = keyword_search(session, query, limit=50)
     rr = retrieve(session, query, mode="hybrid_rerank", limit=5, encoder=encoder)
-
-    cos_scores = [float(h["score"]) for h in vhits]
-    ce_scores = [float(h["rerank_score"]) for h in rr]
-    reranker_model = str(rr[0]["reranker"]) if rr else ""
-    ce_top = ce_scores[0] if ce_scores else 0.0
     row = {
-        "rrf_top": float(hybrid[0]["score"]) if hybrid else 0.0,
-        "cos_top": cos_scores[0] if cos_scores else 0.0,
-        "cos_margin": (cos_scores[0] - cos_scores[1]) if len(cos_scores) >= 2 else 0.0,
-        "cos_mean_top3": statistics.fmean(cos_scores[:3]) if cos_scores else 0.0,
-        "kw_top": float(khits[0]["score"]) if khits else 0.0,
-        "ce_top": ce_top,
-        "ce_margin": (ce_scores[0] - ce_scores[1]) if len(ce_scores) >= 2 else 0.0,
-        "ce_sigmoid_top": 1.0 / (1.0 + math.exp(-ce_top)),
+        name: signal_from_hits(
+            name, hybrid_hits=hybrid, vector_hits=vhits, keyword_hits=khits, rerank_hits=rr
+        )
+        for name in SIGNAL_NAMES
     }
+    reranker_model = str(rr[0]["reranker"]) if rr else ""
     return row, reranker_model
 
 

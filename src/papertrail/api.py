@@ -40,6 +40,12 @@ class SearchResponse(BaseModel):
     results: list[SearchHit]
 
 
+class NearestPaper(BaseModel):
+    arxiv_id: str
+    title: str
+    source_url: str
+
+
 class AnswerResponse(BaseModel):
     question: str
     answer: str | None
@@ -51,6 +57,10 @@ class AnswerResponse(BaseModel):
     generator_model: str | None
     citations: tuple[str, ...]
     retrieved_arxiv_ids: tuple[str, ...]
+    gate_signal_name: str = "rrf_top"
+    gate_score: float | None = None
+    # On abstention, the closest evidence to show instead of a bare refusal.
+    nearest_papers: list[NearestPaper] = []
 
 
 app = FastAPI(title="PaperTrail", version=__version__)
@@ -104,6 +114,7 @@ def ask(
                 generator=get_generator(),
                 threshold=settings.abstain_threshold,
                 top_k=top_k,
+                gate_signal_name=settings.abstain_signal,
             )
     except (RuntimeError, ValueError, httpx.HTTPError) as error:
         raise HTTPException(status_code=502, detail=str(error)) from error

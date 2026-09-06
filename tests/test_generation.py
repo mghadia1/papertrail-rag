@@ -61,6 +61,46 @@ def test_answer_abstains_before_generation_below_threshold(monkeypatch) -> None:
     assert generator.calls == 0
 
 
+def retrieved_three(score: float = 0.03):
+    return [
+        {
+            "arxiv_id": f"2401.0000{i}v1",
+            "title": f"Paper {i}",
+            "source_url": f"https://arxiv.org/abs/2401.0000{i}v1",
+            "chunk_id": i,
+            "ordinal": 0,
+            "text": f"excerpt {i}",
+            "score": score - (i - 1) * 0.001,
+        }
+        for i in (1, 2, 3)
+    ]
+
+
+def test_soft_abstention_returns_top3_nearest_papers(monkeypatch) -> None:
+    monkeypatch.setattr(generation, "retrieve", lambda *a, **k: retrieved_three(0.02))
+    generator = FakeGenerator("unused")
+    result = answer_question(
+        object(), "question", encoder=FakeEncoder(), generator=generator, threshold=0.025,
+    )
+    assert result.abstained is True
+    assert result.answer is None
+    assert generator.calls == 0  # no generation call on abstention
+    assert len(result.nearest_papers) == 3
+    assert set(result.nearest_papers[0]) == {"arxiv_id", "title", "source_url"}
+    assert result.gate_signal_name == "rrf_top"
+    assert result.gate_score == pytest.approx(0.02)
+
+
+def test_non_abstention_has_no_nearest_papers(monkeypatch) -> None:
+    monkeypatch.setattr(generation, "retrieve", lambda *a, **k: retrieved())
+    generator = FakeGenerator("The method evaluates retrieval [2401.01234v2].")
+    result = answer_question(
+        object(), "question", encoder=FakeEncoder(), generator=generator, threshold=0.025,
+    )
+    assert result.abstained is False
+    assert result.nearest_papers == ()
+
+
 def test_answer_accepts_only_retrieved_citations(monkeypatch) -> None:
     monkeypatch.setattr(generation, "retrieve", lambda *a, **k: retrieved())
     generator = FakeGenerator("The method evaluates retrieval [2401.01234v2].")
@@ -98,7 +138,8 @@ def test_answer_rejects_missing_or_invented_citations(monkeypatch) -> None:
 
 def test_abstain_threshold_is_validated(monkeypatch) -> None:
     monkeypatch.setattr(generation, "retrieve", lambda *a, **k: retrieved())
-    with pytest.raises(ValueError, match="between 0 and 1"):
+    # The [0,1] check is now per-signal: rrf_top is bounded, so 1.5 is out of range.
+    with pytest.raises(ValueError, match="above the valid range"):
         answer_question(
             object(),
             "question",

@@ -103,6 +103,11 @@ class AnswerResult:
     entailment_verified: bool = False
     faithfulness_score: float | None = None
     ungrounded_claims: tuple[str, ...] = ()
+    gate_signal_name: str = "rrf_top"
+    gate_score: float | None = None
+    # Soft abstention: on a refusal, the top-3 retrieved papers so the caller can
+    # show "closest evidence" instead of a bare refusal. Empty when not abstaining.
+    nearest_papers: tuple[dict[str, str], ...] = ()
 
 
 def cited_arxiv_ids(answer: str) -> tuple[str, ...]:
@@ -130,17 +135,32 @@ def answer_question(
     threshold: float,
     top_k: int = 5,
     retrieval_mode: str = "hybrid",
+    gate_signal_name: str = "rrf_top",
     verify_entailment: bool = False,
     min_faithfulness: float = 0.80,
 ) -> AnswerResult:
-    if not 0 <= threshold <= 1:
-        raise ValueError("abstain threshold must be between 0 and 1")
+    from .gate import gate_signal, signal_from_hits, validate_threshold
+
+    # Threshold validity is per-signal (a logit gate has no [0,1] bound), so this
+    # replaces the old hardcoded [0,1] check.
+    validate_threshold(gate_signal_name, threshold)
     hits = retrieve(
         session, question, mode=retrieval_mode, limit=top_k, encoder=encoder
     )
     retrieved_ids = tuple(str(hit["arxiv_id"]) for hit in hits)
     top_score = float(hits[0]["score"]) if hits else None
-    if not hits or top_score is None or top_score < threshold:
+    nearest_papers = tuple(
+        {"arxiv_id": str(hit["arxiv_id"]), "title": str(hit["title"]),
+         "source_url": str(hit["source_url"])}
+        for hit in hits[:3]
+    )
+    if not hits:
+        gate_score = None
+    elif gate_signal_name == "rrf_top":
+        gate_score = signal_from_hits("rrf_top", hybrid_hits=hits)
+    else:
+        gate_score = gate_signal(session, question, encoder, gate_signal_name)
+    if not hits or gate_score is None or gate_score < threshold:
         return AnswerResult(
             question=question,
             answer=None,
@@ -152,6 +172,9 @@ def answer_question(
             generator_model=None,
             citations=(),
             retrieved_arxiv_ids=retrieved_ids,
+            gate_signal_name=gate_signal_name,
+            gate_score=gate_score,
+            nearest_papers=nearest_papers,
         )
     answer = generator.generate(question=question, context=format_context(hits))
     citations = cited_arxiv_ids(answer)
@@ -187,6 +210,9 @@ def answer_question(
                 entailment_verified=True,
                 faithfulness_score=faithfulness_score,
                 ungrounded_claims=ungrounded,
+                gate_signal_name=gate_signal_name,
+                gate_score=gate_score,
+                nearest_papers=nearest_papers,
             )
 
     return AnswerResult(
@@ -203,6 +229,9 @@ def answer_question(
         entailment_verified=verify_entailment,
         faithfulness_score=faithfulness_score,
         ungrounded_claims=ungrounded,
+        gate_signal_name=gate_signal_name,
+        gate_score=gate_score,
+        nearest_papers=(),
     )
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from .arxiv import DEFAULT_CATEGORIES, fetch_papers, fetch_papers_by_ids
@@ -187,8 +188,13 @@ def main() -> int:
                 generator=get_generator(),
                 threshold=settings.abstain_threshold,
                 top_k=args.top_k,
+                gate_signal_name=settings.abstain_signal,
             )
         print(json.dumps(result.__dict__))
+        if result.abstained and result.nearest_papers:
+            print("Low confidence. Closest evidence:", file=sys.stderr)
+            for paper in result.nearest_papers:
+                print(f"  [{paper['arxiv_id']}] {paper['title']} — {paper['source_url']}", file=sys.stderr)
         return 0
     if args.command == "evaluate":
         manifest = CorpusManifest.read(args.manifest)

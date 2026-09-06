@@ -406,3 +406,26 @@ does not see the near-miss asymmetry. Small n on held-out (A11): near = 4.
 
 **Post-run:** 56 tests pass; v2/v3/hnsw evidence still verify; gate evidence
 verifies. No gate code (D5) or default (D8) changed — awaiting Mayank.
+
+**Phase 1b D5+D6 (2026-09-06): configurable gate + soft abstention (default kept).**
+Mayank's decision on the D3 table: keep `rrf_top`, do D5+D6 only, no default flip
+(`cos_mean_top3` fails the near-miss rule and near n=4 is noisy).
+- **D5:** new `papertrail/gate.py` holds `signal_from_hits` (the eight signals),
+  per-signal `SIGNAL_RANGES`, `validate_threshold`, and `gate_signal`. Both the
+  study (`gate_signals.py`, refactored to call `signal_from_hits`) and production
+  (`answer_question`) now compute the identical number. `config.abstain_signal`
+  added (default `"rrf_top"`); `answer_question` gained `gate_signal_name`,
+  computes the configured signal instead of `hits[0]["score"]`, and validates the
+  threshold against that signal's range (a logit gate has no [0,1] bound — the
+  old hardcoded check moved into the signal definition). `AnswerResult` gained
+  `gate_signal_name` and `gate_score`. **Default unchanged**, so all evidence
+  still verifies and behavior is identical for `rrf_top`.
+- **D6:** soft abstention — on a refusal `AnswerResult.nearest_papers` holds the
+  top-3 retrieved (id, title, url) and no generation call is made; the API adds
+  `nearest_papers` (+ `NearestPaper`), the CLI prints "Low confidence. Closest
+  evidence:" to stderr while keeping stdout JSON.
+- Tests: `signal_from_hits`/range checks, soft-abstention returns 3 nearest with
+  `answer is None` and no generator call, non-abstention has empty `nearest_papers`;
+  updated the threshold-validation message test. **59 passed.**
+- **STOP before D7** (two-gate RAG eval) — it needs `GROQ_API_KEY`, which is not
+  set here (confirmed: `ask` can't even build the generator without it).

@@ -15,6 +15,31 @@ from papertrail.manifest import CorpusManifest
 ROOT = Path(__file__).parents[1]
 
 
+def test_signal_from_hits_and_threshold_ranges() -> None:
+    import math
+
+    from papertrail.gate import signal_from_hits, validate_threshold
+
+    vhits = [{"score": 0.9}, {"score": 0.6}, {"score": 0.3}]
+    assert signal_from_hits("cos_top", vector_hits=vhits) == 0.9
+    assert signal_from_hits("cos_margin", vector_hits=vhits) == pytest.approx(0.3)
+    assert signal_from_hits("cos_mean_top3", vector_hits=vhits) == pytest.approx(0.6)
+    assert signal_from_hits("kw_top", keyword_hits=[]) == 0.0
+    assert signal_from_hits("rrf_top", hybrid_hits=[{"score": 0.033}]) == pytest.approx(0.033)
+    rr = [{"rerank_score": 2.0}, {"rerank_score": -1.0}]
+    assert signal_from_hits("ce_top", rerank_hits=rr) == 2.0
+    assert signal_from_hits("ce_margin", rerank_hits=rr) == pytest.approx(3.0)
+    assert signal_from_hits("ce_sigmoid_top", rerank_hits=rr) == pytest.approx(1 / (1 + math.exp(-2.0)))
+    with pytest.raises(ValueError, match="unknown gate signal"):
+        signal_from_hits("nope")
+
+    validate_threshold("ce_top", -5.0)  # unbounded logit: any threshold is valid
+    with pytest.raises(ValueError, match="above the valid range"):
+        validate_threshold("cos_top", 1.5)
+    with pytest.raises(ValueError, match="below the valid range"):
+        validate_threshold("rrf_top", -0.1)
+
+
 def test_auroc_known_answers() -> None:
     assert auroc([1.0, 2.0], [-1.0, 0.0]) == 1.0          # perfect separation
     assert auroc([0.0], [1.0]) == 0.0                       # reversed
