@@ -75,6 +75,16 @@ then adjudicated every disagreement, recorded in `eval/tools/adjudication.md`. S
 [`docs/evidence/phase-8-retrieval-v3-baseline.json`](docs/evidence/phase-8-retrieval-v3-baseline.json)
 (verified, 312 rows).
 
+## HNSW index recall
+
+Measured against an exact scan over the 2,039 vectors, the HNSW index is accurate
+at the default `ef_search=40` (chunk-level recall@10 0.990, recall@50 0.998 once
+`ef_search≥100`); see [`docs/results.md`](docs/results.md) and
+[`docs/evidence/phase-8-hnsw-recall.json`](docs/evidence/phase-8-hnsw-recall.json)
+(verified, 467 rows). At this corpus size Postgres's planner uses the index only
+at the low default ef and otherwise runs an exact scan, so the ANN index buys
+little here — an honest "not yet worth it at 2k vectors" result.
+
 ## Run locally
 
 ```bash

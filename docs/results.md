@@ -65,6 +65,33 @@ inter-annotator agreement, and no human has reviewed the labels yet. The held-ou
 split was authored from a sample disjoint from development and was not dry-run
 before freeze.
 
+## Phase 1 — HNSW index recall (September 5, 2026)
+
+Chunk-level recall of the pgvector HNSW index (m=16, ef_construction=64,
+vector_cosine_ops) against an exact sequential scan, over all 78 v3 retrieval
+query vectors. The index is forced on (`SET LOCAL enable_seqscan = off`) so the
+measurement is of the index, not the planner. Evidence:
+`docs/evidence/phase-8-hnsw-recall.json` (verified, 467 rows).
+
+| ef_search | recall@10 | recall@50 | rows | forced-idx p50 ms | natural scan |
+|---|--:|--:|--:|--:|---|
+| 10 | 0.957 | 0.200 | 10 | 3.6 | index |
+| 40 (default) | 0.990 | 0.800 | 40 | 4.2 | index |
+| 100 | 0.999 | 0.998 | 50 | 4.6 | seqscan |
+| 200 | 1.000 | 1.000 | 50 | 4.9 | seqscan |
+| 400 | 1.000 | 1.000 | 50 | 5.5 | seqscan |
+| 1000 | 1.000 | 1.000 | 50 | 6.7 | seqscan |
+
+Exact scan: p50 23.1 ms, p95 34.5 ms (n=78). recall@50 below 1.0 at ef<50 is
+truncation (HNSW returns at most ef rows), not approximation error, so it is only
+meaningful from ef=100 up (0.998). Two findings at this corpus size: the default
+ef=40 returns fewer rows (40) than the retrieval candidate pool asks for (50–200),
+silently capping the vector side — a Phase 4 concern; and Postgres's planner picks
+the HNSW index only at ef≤40 and reverts to an exact scan above that (`natural
+scan` column). Latencies include per-call connection setup (a fresh session per
+call), so read them only relative to each other within this file (A10); an
+EXPLAIN ANALYZE execution-only comparison was exact ~10 ms vs index ~2 ms.
+
 ## Protocol history
 
 The first report is retained because it showed keyword Recall@5 of 0.05 on

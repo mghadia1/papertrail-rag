@@ -59,8 +59,16 @@ parsing, grounding flags, threshold, and freeze-before-run chronology.
 
 - The questions are title-derived known-item lookups with one labeled paper;
   perfect vector Recall@5 does not imply perfect open-ended search.
-- HNSW is approximate, but this study did not compare HNSW against exact vector
-  search, so no index-recall claim is made.
+- HNSW is approximate. Measured against an exact sequential scan over the 2,039
+  vectors (`docs/evidence/phase-8-hnsw-recall.json`), the index is accurate at
+  the default `hnsw.ef_search=40`: chunk-level recall@10 is 0.990 and reaches
+  1.00 by ef=200. recall@50 is only measurable for ef≥50 (HNSW returns at most
+  ef rows); it is 0.998 at ef=100. Two caveats at this corpus size: the default
+  ef=40 truncates the returned list below the retrieval candidate pool (a Phase 4
+  concern), and Postgres's planner reverts to an exact sequential scan for
+  ef_search above ~40, so the ANN index only helps at the low default — where an
+  exact scan is already ~10 ms. An ANN index earns its keep at far larger corpora,
+  not at 2,039 vectors.
 - RRF score magnitude depends on candidate ranks and `k`; it is not a calibrated
   probability. The threshold rejected 2/10 answerable held-out questions.
 - One relevant paper moved to rank 2 under hybrid fusion, showing keyword noise

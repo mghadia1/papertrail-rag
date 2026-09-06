@@ -11,7 +11,7 @@ from .database import session_scope
 from .config import get_settings
 from .embedding import get_encoder
 from .evaluation import evaluate, evaluate_rag, load_question_set
-from .evidence import verify_rag_evidence, verify_retrieval_evidence
+from .evidence import verify_hnsw_evidence, verify_rag_evidence, verify_retrieval_evidence
 from .generation import answer_question, get_generator
 from .manifest import CorpusManifest
 from .pipeline import embed_manifest_corpus
@@ -77,7 +77,7 @@ def build_parser() -> argparse.ArgumentParser:
     evidence = commands.add_parser(
         "verify-evidence", help="recompute and verify a retrieval or RAG report"
     )
-    evidence.add_argument("--kind", choices=("retrieval", "rag"), required=True)
+    evidence.add_argument("--kind", choices=("retrieval", "rag", "hnsw"), required=True)
     evidence.add_argument("--report", type=Path, required=True)
     evidence.add_argument("--manifest", type=Path, required=True)
     evidence.add_argument("--questions", type=Path)
@@ -215,7 +215,9 @@ def main() -> int:
         return 0
     if args.command == "verify-evidence":
         manifest = CorpusManifest.read(args.manifest)
-        if args.kind == "retrieval":
+        if args.kind == "hnsw":
+            result = verify_hnsw_evidence(args.report, manifest)
+        elif args.kind == "retrieval":
             question_set = (
                 load_question_set(args.questions, manifest)
                 if args.questions is not None

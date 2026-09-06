@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -157,8 +157,41 @@ def update_embedding_run(
 
 
 def vector_search(
-    session: Session, query_embedding: list[float], *, limit: int
+    session: Session,
+    query_embedding: list[float],
+    *,
+    limit: int,
+    exact: bool = False,
+    ef_search: int | None = None,
 ) -> list[dict[str, object]]:
+    """Cosine vector search over embedded chunks.
+
+    By default this uses the pgvector HNSW index (m=16, ef_construction=64,
+    vector_cosine_ops) at the server's ``hnsw.ef_search`` (default 40).
+
+    ``exact=True`` forces an exact sequential scan by disabling index and bitmap
+    scans for this transaction, giving the true nearest neighbours (the ground
+    truth for a recall study). ``ef_search`` overrides the HNSW search breadth.
+
+    Postgres facts this relies on (A12/A13 of the execution brief):
+    - ``SET LOCAL`` applies only within the current transaction, so it is issued
+      on this ``session`` right before the query and must not be committed away.
+    - HNSW returns at most ``hnsw.ef_search`` rows, so ``ef_search`` must be
+      ``>= limit`` or results are silently truncated; enforced below.
+    - ``hnsw.ef_search`` is capped at 1000.
+    ``exact`` and ``ef_search`` are mutually exclusive knobs; ``exact`` wins.
+    """
+    if exact:
+        session.execute(text("SET LOCAL enable_indexscan = off"))
+        session.execute(text("SET LOCAL enable_bitmapscan = off"))
+    elif ef_search is not None:
+        if not 1 <= ef_search <= 1000:
+            raise ValueError("ef_search must be in [1, 1000]")
+        if ef_search < limit:
+            raise ValueError("ef_search must be >= limit or results are truncated")
+        # SET does not accept bind parameters; ef_search is validated to an int in
+        # [1, 1000] above, so this interpolation is safe.
+        session.execute(text(f"SET LOCAL hnsw.ef_search = {int(ef_search)}"))
     distance = Chunk.embedding.cosine_distance(query_embedding)
     rows = session.execute(
         select(

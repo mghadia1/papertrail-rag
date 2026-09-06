@@ -14,6 +14,8 @@ from .evaluation import (
     _aggregate,
     _aggregate_by_type,
     _choose_threshold,
+    _percentile,
+    chunk_recall,
     ndcg_at,
     recall_at,
     reciprocal_rank,
@@ -162,6 +164,45 @@ def verify_retrieval_evidence(
     if report.get("protocol", {}).get("rrf_k") != 60:
         raise ValueError("retrieval evidence does not use frozen RRF k=60")
     return {"verified": True, "kind": "retrieval", "raw_rows": len(rows)}
+
+
+def verify_hnsw_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]:
+    """Recompute the HNSW recall study's summary from its raw rows."""
+    report = json.loads(path.read_text(encoding="utf-8"))
+    _verify_freeze_precedes_report(report)
+    if report.get("corpus_arxiv_ids_sha256") != manifest.arxiv_ids_sha256:
+        raise ValueError("hnsw evidence corpus hash does not match manifest")
+    rows = report.get("rows", [])
+    if not rows:
+        raise ValueError("hnsw evidence has no rows")
+    limit = int(report["protocol"]["limit"])
+
+    # Truncation honesty (C3): ef_search < limit must return < limit rows and be
+    # flagged truncated; the flag must match returned_rows.
+    for row in rows:
+        truncated = bool(row["returned_rows"] < limit)
+        if truncated != bool(row["truncated"]):
+            raise ValueError(f"truncated flag disagrees with returned_rows for {row['question_id']}/{row['ef_search']}")
+        if int(row["ef_search"]) < limit and not row["truncated"]:
+            raise ValueError(f"ef_search<{limit} must be truncated for {row['question_id']}")
+
+    summary = report["summary"]["ef_search"]
+    for ef_str, published in summary.items():
+        sel = [r for r in rows if r["ef_search"] == int(ef_str)]
+        _close(len(sel), published["questions"], f"ef {ef_str} questions")
+        _close(statistics.fmean(r["recall_at_10"] for r in sel), published["mean_recall_at_10"], f"ef {ef_str} recall@10")
+        _close(statistics.fmean(r["recall_at_50"] for r in sel), published["mean_recall_at_50"], f"ef {ef_str} recall@50")
+        _close(statistics.fmean(r["returned_rows"] for r in sel), published["mean_returned_rows"], f"ef {ef_str} returned")
+        _close(_percentile([r["forced_index_latency_ms"] for r in sel], 0.50), published["forced_index_latency_p50_ms"], f"ef {ef_str} p50")
+        _close(_percentile([r["forced_index_latency_ms"] for r in sel], 0.95), published["forced_index_latency_p95_ms"], f"ef {ef_str} p95")
+        if published.get("natural_scan") not in ("index", "seqscan"):
+            raise ValueError(f"ef {ef_str} natural_scan must be 'index' or 'seqscan'")
+
+    # Exact latency percentiles recompute from the distinct per-question value.
+    exact_vals = list({r["question_id"]: r["exact_latency_ms"] for r in rows}.values())
+    _close(_percentile(exact_vals, 0.50), report["summary"]["exact"]["latency_p50_ms"], "exact p50")
+    _close(_percentile(exact_vals, 0.95), report["summary"]["exact"]["latency_p95_ms"], "exact p95")
+    return {"verified": True, "kind": "hnsw", "rows": len(rows)}
 
 
 def verify_rag_evidence(

@@ -308,3 +308,48 @@ the editable `.pth` is not honored because the repo path contains a space);
   frozen (A2) / evidence (A3) and are **not** edited; the same block names
   `adjudicator: "Claude Opus 4.8"`, so it is attributed to the model, not a
   human. `build_v3.py` source was corrected for any future regen.
+
+**C1 — `vector_search` gains `exact` and `ef_search`** (`repository.py`), with a
+docstring stating the A12/A13 facts. Verified plans by EXPLAIN ANALYZE on the
+production ORM query (`ORDER BY embedding <=> q, chunks.id LIMIT 50`):
+- `exact=True` (indexscan+bitmapscan off) → **Seq Scan on chunks** (2039 rows).
+- default `ef_search=40` → **Index Scan using ix_chunks_embedding_hnsw_cosine**
+  (Nested Loop + Incremental Sort), returns 40 rows.
+- `ef_search=100` (natural) → the planner **reverts to Seq Scan** — the ANN index
+  is only chosen at the low default ef on this 2,039-row table.
+`SHOW hnsw.ef_search` read back the SET LOCAL value in-transaction (A12).
+
+**C2 — study** (`eval/tools/hnsw_study.py`), all 78 v3 query vectors, index forced
+on so recall measures the index not the planner. Table (from the JSON, A4):
+
+| ef | recall@10 | recall@50 | rows | forced-idx p50 ms | natural scan |
+|---|--:|--:|--:|--:|---|
+| 10 | 0.957 | 0.200 | 10 | 3.6 | index |
+| 40 | 0.990 | 0.800 | 40 | 4.2 | index |
+| 100 | 0.999 | 0.998 | 50 | 4.6 | seqscan |
+| 200 | 1.000 | 1.000 | 50 | 4.9 | seqscan |
+| 400 | 1.000 | 1.000 | 50 | 5.5 | seqscan |
+| 1000 | 1.000 | 1.000 | 50 | 6.7 | seqscan |
+
+Exact scan p50 23.1 / p95 34.5 ms (n=78). Evidence
+`docs/evidence/phase-8-hnsw-recall.json` (verified, 467 rows); C3 verifier
+`--kind hnsw` recomputes every summary value from rows and enforces the
+truncated-flag rule; C4 tests (chunk_recall, ef_search guard, verifier edit) →
+**54 passed**.
+
+**Design choice:** measured the index with `enable_seqscan=off` forced on, rather
+than the planner's natural path, because at 2,039 vectors the planner declines the
+index above ef=40 — forcing it is the only way to get a true recall@ef curve.
+
+**Failure mode found:** the default `hnsw.ef_search=40` is **below** the retrieval
+candidate pool (`candidate_limit` 50–200), so the production vector side is
+silently capped at 40 candidates. Recorded, not fixed (A7); flagged for Phase 4.
+
+**Surprises / not measured:** the planner reverting to an exact scan above ef=40
+was unexpected and is the real answer to "is an ANN index worth it at 2k vectors"
+— not yet. C5 index-parameter sweep **skipped**: recall@50 at ef=100 is 0.998
+(≥0.99), the skip condition. Latencies include per-call connection setup, so they
+are within-file relative only (A10).
+
+**Post-run:** tests 54 passed; frozen v2 (90 rows) and v3 (312 rows) evidence
+still verify; new `phase-8-hnsw-recall.json` verifies.

@@ -36,6 +36,20 @@ def _as_grades(relevant: "set[str] | dict[str, int]") -> dict[str, int]:
     return {str(identifier): 1 for identifier in relevant}
 
 
+def chunk_recall(approx_ids: list[int], exact_ids: list[int], k: int) -> float:
+    """Chunk-level index recall@k against an exact ground truth.
+
+    recall@k = |approx[:k] ∩ exact[:k]| / k. The denominator is always k, so an
+    approximate result that returns fewer than k rows (e.g. HNSW truncated by
+    ``ef_search < k``) scores below 1.0 honestly rather than being renormalized.
+    """
+    if k < 1:
+        raise ValueError("k must be positive")
+    exact_k = set(exact_ids[:k])
+    approx_k = set(approx_ids[:k])
+    return len(approx_k & exact_k) / k
+
+
 def recall_at(ranked_ids: list[str], relevant: "set[str] | dict[str, int]", k: int) -> float:
     relevant_ids = set(_as_grades(relevant))
     return float(bool(set(ranked_ids[:k]) & relevant_ids))
