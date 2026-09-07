@@ -137,6 +137,54 @@ every `gpt-oss-120b` answer (faithfulness 0.0-0.5) and needs recalibration for
 this model before it is usable. `gpt-oss-120b` also omitted the required citation
 format on 5-12 answers, which the citation gate correctly refused.
 
+## Phase 2 (Part E) — reranker evaluation (September 6, 2026)
+
+Pool-size × model × rerank-target study of the cross-encoder stage, over the 78
+v3 retrieval questions (dev: 24 paraphrase, 16 lexical, 12 topical; held-out: 12
+paraphrase, 8 lexical, 6 topical). Eight verified files,
+`docs/evidence/phase-8-rerank-{msmarco,bge}-pool{20,50}-{hybrid_rerank,vector_rerank}.json`.
+`hybrid_rerank` reranks the fused (RRF) list; `vector_rerank` reranks the vector
+list alone. Latencies are within-file only (A10); each config ran in its own
+process with the model load paid in a discarded warm-up.
+
+nDCG@10 by type (lexical is 1.000 in every cell and omitted; Recall@10 is 1.000 in
+every cell — reranking reorders a complete top-10, it does not add recall):
+
+| config | dev all | dev para | dev top | HO all | HO para | HO top | dev p50 ms | dev p95 ms |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| baseline hybrid (no rerank) | 0.879 | 0.890 | 0.697 | 0.913 | 0.969 | 0.683 | 57.3 | 310.5 |
+| ms-marco pool20 hybrid_rerank (current) | 0.942 | 0.964 | 0.821 | 0.951 | 1.000 | 0.789 | 169.9 | 231.4 |
+| ms-marco pool20 vector_rerank | 0.924 | 0.948 | 0.773 | 0.925 | 0.944 | 0.788 | 122.6 | 144.3 |
+| ms-marco pool50 hybrid_rerank | 0.930 | 0.933 | 0.832* | 0.949 | 1.000 | 0.778* | 341.5 | 1419.5 |
+| ms-marco pool50 vector_rerank | 0.920 | 0.933 | 0.786* | 0.926 | 0.944 | 0.793* | 226.4 | 317.5 |
+| bge pool20 hybrid_rerank | 0.951 | 0.985 | 0.819 | 0.953 | 1.000 | 0.797 | 1734.4 | 5248.0 |
+| bge pool20 vector_rerank | 0.940 | 1.000 | 0.741 | 0.953 | 1.000 | 0.797 | 1341.3 | 1614.3 |
+| bge pool50 hybrid_rerank | 0.955 | 0.985 | 0.838* | 0.955 | 1.000 | 0.803* | 3712.8 | 11096.4 |
+| bge pool50 vector_rerank | 0.942 | 0.985 | 0.778* | 0.948 | 1.000 | 0.775* | 2210.7 | 3271.0 |
+
+`*` topical lower bound: at pool 50 the first stage reaches outside the depth-20
+judged pool, so 5-9 top-10 papers are unjudged and scored grade 0.
+
+Findings:
+- Reranking earns its place: every config beats plain hybrid on dev·all and
+  dev·topical; the lift is entirely in topical and paraphrase (lexical is
+  saturated).
+- Fusion *and* the reranker both contribute. `vector_rerank` alone beats plain
+  hybrid (dev·all 0.924 vs 0.879), but `hybrid_rerank` beats `vector_rerank` on
+  dev·topical at every model/pool (e.g. ms-marco pool20 0.821 vs 0.773) — RRF
+  fusion supplies topical signal the reranker cannot recover from vector alone.
+- ms-marco vs bge: bge is marginally better (dev·all +0.009 at pool 20) for ~10×
+  the latency (dev p50 1734 ms vs 170 ms).
+- pool 20 vs pool 50: no reliable gain (ms-marco pool50 is worse on dev·all and
+  held-out topical; pool-50 topical is a lower bound) for ~2× latency.
+
+Recommendation: **keep the current default — ms-marco-MiniLM-L-6-v2,
+`hybrid_rerank`, pool 20.** It captures ~all the quality lift (+0.063 dev·all over
+plain hybrid) at ~110 ms added p50 latency; bge and pool 50 do not justify their
+cost. No default was changed (Part E is a measurement phase). The frozen baseline's
+`hybrid_rerank` latency (dev p50 3896 ms) was model-load-polluted; the clean
+Phase-2 figure is 170 ms.
+
 ## Protocol history
 
 The first report is retained because it showed keyword Recall@5 of 0.05 on

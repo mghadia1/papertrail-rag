@@ -70,6 +70,24 @@ def _verify_retrieval_evidence_v3(
         raise ValueError("schema-3 retrieval evidence has no raw rows")
     modes = sorted({row["mode"] for row in rows})
 
+    # E5: a rerank study run must record a non-fallback reranker model and its
+    # pool depth in the protocol, so no rerank cell is attributable to the lexical
+    # fallback (A6) or an unrecorded pool size. New-shape rerank evidence stamps
+    # rerank_pool_size on every rerank row; the frozen v3 baseline predates that
+    # field and its default-ms-marco hybrid_rerank cell is grandfathered (its
+    # aggregates are still recomputed below).
+    rerank_modes = {"hybrid_rerank", "vector_rerank"}
+    rerank_rows = [row for row in rows if row["mode"] in rerank_modes]
+    if any("rerank_pool_size" in row for row in rerank_rows):
+        protocol = report.get("protocol", {})
+        reranker_model = protocol.get("reranker_model", "")
+        if not reranker_model or reranker_model.endswith("-fallback"):
+            raise ValueError(
+                "rerank evidence protocol.reranker_model missing or a fallback (A6)"
+            )
+        if not isinstance(protocol.get("rerank_pool"), int):
+            raise ValueError("rerank evidence protocol.rerank_pool missing")
+
     # 1. Recompute every per-row metric from ranked ids + graded relevance.
     for row in rows:
         graded = {str(k): int(v) for k, v in row["relevant"].items()}
@@ -107,9 +125,22 @@ def _verify_retrieval_evidence_v3(
         }
         for row in rows:
             pool = pools.get(row["question_id"])
-            if pool is not None and not set(row["ranked_arxiv_ids"]).issubset(pool):
+            if pool is None:
+                continue
+            out_of_pool = sorted(set(row["ranked_arxiv_ids"]) - pool)
+            if not out_of_pool:
+                continue
+            # Only a rerank mode over a pool deeper than the judged depth may reach
+            # outside the frozen pool; those ids are unjudged (scored grade 0) and
+            # must be recorded per row so the topical understatement is auditable.
+            if row["mode"] not in rerank_modes:
                 raise ValueError(
                     f"ranked ids for {row['question_id']} fall outside its judged pool"
+                )
+            if sorted(row.get("unjudged_ranked_ids", [])) != out_of_pool:
+                raise ValueError(
+                    f"{row['question_id']}/{row['mode']} unjudged_ranked_ids "
+                    "does not match the ids outside its judged pool"
                 )
 
     # 3. Recompute the per-type and "all" aggregates and check the published block.

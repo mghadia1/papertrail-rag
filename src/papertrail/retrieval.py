@@ -15,7 +15,7 @@ from .repository import (
 )
 
 
-SearchMode = Literal["vector", "keyword", "hybrid", "hybrid_rerank"]
+SearchMode = Literal["vector", "keyword", "hybrid", "hybrid_rerank", "vector_rerank"]
 
 
 def reciprocal_rank_fusion(
@@ -68,6 +68,30 @@ def distinct_papers(
     return selected
 
 
+def _rerank(
+    query: str,
+    pooled: list[dict[str, object]],
+    *,
+    top_k: int,
+    reranker: object | None,
+) -> list[dict[str, object]]:
+    """Apply a cross-encoder reranker to a first-stage candidate pool.
+
+    Defaults to the real cross-encoder, which raises if the model cannot load
+    rather than silently substituting the lexical reranker (brief A6). The actual
+    pool size seen by the reranker is stamped on every returned row so the study
+    can record it (brief E, trap: pool 50 may be smaller than requested).
+    """
+    from .reranking import CrossEncoderReranker
+
+    active_reranker = reranker if reranker is not None else CrossEncoderReranker()
+    reranked = active_reranker.rerank(query, pooled, top_k=top_k)
+    pool_size = len(pooled)
+    for row in reranked:
+        row["rerank_pool_size"] = pool_size
+    return reranked
+
+
 def retrieve(
     session: Session,
     query: str,
@@ -77,9 +101,12 @@ def retrieve(
     encoder: Encoder | None = None,
     rrf_k: int = 60,
     reranker: object | None = None,
+    rerank_pool: int | None = None,
 ) -> list[dict[str, object]]:
     if not 1 <= limit <= 50:
         raise ValueError("limit must be between 1 and 50")
+    if rerank_pool is not None and rerank_pool < limit:
+        raise ValueError("rerank_pool must be at least limit")
     candidate_limit = min(200, max(50, limit * 10))
     if mode == "keyword":
         return distinct_papers(
@@ -94,22 +121,25 @@ def retrieve(
     vector_hits = vector_search(session, query_embedding, limit=candidate_limit)
     if mode == "vector":
         return distinct_papers(vector_hits, limit=limit)
+
+    # First-stage pool depth for a rerank stage; the default preserves the
+    # original hybrid_rerank behaviour (max(limit*2, 20)).
+    pool = rerank_pool if rerank_pool is not None else max(limit * 2, 20)
+
+    if mode == "vector_rerank":
+        # Rerank the vector list alone — no keyword_search call on this path.
+        pooled = distinct_papers(vector_hits, limit=pool)
+        return _rerank(query, pooled, top_k=limit, reranker=reranker)
+
     if mode not in {"hybrid", "hybrid_rerank"}:
         raise ValueError(f"unsupported search mode: {mode}")
     keyword_hits = keyword_search(session, query, limit=candidate_limit)
-    fused_hits = distinct_papers(
-        reciprocal_rank_fusion(
-            {"keyword": keyword_hits, "vector": vector_hits}, k=rrf_k
-        ),
-        limit=max(limit * 2, 20) if mode == "hybrid_rerank" else limit,
+    fused = reciprocal_rank_fusion(
+        {"keyword": keyword_hits, "vector": vector_hits}, k=rrf_k
     )
     if mode == "hybrid":
-        return fused_hits[:limit]
+        return distinct_papers(fused, limit=limit)
 
-    # Two-stage rerank mode. Default to the real cross-encoder; it raises if the
-    # model cannot load rather than silently substituting the lexical reranker.
-    from .reranking import CrossEncoderReranker
-
-    active_reranker = reranker if reranker is not None else CrossEncoderReranker()
-    return active_reranker.rerank(query, fused_hits, top_k=limit)
+    pooled = distinct_papers(fused, limit=pool)
+    return _rerank(query, pooled, top_k=limit, reranker=reranker)
 

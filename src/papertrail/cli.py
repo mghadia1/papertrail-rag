@@ -61,7 +61,7 @@ def build_parser() -> argparse.ArgumentParser:
     search.add_argument("query")
     search.add_argument(
         "--mode",
-        choices=("vector", "keyword", "hybrid", "hybrid_rerank"),
+        choices=("vector", "keyword", "hybrid", "hybrid_rerank", "vector_rerank"),
         default="hybrid",
     )
     search.add_argument("--limit", type=int, default=5)
@@ -74,6 +74,30 @@ def build_parser() -> argparse.ArgumentParser:
     evaluation.add_argument("--questions", type=Path, required=True)
     evaluation.add_argument("--manifest", type=Path, required=True)
     evaluation.add_argument("--output", type=Path, required=True)
+    evaluation.add_argument(
+        "--modes",
+        nargs="+",
+        choices=("vector", "keyword", "hybrid", "hybrid_rerank", "vector_rerank"),
+        default=None,
+        help="subset of modes to evaluate (default: all modes for the schema)",
+    )
+    evaluation.add_argument(
+        "--reranker",
+        default=None,
+        help="cross-encoder model name for rerank modes (default: ms-marco-MiniLM-L-6-v2)",
+    )
+    evaluation.add_argument(
+        "--rerank-pool",
+        type=int,
+        default=None,
+        help="first-stage candidate pool depth for rerank modes (default: max(limit*2, 20))",
+    )
+    evaluation.add_argument(
+        "--reranker-max-length",
+        type=int,
+        default=None,
+        help="explicit CrossEncoder max_length (bge-reranker-base needs 512)",
+    )
     rag_eval = commands.add_parser(
         "evaluate-rag", help="run held-out generation, abstention, and citation checks"
     )
@@ -205,6 +229,17 @@ def main() -> int:
     if args.command == "evaluate":
         manifest = CorpusManifest.read(args.manifest)
         question_set = load_question_set(args.questions, manifest)
+        modes = tuple(args.modes) if args.modes else None
+        rerank_modes = {"hybrid_rerank", "vector_rerank"}
+        reranker = None
+        if args.reranker is not None or (modes and any(m in rerank_modes for m in modes)):
+            from .reranking import CrossEncoderReranker
+
+            reranker = CrossEncoderReranker(
+                args.reranker or "cross-encoder/ms-marco-MiniLM-L-6-v2",
+                allow_fallback=False,
+                max_length=args.reranker_max_length,
+            )
         with session_scope() as session:
             report = evaluate(
                 session,
@@ -212,6 +247,9 @@ def main() -> int:
                 manifest=manifest,
                 encoder=get_encoder(),
                 output_path=args.output,
+                modes=modes,
+                reranker=reranker,
+                rerank_pool=args.rerank_pool,
             )
         print(json.dumps({"output": str(args.output), **report["aggregates"], "abstention": report["abstention"]}))
         return 0

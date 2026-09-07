@@ -84,9 +84,14 @@ class CrossEncoderReranker:
         model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
         *,
         allow_fallback: bool = False,
+        max_length: int | None = None,
     ) -> None:
         self.model_name = model_name
         self.allow_fallback = allow_fallback
+        # Some cross-encoders (e.g. BAAI/bge-reranker-base, an xlm-roberta-base
+        # model) do not carry a usable max_length in their config; set it
+        # explicitly so truncation is deterministic and recorded (brief E2).
+        self.max_length = max_length
         self._model = None
         self._fallback = LexicalSemanticReranker(model_name=f"{model_name}-fallback")
 
@@ -94,7 +99,10 @@ class CrossEncoderReranker:
         if self._model is None:
             try:
                 from sentence_transformers import CrossEncoder
-                self._model = CrossEncoder(self.model_name)
+                if self.max_length is not None:
+                    self._model = CrossEncoder(self.model_name, max_length=self.max_length)
+                else:
+                    self._model = CrossEncoder(self.model_name)
             except Exception as exc:
                 if not self.allow_fallback:
                     raise RuntimeError(

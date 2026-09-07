@@ -130,6 +130,39 @@ def test_retrieval_verifier_rejects_edited_summary(tmp_path) -> None:
         verify_retrieval_evidence(edited, manifest)
 
 
+def test_rerank_verifier_requires_reranker_protocol_fields(tmp_path) -> None:
+    manifest = CorpusManifest.read(ROOT / "docs/evidence/corpus-manifest-1000.json")
+    questions = load_question_set(ROOT / "eval/questions-v3.json", manifest)
+    source = ROOT / "docs/evidence/phase-8-rerank-msmarco-pool20-hybrid_rerank.json"
+    assert verify_retrieval_evidence(source, manifest, question_set=questions)[
+        "verified"
+    ] is True
+
+    # E5: a new-shape rerank file (per-row rerank_pool_size present) must carry a
+    # non-fallback reranker model and pool depth in its protocol.
+    report = json.loads(source.read_text())
+    dropped = json.loads(source.read_text())
+    dropped["protocol"].pop("reranker_model")
+    edited = tmp_path / "no-model.json"
+    edited.write_text(json.dumps(dropped))
+    with pytest.raises(ValueError, match="reranker_model missing"):
+        verify_retrieval_evidence(edited, manifest, question_set=questions)
+
+    fallback = json.loads(source.read_text())
+    fallback["protocol"]["reranker_model"] = "cross-encoder/ms-marco-MiniLM-L-6-v2-fallback"
+    edited2 = tmp_path / "fallback.json"
+    edited2.write_text(json.dumps(fallback))
+    with pytest.raises(ValueError, match="fallback"):
+        verify_retrieval_evidence(edited2, manifest, question_set=questions)
+
+    no_pool = report
+    no_pool["protocol"].pop("rerank_pool")
+    edited3 = tmp_path / "no-pool.json"
+    edited3.write_text(json.dumps(no_pool))
+    with pytest.raises(ValueError, match="rerank_pool missing"):
+        verify_retrieval_evidence(edited3, manifest, question_set=questions)
+
+
 def test_rag_verifier_rejects_edited_grounding_rate(tmp_path) -> None:
     manifest = CorpusManifest.read(ROOT / "docs/evidence/corpus-manifest-1000.json")
     questions = load_question_set(ROOT / "eval/questions-v2.json", manifest)

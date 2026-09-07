@@ -95,6 +95,20 @@ the default stays `rrf_top` (the gate is now configurable). See
 `docs/evidence/phase-8-gate-*.json` / `phase-8-rag-*.json`. Every emitted answer's
 citations were in its retrieved set (grounding 1.00).
 
+## Reranker study
+
+A pool-size × model × target study of the cross-encoder stage (eight verified
+files, `docs/evidence/phase-8-rerank-*.json`) confirms the current default —
+`ms-marco-MiniLM-L-6-v2`, `hybrid_rerank`, pool 20 — is the right operating point:
+it lifts development nDCG@10 from 0.879 (plain hybrid) to 0.942 at ~110 ms added
+p50 latency, whereas `bge-reranker-base` adds only 0.009 for ~10× the latency and
+a pool of 50 buys nothing reliable. Reranking the fused list beats reranking the
+vector list alone on topical queries, so RRF fusion contributes signal the
+reranker cannot recover on its own; Recall@10 stays 1.00 everywhere because
+reranking reorders a complete top-10 rather than adding recall. No default was
+changed; at pool 50 the first stage reaches outside the depth-20 judged pool, so
+those topical scores are recorded lower bounds. See [`docs/results.md`](docs/results.md).
+
 ## Run locally
 
 ```bash

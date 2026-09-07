@@ -275,21 +275,40 @@ def evaluate(
     manifest: CorpusManifest,
     encoder: Encoder,
     output_path: Path,
+    modes: "tuple[SearchMode, ...] | None" = None,
+    reranker: object | None = None,
+    rerank_pool: int | None = None,
 ) -> dict[str, Any]:
     schema = int(question_set["schema_version"])
     graded_mode = schema >= 3
-    modes = _modes_for_schema(schema)
+    modes = tuple(modes) if modes is not None else _modes_for_schema(schema)
+    rerank_modes = {"hybrid_rerank", "vector_rerank"}
+    has_rerank = any(mode in rerank_modes for mode in modes)
+
+    def _retrieve(query: str, mode: SearchMode, limit: int):
+        kwargs: dict[str, Any] = {
+            "mode": mode,
+            "limit": limit,
+            "encoder": encoder if mode != "keyword" else None,
+        }
+        if mode in rerank_modes:
+            kwargs["reranker"] = reranker
+            kwargs["rerank_pool"] = rerank_pool
+        return retrieve(session, query, **kwargs)
 
     # Discard one warm-up per path before collecting latency.
     warmup = question_set["retrieval_questions"][0]["query"]
     for mode in modes:
-        retrieve(
-            session,
-            warmup,
-            mode=mode,
-            limit=10,
-            encoder=encoder if mode != "keyword" else None,
-        )
+        _retrieve(warmup, mode, 10)
+
+    # Topical questions are judged only within a frozen pool; a rerank mode over a
+    # deeper pool can surface first-stage candidates that were never judged. Those
+    # are scored grade 0 but recorded per row so the understatement is auditable.
+    pools = {
+        q["id"]: set(q["pool"])
+        for q in question_set["retrieval_questions"]
+        if q.get("pool")
+    }
 
     rows: list[dict[str, Any]] = []
     hybrid_scores: dict[str, float] = {}
@@ -297,13 +316,7 @@ def evaluate(
         graded = item.get("relevant") or {rid: 1 for rid in item["relevant_arxiv_ids"]}
         for mode in modes:
             started = time.perf_counter()
-            hits = retrieve(
-                session,
-                item["query"],
-                mode=mode,
-                limit=10,
-                encoder=encoder if mode != "keyword" else None,
-            )
+            hits = _retrieve(item["query"], mode, 10)
             latency_ms = (time.perf_counter() - started) * 1000
             ranked = [str(hit["arxiv_id"]) for hit in hits]
             row = {
@@ -322,9 +335,24 @@ def evaluate(
                 row["type"] = item["type"]
                 row["relevant"] = graded
                 row["recall_at_10"] = recall_at(ranked, graded, 10)
+                if mode in rerank_modes:
+                    row["rerank_pool_size"] = (
+                        int(hits[0]["rerank_pool_size"]) if hits else 0
+                    )
+                    pool = pools.get(item["id"])
+                    if pool is not None:
+                        row["unjudged_ranked_ids"] = sorted(set(ranked) - pool)
             rows.append(row)
             if mode == "hybrid":
                 hybrid_scores[item["id"]] = row["top_score"]
+
+    # The abstention gate is the hybrid RRF top score; compute it independently
+    # when hybrid is not among the evaluated modes (e.g. a rerank-only study run)
+    # so the frozen threshold is still selected on the same signal.
+    if "hybrid" not in modes:
+        for item in question_set["retrieval_questions"]:
+            hits = retrieve(session, item["query"], mode="hybrid", limit=10, encoder=encoder)
+            hybrid_scores[item["id"]] = float(hits[0]["score"]) if hits else 0.0
 
     negative_scores: dict[str, float] = {}
     for item in question_set["abstention_questions"]:
@@ -393,6 +421,21 @@ def evaluate(
             "threshold_tie_break": "balanced accuracy, then positive accept rate, then lower threshold",
             "topical_grade_provenance": question_set.get("topical_grade_provenance"),
         }
+        if has_rerank:
+            reranker_model = getattr(reranker, "model_name", None) or (
+                "cross-encoder/ms-marco-MiniLM-L-6-v2"
+            )
+            if reranker_model.endswith("-fallback"):
+                raise ValueError(
+                    "rerank study ran on the lexical fallback, not a cross-encoder (A6)"
+                )
+            protocol["reranker_model"] = reranker_model
+            protocol["rerank_pool"] = (
+                rerank_pool if rerank_pool is not None else max(10 * 2, 20)
+            )
+            max_length = getattr(reranker, "max_length", None)
+            if max_length is not None:
+                protocol["reranker_max_length"] = int(max_length)
         claim_boundary = (
             "Graded relevance over paraphrase, lexical, and pooled-topical queries "
             "plus out-of-domain and near-miss negatives. Queries were LLM-authored "
