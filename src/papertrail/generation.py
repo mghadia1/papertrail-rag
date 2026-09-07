@@ -206,7 +206,7 @@ def answer_question(
                 question=question,
                 answer=None,
                 abstained=True,
-                abstain_reason=f"answer failed NLI entailment faithfulness check (score: {report.faithfulness_score:.2f})",
+                abstain_reason=f"answer failed heuristic token-overlap faithfulness check (score: {report.faithfulness_score:.2f})",
                 retrieval_mode=retrieval_mode,
                 top_score=top_score,
                 threshold=threshold,

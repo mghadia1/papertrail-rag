@@ -356,6 +356,33 @@ def verify_rag_evidence(
             sum(row["abstained"] and row.get("retrieved_rank_of_relevant") in (1, 2) for row in positives),
             report["answerable_refused_at_rank_1or2"], "answerable_refused_at_rank_1or2",
         )
+    # Rank-1/2 refusals split by cause (review F3); optional so older files verify.
+    if "gate_refused_at_rank_1or2" in report:
+        _close(
+            sum(
+                row["abstained"] and not row.get("entailment_refused")
+                and row.get("retrieved_rank_of_relevant") in (1, 2)
+                for row in positives
+            ),
+            report["gate_refused_at_rank_1or2"], "gate_refused_at_rank_1or2",
+        )
+    if "entailment_refused_at_rank_1or2" in report:
+        _close(
+            sum(
+                bool(row.get("entailment_refused"))
+                and row.get("retrieved_rank_of_relevant") in (1, 2)
+                for row in positives
+            ),
+            report["entailment_refused_at_rank_1or2"], "entailment_refused_at_rank_1or2",
+        )
+    # Citation-format failures among answerable questions (review F2); optional.
+    if "answerable_uncited_rate" in report:
+        _close(
+            statistics.fmean(
+                float(bool(row["error"]) and "citation" in row["error"]) for row in positives
+            ) if positives else 0.0,
+            report["answerable_uncited_rate"], "answerable_uncited_rate",
+        )
     if "entailment_refusals" in report:
         _close(
             sum(bool(row.get("entailment_refused")) for row in records),

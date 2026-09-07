@@ -27,8 +27,10 @@ explanation gate in [`docs/explanation-check.md`](docs/explanation-check.md).
   metrics, citations, thresholds, question IDs, corpus hash, or chronology are
   edited inconsistently.
 
-A `hybrid_rerank` mode and a statement-level NLI check exist in code; neither has
-a published metric.
+An optional statement-level faithfulness check exists in code; it is a
+**token-overlap heuristic (`HeuristicOverlapJudge`), not a trained NLI model** —
+no NLI model exists in this package — and it is off by default with no headline
+metric. (`hybrid_rerank` is now measured; see the reranker study below.)
 
 ## Frozen evaluation result
 
@@ -78,7 +80,8 @@ then adjudicated every disagreement, recorded in `eval/tools/adjudication.md`. S
 ## HNSW index recall
 
 Measured against an exact scan over the 2,039 vectors, the HNSW index is accurate
-at the default `ef_search=40` (chunk-level recall@10 0.990, recall@50 0.998 once
+at the default `ef_search=40` (chunk-level recall@10 0.990; recall@50 is undefined
+below ef=50 — the index returns at most ef rows — and reaches 0.998 once
 `ef_search≥100`); see [`docs/results.md`](docs/results.md) and
 [`docs/evidence/phase-8-hnsw-recall.json`](docs/evidence/phase-8-hnsw-recall.json)
 (verified, 467 rows). At this corpus size Postgres's planner uses the index only
@@ -90,10 +93,13 @@ little here — an honest "not yet worth it at 2k vectors" result.
 The confidence gate reads a rank-quantized RRF score, which refuses 8 of 26
 held-out questions whose relevant paper was retrieved at rank 1-2; a continuous
 `cos_mean_top3` gate cuts that to 1 but answers 2 of 4 absent-topic queries, so
-the default stays `rrf_top` (the gate is now configurable). See
+the default stays `rrf_top` (the gate is now configurable). In the end-to-end RAG
+run with `gpt-oss-120b`, that model omits the required `[id]` citation format on 5
+(rrf_top) and 8 (cos_mean_top3) of 26 answerable questions — a regression from the
+Llama run that the citation gate correctly refuses; every emitted answer's
+citations were in its retrieved set (grounding 1.00). See
 [`docs/results.md`](docs/results.md) and the verified
-`docs/evidence/phase-8-gate-*.json` / `phase-8-rag-*.json`. Every emitted answer's
-citations were in its retrieved set (grounding 1.00).
+`docs/evidence/phase-8-gate-*.json` / `phase-8-rag-*.json`.
 
 ## Reranker study
 

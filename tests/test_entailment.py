@@ -1,10 +1,10 @@
-"""Tests for statement-level NLI entailment and hallucination verification."""
+"""Tests for the statement-level token-overlap faithfulness heuristic."""
 
 from __future__ import annotations
 
 from papertrail.entailment import (
     EntailmentVerdict,
-    HeuristicNLIJudge,
+    HeuristicOverlapJudge,
     evaluate_entailment,
     extract_statements,
 )
@@ -23,8 +23,8 @@ def test_extract_statements_splits_sentences_and_captures_citations():
     assert statements[2][1] is None
 
 
-def test_heuristic_nli_judge_entails_matching_fact():
-    judge = HeuristicNLIJudge()
+def test_heuristic_overlap_judge_supports_matching_fact():
+    judge = HeuristicOverlapJudge()
     premise = (
         "FlashAttention is a fast and memory-efficient exact attention algorithm with IO-awareness. "
         "It tiles keys and values to compute attention within SRAM without writing large matrices to HBM."
@@ -36,8 +36,8 @@ def test_heuristic_nli_judge_entails_matching_fact():
     assert verdict.confidence > 0.6
 
 
-def test_heuristic_nli_judge_detects_polarity_contradiction():
-    judge = HeuristicNLIJudge()
+def test_heuristic_overlap_judge_detects_polarity_contradiction():
+    judge = HeuristicOverlapJudge()
     premise = "The proposed algorithm completely fails on out-of-distribution tabular benchmarks."
     statement = "The proposed algorithm succeeds on out-of-distribution tabular benchmarks."
     verdict = judge.verify_statement(statement, premise, "2401.99999v1")

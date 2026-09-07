@@ -476,14 +476,24 @@ held-out runs, all verified (`--kind rag`, 35 records each):
    each emitted versioned ID was in the retrieved set (membership, not
    entailment).
 4. **Model migration:** `gpt-oss-120b` omits the `[id]` citation format more than
-   Llama did, so the citation gate refuses 5-12 answers as uncited (working as
-   designed; the "provider_or_enforcement_errors" here are all the no-citation
-   ValueError, not Groq outages). The system prompt likely needs model-specific
-   citation tuning — noted, not changed.
-5. **Entailment at 0.80 refuses every answer** (faithfulness 0.0-0.5). The
-   statement-level NLI gate is incompatible with `gpt-oss-120b`'s elaborative
-   answers at that threshold; it needs recalibration before it is usable. Honest,
-   striking result — kept as-is.
+   Llama did, so the citation gate refuses answers as uncited (5 of 26 answerable
+   for rrf_top, 8 for cos_mean_top3, 10 for the entail run; the "no-cite refusals"
+   column above counts all 35 records). Correction (2026-09-07, review F2): the
+   Llama v2 run had zero enforcement errors, so this is a **regression from the
+   model migration, not "working as designed"** — the citation gate did its job,
+   but the generation prompt needs model-specific citation tuning (follow-up,
+   measured on development only).
+5. **The 0.80 faithfulness gate refuses every answer** (faithfulness 0.0-0.5).
+   Correction (2026-09-07, review F1): this gate is a **token-overlap heuristic
+   (`HeuristicOverlapJudge`), not a trained NLI model** — no NLI model exists in
+   the package; earlier "statement-level NLI gate" wording was inaccurate. So the
+   honest reading is "an overlap heuristic at 0.80 refuses every gpt-oss-120b
+   answer; a real NLI judge was never built." Kept as-is.
+
+Correction (2026-09-07, review F3): the table's `refuse@rank1-2` value of 15 for
+the entail row conflates causes — it is 1 gate refusal + 14 heuristic-faithfulness
+refusals. `docs/results.md` now splits `gate refuse@1-2` from `heuristic
+refuse@1-2`, and the RAG summary + verifier record both separately going forward.
 
 Harness bug found and fixed: an entailment-refused record carried the discarded
 answer's citations while `answer` was null; the record now emits no citations
@@ -590,3 +600,50 @@ computed against the frozen v3 grades only.
 Post-run: 64 tests passed (added 4: `vector_rerank`-skips-keyword, rerank-pool
 depth, pool-below-limit guard, rerank-protocol verifier); frozen v2 and v3
 retrieval evidence still verify; all 8 new files verify.
+
+## 2026-09-07 — Review response (Phases 1, 1b, 2 findings F1–F5, S1–S4)
+
+An independent review (Claude Fable 5.1 session, checked against the evidence
+files and code) raised five must-fix items and four small ones. All addressed:
+
+- **F4 (separate commit, code correctness):** `answer_question` computed `rrf_top`
+  from `hits[0]["score"]` for any `retrieval_mode`; over `hybrid_rerank` that score
+  is a cross-encoder logit, so the gate was meaningless. Latent (default mode is
+  `hybrid`). Fixed to reuse the hits only when `retrieval_mode == "hybrid"` and
+  otherwise recompute via `gate_signal()`; test added.
+- **F1 (honesty):** the "NLI"/"entailment model" naming was false — the only judge
+  is a token-overlap heuristic with no model. Renamed `HeuristicNLIJudge` →
+  `HeuristicOverlapJudge` and the Protocol `NLIJudge` → `FaithfulnessJudge`; fixed
+  the module docstring, the abstain reason, and every "NLI" mention in README,
+  status.md, results.md, and this file. Added `entailment_judge` to the RAG
+  evidence protocol for future runs (records `HeuristicOverlapJudge (token
+  overlap, no model)`); the three existing D7 files predate the field, so
+  results.md states the judge was the heuristic (the only one that exists).
+- **F2 (honesty):** citation-format failures were under-reported. Added
+  `answerable_uncited_rate` to the RAG summary and verifier, and results.md/README
+  now state the uncited counts (5/8/10 of 26) beside the answer rates. Reframed the
+  finding as a regression from the Llama run, not "working as designed".
+- **F3 (honesty):** `answerable_refused_at_rank_1or2` conflated gate and heuristic
+  refusals (the entail file's 15 = 1 gate + 14 heuristic). Split into
+  `gate_refused_at_rank_1or2` and `entailment_refused_at_rank_1or2` in the summary
+  and verifier (old field kept for back-compat); results.md table corrected.
+- **F5 (process):** the canonical interpreter for these ML phases is **`.venv-ml`**
+  (it carries the `ml` extra: sentence-transformers, the cross-encoders). The base
+  `.venv` named in CLAUDE.md lacked the post-Phase-1 package and failed
+  `verify-evidence` until reinstalled. Going forward the pre-run checklist prints
+  `pip show papertrail-rag` (name/version/location) so a stale install is caught
+  before a run, and the non-editable reinstall target is `.venv-ml`.
+- Small: results.md ties the EXPLAIN "~10 ms" number to its no-setup caveat next
+  to the table's 23.1 ms (S1); README/results.md state recall@50 is undefined below
+  ef=50 (S2); a footnote flags the frozen v3-baseline `hybrid_rerank` latency as
+  model-load-polluted and points to the clean Phase 2 figure without editing the
+  frozen file (S3); results.md notes `ce_margin` would have won under a near-miss-
+  cost rule, a limitation of AUROC-only selection (S4).
+
+The existing frozen evidence (v2 retrieval/RAG, v3 baseline, hnsw, gate, the three
+D7 RAG files, the eight rerank files) all still verify unchanged — the new RAG
+summary fields are optional in the verifier. No default and no evidence file was
+changed; no question set was touched.
+
+Follow-up opened: a model-specific citation prompt for `gpt-oss-120b`, to be tuned
+and measured on development questions only before any further RAG evidence.

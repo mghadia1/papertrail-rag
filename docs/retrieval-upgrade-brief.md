@@ -130,7 +130,10 @@ evidence file. Do not push. Do not squash earlier commits. Do not amend.
 **A19. The pre-run checklist, every phase:**
 1. `git status` clean, on a fresh commit.
 2. DB up, manifest verified (A9).
-3. Package reinstalled (A8).
+3. Package reinstalled into the canonical `.venv-ml` (A8; it carries the `ml`
+   extra). Print `pip show papertrail-rag` (name / version / location) into the
+   lab-notes so a stale non-editable install cannot silently run old code (review
+   F5, 2026-09-07).
 4. `python -m pytest -q` green. Record the count.
 5. Frozen v2 and v3 evidence verify:
 ```bash

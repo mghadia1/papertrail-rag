@@ -57,6 +57,12 @@ Abstention balanced accuracy fell to 0.828 dev / 0.846 held-out (from v2's
 0.925 / 0.90) because the near-miss negatives — real ML topics verified absent
 from the corpus — are harder to refuse than out-of-domain ones.
 
+Latency note: the `hybrid_rerank` latency stored in this frozen file (dev p50
+≈3896 ms) was polluted by cross-encoder model loading inside the timed loop and is
+not a usable figure; it is left unedited (A3). The clean, warm-model measurement
+is in the Phase 2 section below (dev p50 ≈170 ms). The nDCG@10 / Recall@10 values
+here are deterministic and unaffected.
+
 Topical grades were produced by two independent Claude gradings (Opus 4.8 draft,
 Fable 5.1 blind), Cohen's kappa **0.719** (0.709 on the fully-blind pools); the
 draft model (Opus 4.8) then adjudicated all 53 disagreements per abstract
@@ -82,15 +88,18 @@ measurement is of the index, not the planner. Evidence:
 | 400 | 1.000 | 1.000 | 50 | 5.5 | seqscan |
 | 1000 | 1.000 | 1.000 | 50 | 6.7 | seqscan |
 
-Exact scan: p50 23.1 ms, p95 34.5 ms (n=78). recall@50 below 1.0 at ef<50 is
-truncation (HNSW returns at most ef rows), not approximation error, so it is only
+Exact scan: p50 23.1 ms, p95 34.5 ms (n=78). recall@50 is undefined below ef=50
+(HNSW returns at most ef rows, so the denominator cannot be reached); the sub-1.0
+values at ef<50 are truncation, not approximation error, and the metric is only
 meaningful from ef=100 up (0.998). Two findings at this corpus size: the default
 ef=40 returns fewer rows (40) than the retrieval candidate pool asks for (50–200),
 silently capping the vector side — a Phase 4 concern; and Postgres's planner picks
 the HNSW index only at ef≤40 and reverts to an exact scan above that (`natural
-scan` column). Latencies include per-call connection setup (a fresh session per
-call), so read them only relative to each other within this file (A10); an
-EXPLAIN ANALYZE execution-only comparison was exact ~10 ms vs index ~2 ms.
+scan` column). The table latencies include per-call connection setup (a fresh
+session per call), so read them only relative to each other within this file
+(A10); with that setup excluded, an EXPLAIN ANALYZE execution-only comparison was
+exact ~10 ms vs index ~2 ms (versus the table's exact p50 of 23.1 ms, which
+includes setup).
 
 ## Phase 1b — abstention gate signals (September 6, 2026)
 
@@ -116,26 +125,49 @@ refusals and raises balanced accuracy, but it answers 2 of the 4 near-miss
 negatives, so it is not adopted without review (brief rule D8). No default was
 changed in this phase.
 
+Selection-rule limitation: signals were chosen on development AUROC alone.
+`ce_margin` had the best held-out balanced accuracy (0.923) with zero near-miss
+false-answers but the lowest dev AUROC (0.811), so AUROC-only selection did not
+pick it; a rule that priced in near-miss cost would have chosen differently. This
+is a limitation of the AUROC-only criterion recorded here, not a new choice — the
+held-out numbers were read once and no default was changed.
+
 ## Phase 1b D7 — two-gate RAG on held-out (September 6, 2026)
 
 Held-out RAG generation with `openai/gpt-oss-120b` (Groq retired the previous
 `llama-3.3-70b-versatile`). Three runs, each verified (`--kind rag`, 35 records):
 `docs/evidence/phase-8-rag-{rrf_top,cos_mean_top3,cos_mean_top3-entail}.json`.
 
-| gate (threshold) | answered/26 | refuse@rank1-2 | ood abstain | near abstain | entailment refusals | grounding |
-|---|--:|--:|--:|--:|--:|--:|
-| rrf_top (0.0324, current) | 13 (0.50) | 8 | 1.00 | 1.00 | 0 | 1.00 |
-| cos_mean_top3 (0.4628) | 17 (0.65) | 1 | 0.78 | 0.50 | 0 | 1.00 |
-| cos_mean_top3 + entailment | 0 (0.00) | 15 | 0.78 | 0.50 | 15 | n/a |
+The three answerable outcomes are disjoint and sum to 26: answered, refused, and
+uncited (the model omitted the `[id]` citation format, so citation enforcement
+raised and the question was neither answered nor abstained). Rank-1/2 refusals are
+split by cause — the gate vs the faithfulness heuristic — because they are
+different failures.
 
-Reading: the current `rrf_top` gate leaves 13/26 answerable questions unanswered
-and refuses 8 whose relevant paper was at hybrid rank 1-2; `cos_mean_top3` answers
-17/26 and refuses only 1, but it also answers 2 of the 4 absent-topic (near-miss)
-queries — the trade-off that keeps `rrf_top` as the default. Citation grounding is
-1.00 under both gates. The statement-level NLI entailment gate at 0.80 refuses
-every `gpt-oss-120b` answer (faithfulness 0.0-0.5) and needs recalibration for
-this model before it is usable. `gpt-oss-120b` also omitted the required citation
-format on 5-12 answers, which the citation gate correctly refused.
+| gate (threshold) | answered/26 | uncited/26 | gate refuse@1-2 | heuristic refuse@1-2 | ood abstain | near abstain | grounding |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| rrf_top (0.0324, current) | 13 (0.50) | 5 | 8 | 0 | 1.00 | 1.00 | 1.00 |
+| cos_mean_top3 (0.4628) | 17 (0.65) | 8 | 1 | 0 | 0.78 | 0.50 | 1.00 |
+| cos_mean_top3 + heuristic faithfulness | 0 (0.00) | 10 | 1 | 14 | 0.78 | 0.50 | n/a |
+
+Reading: the current `rrf_top` gate answers 13/26, refuses 8 whose relevant paper
+was at hybrid rank 1-2, and 5 raised the no-citation error; `cos_mean_top3`
+answers 17/26 and gate-refuses only 1, but it also answers 2 of the 4 absent-topic
+(near-miss) queries — the trade-off that keeps `rrf_top` as the default. Citation
+grounding is 1.00 among emitted answers under both gates.
+
+The third row's faithfulness stage is a **token-overlap heuristic, not a trained
+NLI model** — the only judge that exists in the package (see
+`src/papertrail/entailment.py`, `HeuristicOverlapJudge`). At threshold 0.80 that
+heuristic refuses every one of the 15 answers that passed citation enforcement
+(faithfulness 0.0-0.5), so a real NLI judge — which was never built — would be the
+prerequisite before this gate is usable. The three D7 files predate the
+`entailment_judge` protocol field, so they do not record the judge; it was the
+heuristic, the only one available. Finally, `gpt-oss-120b` omitting the citation
+format on 5, 8, and 10 answerable questions is a **regression from the Llama 3.3
+run** (which had zero enforcement errors), not working-as-designed behaviour; the
+citation gate did its job, but the generation prompt needs model-specific citation
+tuning (follow-up, measured on development only).
 
 ## Phase 2 (Part E) — reranker evaluation (September 6, 2026)
 

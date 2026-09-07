@@ -1,4 +1,11 @@
-"""Statement-level Natural Language Inference (NLI) entailment and hallucination verification."""
+"""Statement-level faithfulness check by token overlap.
+
+This is a deterministic, zero-dependency heuristic — token overlap plus a negation
+polarity flag — NOT a trained Natural Language Inference (NLI) model. No NLI model
+exists in this package. It approximates whether each sentence in an answer is
+supported by its cited excerpt; treat its output as a coarse overlap signal, not a
+semantic entailment judgement.
+"""
 
 from __future__ import annotations
 
@@ -37,6 +44,10 @@ class EntailmentReport:
     ungrounded_claims: tuple[str, ...]
 
 
+# Recorded in RAG evidence so a reader knows which judge ran. It is the only judge
+# that exists; there is no trained NLI model in this package.
+HEURISTIC_JUDGE_NAME = "HeuristicOverlapJudge (token overlap, no model)"
+
 SENTENCE_SPLIT_REGEX = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
 CITATION_REGEX = re.compile(r"\[([A-Za-z0-9.-]+(?:/[A-Za-z0-9.-]+)?v\d+)\]")
 
@@ -59,15 +70,21 @@ def extract_statements(answer: str) -> list[tuple[str, str | None]]:
     return statements
 
 
-class NLIJudge(Protocol):
+class FaithfulnessJudge(Protocol):
     def verify_statement(
         self, statement: str, premise_text: str, cited_id: str | None
     ) -> StatementVerification:
-        """Verify if statement is entailed by the premise text."""
+        """Estimate whether the statement is supported by the premise text."""
 
 
-class HeuristicNLIJudge:
-    """Deterministic, zero-dependency token-overlap and negation-aware NLI judge."""
+class HeuristicOverlapJudge:
+    """Deterministic, zero-dependency token-overlap and negation-aware judge.
+
+    This is a lexical heuristic, not a trained NLI model. It scores support by the
+    fraction of a statement's informative words that appear in the best-matching
+    premise sentence, and flags a contradiction on a negation-polarity mismatch at
+    high overlap.
+    """
 
     NEGATION_WORDS = {"not", "never", "no", "neither", "nor", "fails", "failed", "cannot", "unable", "without"}
 
@@ -164,12 +181,16 @@ def evaluate_entailment(
     answer: str,
     context_by_id: dict[str, str],
     *,
-    judge: NLIJudge | None = None,
+    judge: FaithfulnessJudge | None = None,
     min_faithfulness_threshold: float = 0.80,
 ) -> EntailmentReport:
-    """Evaluate an entire answer against the retrieved chunk context."""
+    """Evaluate an entire answer against the retrieved chunk context.
+
+    Uses the token-overlap ``HeuristicOverlapJudge`` by default — a heuristic, not
+    a trained NLI model.
+    """
     if judge is None:
-        judge = HeuristicNLIJudge()
+        judge = HeuristicOverlapJudge()
 
     statements = extract_statements(answer)
     if not statements:

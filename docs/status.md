@@ -21,9 +21,14 @@ Date: August 5, 2026
 - Verification: 49 local tests; evidence verifier passes all 90 retrieval rows
   and 15 RAG records; CPU-only Docker image builds.
 
-A `hybrid_rerank` mode and a statement-level NLI check exist in code; neither has
-a published metric.
+A `hybrid_rerank` mode and an optional statement-level faithfulness check exist in
+code. The faithfulness check is a token-overlap heuristic (`HeuristicOverlapJudge`),
+not a trained NLI model — no NLI model exists in the package — and is off by
+default. (`hybrid_rerank` is now measured in the v3 and reranker studies; see
+docs/results.md.)
 
 Claim boundary: title-derived known-item questions are not exhaustive relevance
 judgments or production traffic. Citation set membership is not statement-level
-entailment. PaperTrail remains off the résumé until the explanation gate closes.
+entailment, and the optional faithfulness check is a lexical overlap heuristic,
+not semantic entailment. PaperTrail remains off the résumé until the explanation
+gate closes.

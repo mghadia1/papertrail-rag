@@ -13,6 +13,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from .embedding import Encoder
+from .entailment import HEURISTIC_JUDGE_NAME
 from .generation import Generator, answer_question
 from .manifest import CorpusManifest
 from .retrieval import SearchMode, retrieve
@@ -598,6 +599,10 @@ def evaluate_rag(
         "embedding_model": encoder.model_name,
         "gate_signal": gate_signal_name,
         "verify_entailment": verify_entailment,
+        # The only faithfulness judge that exists is the token-overlap heuristic;
+        # record which judge would run so a reader never reads it as a trained NLI
+        # model (review F1).
+        "entailment_judge": HEURISTIC_JUDGE_NAME if verify_entailment else None,
         "frozen_abstain_threshold": threshold,
         "heldout_answerable_questions": len(positive_records),
         "heldout_out_of_domain_questions": len(negative_records),
@@ -607,8 +612,30 @@ def evaluate_rag(
         "answerable_abstain_rate": statistics.fmean(
             float(row["abstained"]) for row in positive_records
         ),
+        # Citation-format failures: gpt-oss-120b omits the [id] format more than
+        # Llama, so some answerable questions raise a no-citation ValueError and are
+        # counted as neither answered nor abstained. Reported alongside the answer
+        # rate so it is never hidden (review F2).
+        "answerable_uncited_rate": statistics.fmean(
+            float(bool(row["error"]) and "citation" in row["error"])
+            for row in positive_records
+        ),
+        # Rank-1/2 refusals, split by cause: a gate refusal and a faithfulness-
+        # heuristic refusal are different failures and must not be conflated
+        # (review F3). The combined field is kept for back-compat.
         "answerable_refused_at_rank_1or2": sum(
             row["abstained"] and row["retrieved_rank_of_relevant"] in (1, 2)
+            for row in positive_records
+        ),
+        "gate_refused_at_rank_1or2": sum(
+            row["abstained"]
+            and not row.get("entailment_refused")
+            and row["retrieved_rank_of_relevant"] in (1, 2)
+            for row in positive_records
+        ),
+        "entailment_refused_at_rank_1or2": sum(
+            bool(row.get("entailment_refused"))
+            and row["retrieved_rank_of_relevant"] in (1, 2)
             for row in positive_records
         ),
         "out_of_domain_abstain_rate": statistics.fmean(
