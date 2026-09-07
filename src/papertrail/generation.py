@@ -156,9 +156,15 @@ def answer_question(
     )
     if not hits:
         gate_score = None
-    elif gate_signal_name == "rrf_top":
+    elif gate_signal_name == "rrf_top" and retrieval_mode == "hybrid":
+        # Fast path: the hits are already the hybrid RRF list, so reuse their top
+        # score. This is only valid when retrieval_mode is "hybrid".
         gate_score = signal_from_hits("rrf_top", hybrid_hits=hits)
     else:
+        # Any other signal — or rrf_top over a non-hybrid retrieval whose top score
+        # is not an RRF score (e.g. a cross-encoder logit from hybrid_rerank) —
+        # must recompute the signal from its own retrieval, so the gate is never
+        # compared on the wrong scale (F4).
         gate_score = gate_signal(session, question, encoder, gate_signal_name)
     if not hits or gate_score is None or gate_score < threshold:
         return AnswerResult(

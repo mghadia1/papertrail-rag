@@ -149,6 +149,35 @@ def test_abstain_threshold_is_validated(monkeypatch) -> None:
         )
 
 
+def test_rrf_gate_over_nonhybrid_mode_recomputes_from_hybrid(monkeypatch) -> None:
+    # With retrieval_mode="hybrid_rerank", hits[0]["score"] is a cross-encoder
+    # logit, not an RRF score. The rrf_top gate must not read that logit; it must
+    # recompute rrf_top from an independent hybrid retrieval (F4).
+    import papertrail.gate as gate_module
+
+    rerank_hits = retrieved(score=7.63)  # a cross-encoder-scale logit
+    monkeypatch.setattr(generation, "retrieve", lambda *a, **k: rerank_hits)
+    seen = {}
+
+    def fake_gate_signal(session, query, encoder, name, **kwargs):
+        seen["name"] = name
+        return 0.05  # the true hybrid rrf_top score
+
+    monkeypatch.setattr(gate_module, "gate_signal", fake_gate_signal)
+    result = answer_question(
+        object(),
+        "question",
+        encoder=FakeEncoder(),
+        generator=FakeGenerator("Answer [2401.01234v2]."),
+        threshold=0.0324,
+        retrieval_mode="hybrid_rerank",
+        gate_signal_name="rrf_top",
+    )
+    assert seen["name"] == "rrf_top"  # recomputed via gate_signal, not the logit
+    assert result.gate_score == pytest.approx(0.05)  # not 7.63
+    assert result.abstained is False
+
+
 def test_groq_retries_rate_limits_without_exposing_key(monkeypatch) -> None:
     requests = []
     request = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
