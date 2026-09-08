@@ -734,3 +734,69 @@ Not measured: BM25 as a *served* retriever. This is an in-process index built in
 ~0.6 s over 2k chunks; its per-query time (dev p50 2.9 ms) is in-process scoring
 and is **not** comparable to the SQL path (A10). Whether ParadeDB/`pg_search`
 would be worth it is F2-iv, and only if F2-iii fails to close the gap.
+
+**F2-iii — field weights + length normalization. Negative result: it makes things
+worse.** Evidence: `docs/evidence/phase-8-keyword-{or,or-depth200,weighted-n0,
+weighted-n1,weighted-n2}.json` (all verified, `--kind sparse`, 52 dev rows each).
+
+Two corrections to the brief's spec, both confirmed before building (Mayank chose
+the corrected plan):
+
+1. **`ts_rank_cd(..., 32)` is not length normalization.** The brief says flag 32
+   "divides by document length"; in Postgres, flag 32 divides the rank by itself
+   plus one, 2 divides by length, 1 by 1+log(length). Because x/(x+1) is
+   monotonic, flag 32 **cannot reorder anything**. Checked directly on v3q026:
+   flags 0 and 32 return an identical top-15 ordering (top score 1.300 vs 0.565,
+   the same ranking rescaled); flags 1, 2 and 16 do reorder. So the literal spec
+   would have measured field weights only, with zero normalization effect.
+2. **Additive migration, not a replacing one.** `20260908_0003` *adds*
+   `search_vector_weighted` (title `A`, body `B`) plus its GIN index and leaves
+   `search_vector` untouched. Replacing it would have silently reordered the
+   current `"or"` default too (all-D lexemes become A/B under the default rank
+   weights), breaking reproducibility of the frozen keyword rows and making
+   "cascade" vs "cascade+weights" unmeasurable. `alembic downgrade -1` then
+   `upgrade head` both proven; `\d chunks` shows both GIN indexes.
+
+nDCG@10, development:
+
+| variant | all | lexical | paraphrase | topical |
+|---|--:|--:|--:|--:|
+| `or` (frozen baseline) | 0.759 | 0.977 | 0.695 | 0.595 |
+| `or-depth200` | 0.759 | 0.977 | 0.695 | 0.595 |
+| `weighted-n0` (weights only) | 0.721 | **1.000** | 0.602 | 0.588 |
+| `weighted-n1` (÷1+log len) | 0.729 | **1.000** | 0.623 | 0.580 |
+| `weighted-n2` (÷ len) | 0.480 | 0.923 | 0.314 | 0.222 |
+| BM25 offline (F1) | 0.887 | 1.000 | 0.917 | 0.675 |
+
+Two things this table settles before the main result:
+- **`or` reproduces the frozen v3 baseline exactly** (0.759 / 0.977 / 0.695 /
+  0.595). The additive migration left the default bit-identical, and the harness
+  is validated against frozen evidence.
+- **`or-depth200` is identical to `or`**, so the candidate-depth asymmetry in F1
+  (BM25 read 200 candidate chunks, the SQL path 100) is worth exactly **zero**
+  nDCG. The F1 comparison was fair; that confound is now closed rather than
+  hand-waved.
+
+**The result: field weighting helps `lexical` and hurts `paraphrase`, and the net
+is negative** (all 0.759 → 0.721). Length normalization does not rescue it (n1
+0.729) and full division by length is catastrophic (n2 0.480).
+
+Why, measured rather than guessed: v3 paraphrase queries are constructed so no
+title word appears in the query. On the development split the relevant paper's
+title shares a mean of **0.04** content words with its paraphrase query — **23 of
+24 share none at all** — versus **4.81** for lexical queries, where none has zero
+overlap. So `setweight(title, 'A')` boosts, at weight 1.0, exactly the field a
+paraphrase query cannot match, and dilutes the body evidence (weight 0.4) that it
+can. Lexical rises to a perfect 1.000 for the same reason, in reverse. The knob is
+not broken; it is aimed at the wrong type.
+
+**Conclusion: the missing ingredient is IDF, and Postgres's rank knobs cannot
+supply it.** `ts_rank_cd` scores from within-document term frequency and cover
+density; it has no corpus-wide document-frequency term at all. Field weighting and
+length normalization are the two levers Postgres offers, and on this question set
+both are neutral-to-harmful. That is exactly the brief's precondition for F2-iv
+(ParadeDB `pg_search`, which implements real BM25): F1 showed the ranking function
+matters by a wide margin (+0.222) *and* iii did not close the gap.
+
+No default changed: `keyword_search` still ranks the unweighted column with the
+original expression unless `weighted=`/`normalization=` are passed (A7).

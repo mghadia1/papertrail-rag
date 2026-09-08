@@ -264,6 +264,57 @@ a single controlled variable. BM25's per-query time (dev p50 2.9 ms) is in-proce
 scoring over a ~0.6 s in-memory index and is **not** comparable to the SQL path
 (A10); nothing here proposes BM25 as a served retriever.
 
+## Phase 3 (Part F) — F2-iii: field weights and length normalization (September 8, 2026)
+
+F1 said the ranking function was the problem, so F2-iii adds the two levers
+Postgres offers: a field-weighted `search_vector_weighted` column (title `A`, body
+`B`, migration `20260908_0003`) ranked with
+`ts_rank_cd('{0.1,0.2,0.4,1.0}', …, N)`. Development split only. Evidence:
+`docs/evidence/phase-8-keyword-{or,or-depth200,weighted-n0,weighted-n1,weighted-n2}.json`
+(verified, `--kind sparse`, 52 rows each).
+
+nDCG@10, development:
+
+| variant | all | lexical | paraphrase | topical |
+|---|--:|--:|--:|--:|
+| `or` (frozen baseline) | 0.759 | 0.977 | 0.695 | 0.595 |
+| `or-depth200` | 0.759 | 0.977 | 0.695 | 0.595 |
+| `weighted-n0` (weights only) | 0.721 | **1.000** | 0.602 | 0.588 |
+| `weighted-n1` (÷ 1+log len) | 0.729 | **1.000** | 0.623 | 0.580 |
+| `weighted-n2` (÷ len) | 0.480 | 0.923 | 0.314 | 0.222 |
+| BM25 offline (F1) | 0.887 | 1.000 | 0.917 | 0.675 |
+
+Two controls first. `or` **reproduces the frozen v3 baseline exactly**, so the
+additive migration left the current default bit-identical and the harness is
+validated against frozen evidence. `or-depth200` is identical to `or`, so the
+candidate-depth asymmetry in F1 (BM25 read 200 candidate chunks, the SQL path 100)
+is worth zero nDCG — that confound is closed, not assumed away.
+
+**The result is negative: field weighting helps `lexical` and hurts `paraphrase`,
+and the net is worse than the baseline** (0.759 → 0.721). Length normalization does
+not rescue it, and dividing by document length is catastrophic (0.480).
+
+The reason is measured, not guessed. v3 paraphrase queries are built so no title
+word appears in the query: on development, a relevant paper's title shares a mean
+of **0.04** content words with its paraphrase query (**23 of 24 share none**),
+versus **4.81** for lexical queries (none has zero overlap). Weighting the title to
+1.0 therefore boosts exactly the field a paraphrase query cannot match, and dilutes
+the body evidence it can — while lexical rises to a perfect 1.000 for the same
+reason in reverse.
+
+**Conclusion: the missing ingredient is IDF, and Postgres's rank knobs cannot
+supply it.** `ts_rank_cd` scores from within-document term frequency and cover
+density and carries no corpus-wide document-frequency term; field weights and
+length normalization are the only levers available, and both are
+neutral-to-harmful here. No default changed — `keyword_search` still ranks the
+unweighted column unless the new `weighted=`/`normalization=` arguments are passed.
+
+Two corrections to the execution brief were needed and are recorded in
+`docs/lab-notes.md`: `ts_rank_cd(..., 32)` divides the rank by itself+1, not by
+document length, and is provably order-preserving (verified: flags 0 and 32 give an
+identical top-15); and the migration is additive rather than replacing, so the
+frozen keyword rows stay reproducible.
+
 ## Protocol history
 
 The first report is retained because it showed keyword Recall@5 of 0.05 on

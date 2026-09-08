@@ -59,6 +59,11 @@ class Chunk(Base):
             postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
         Index("ix_chunks_search_vector_gin", "search_vector", postgresql_using="gin"),
+        Index(
+            "ix_chunks_search_vector_weighted_gin",
+            "search_vector_weighted",
+            postgresql_using="gin",
+        ),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
@@ -73,6 +78,19 @@ class Chunk(Base):
     search_vector: Mapped[str] = mapped_column(
         TSVECTOR,
         Computed("to_tsvector('english', coalesce(text, ''))", persisted=True),
+        nullable=False,
+    )
+    # Field-weighted variant kept alongside the original so the current "or"
+    # strategy stays bit-identical and both remain measurable (Part F, F2-iii).
+    # Chunk text is title + E'\n\n' + abstract_chunk.
+    search_vector_weighted: Mapped[str] = mapped_column(
+        TSVECTOR,
+        Computed(
+            "setweight(to_tsvector('english', split_part(text, E'\\n\\n', 1)), 'A') || "
+            "setweight(to_tsvector('english', "
+            "substr(text, length(split_part(text, E'\\n\\n', 1)) + 3)), 'B')",
+            persisted=True,
+        ),
         nullable=False,
     )
 

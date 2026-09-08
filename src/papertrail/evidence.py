@@ -242,35 +242,50 @@ def verify_hnsw_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]
     return {"verified": True, "kind": "hnsw", "rows": len(rows)}
 
 
-def verify_bm25_evidence(
+def verify_sparse_evidence(
     path: Path,
     manifest: CorpusManifest,
     *,
     question_set: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Recompute the offline BM25 ablation (Part F, F1) from its raw rows."""
+    """Recompute a Part F sparse-retrieval ablation from its raw rows.
+
+    Covers both the offline BM25 run (F1) and the Postgres keyword variants (F2),
+    which share a shape deliberately so the F3 table compares rows measured by one
+    harness. Both are development-only by protocol.
+    """
     report = json.loads(path.read_text(encoding="utf-8"))
     _verify_freeze_precedes_report(report)
     if report.get("corpus_arxiv_ids_sha256") != manifest.arxiv_ids_sha256:
-        raise ValueError("bm25 evidence corpus hash does not match manifest")
+        raise ValueError("sparse evidence corpus hash does not match manifest")
     rows = report.get("per_question", [])
     if not rows:
-        raise ValueError("bm25 evidence has no raw rows")
+        raise ValueError("sparse evidence has no raw rows")
 
     protocol = report.get("protocol", {})
-    if not str(protocol.get("library", "")).startswith("rank_bm25"):
-        raise ValueError("bm25 evidence must record the rank_bm25 library version")
-    for key in ("k1", "b"):
-        if not isinstance(protocol.get(key), (int, float)):
-            raise ValueError(f"bm25 evidence protocol.{key} missing")
+    kind = report.get("kind")
+    if kind == "bm25_offline":
+        if not str(protocol.get("library", "")).startswith("rank_bm25"):
+            raise ValueError("bm25 evidence must record the rank_bm25 library version")
+        for key in ("k1", "b"):
+            if not isinstance(protocol.get(key), (int, float)):
+                raise ValueError(f"bm25 evidence protocol.{key} missing")
+    elif kind == "keyword_variant":
+        if not report.get("variant"):
+            raise ValueError("keyword-variant evidence must name its variant")
+        for key in ("rank_expression", "search_vector_column", "candidate_chunks"):
+            if not protocol.get(key):
+                raise ValueError(f"keyword-variant evidence protocol.{key} missing")
+    else:
+        raise ValueError(f"unknown sparse evidence kind: {kind!r}")
 
     # A1 guard: this ablation is development-only; held-out is reserved for the
     # single final report, so a held-out row here would be a protocol violation.
     splits = sorted({row["split"] for row in rows})
     if splits != ["development"]:
-        raise ValueError(f"bm25 evidence must be development-only; found splits {splits}")
+        raise ValueError(f"sparse evidence must be development-only; found splits {splits}")
     if list(protocol.get("splits_evaluated", [])) != ["development"]:
-        raise ValueError("bm25 evidence protocol.splits_evaluated must be ['development']")
+        raise ValueError("sparse evidence protocol.splits_evaluated must be ['development']")
 
     for row in rows:
         graded = {str(k): int(v) for k, v in row["relevant"].items()}
@@ -293,8 +308,8 @@ def verify_bm25_evidence(
             for q in question_set["retrieval_questions"]
             if q.get("pool")
         }
-        # BM25 did not build the topical pools, so it may rank unjudged papers.
-        # Those must be recorded per row (scored grade 0), never silently dropped.
+        # These retrievers did not build the topical pools, so they may rank
+        # unjudged papers. Those must be recorded per row (scored grade 0).
         for row in rows:
             pool = pools.get(row["question_id"])
             if pool is None:
@@ -315,8 +330,12 @@ def verify_bm25_evidence(
                 _close(float(value), published[type_key][key],
                        f"aggregates.development.{mode}.{type_key}.{key}")
 
-    return {"verified": True, "kind": "bm25", "raw_rows": len(rows),
+    return {"verified": True, "kind": kind, "raw_rows": len(rows),
             "unjudged_topical_rows": sum(1 for r in rows if r.get("unjudged_ranked_ids"))}
+
+
+# Kept so the F1 command line in the notes/commits keeps working.
+verify_bm25_evidence = verify_sparse_evidence
 
 
 def verify_gate_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]:

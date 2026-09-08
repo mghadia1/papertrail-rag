@@ -13,7 +13,7 @@ from .config import get_settings
 from .embedding import get_encoder
 from .evaluation import evaluate, evaluate_rag, load_question_set
 from .evidence import (
-    verify_bm25_evidence,
+    verify_sparse_evidence,
     verify_gate_evidence,
     verify_hnsw_evidence,
     verify_rag_evidence,
@@ -112,7 +112,7 @@ def build_parser() -> argparse.ArgumentParser:
     evidence = commands.add_parser(
         "verify-evidence", help="recompute and verify a retrieval or RAG report"
     )
-    evidence.add_argument("--kind", choices=("retrieval", "rag", "hnsw", "gate", "bm25"), required=True)
+    evidence.add_argument("--kind", choices=("retrieval", "rag", "hnsw", "gate", "bm25", "sparse"), required=True)
     evidence.add_argument("--report", type=Path, required=True)
     evidence.add_argument("--manifest", type=Path, required=True)
     evidence.add_argument("--questions", type=Path)
@@ -280,13 +280,13 @@ def main() -> int:
         manifest = CorpusManifest.read(args.manifest)
         if args.kind == "hnsw":
             result = verify_hnsw_evidence(args.report, manifest)
-        elif args.kind == "bm25":
+        elif args.kind in ("bm25", "sparse"):
             question_set = (
                 load_question_set(args.questions, manifest)
                 if args.questions is not None
                 else None
             )
-            result = verify_bm25_evidence(args.report, manifest, question_set=question_set)
+            result = verify_sparse_evidence(args.report, manifest, question_set=question_set)
         elif args.kind == "gate":
             result = verify_gate_evidence(args.report, manifest)
         elif args.kind == "retrieval":

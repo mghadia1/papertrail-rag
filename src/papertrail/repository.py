@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from sqlalchemy import delete, func, select, text, update
+from sqlalchemy import ARRAY, REAL, cast, delete, func, select, text, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -222,9 +222,35 @@ def vector_search(
     ]
 
 
+# ts_rank_cd normalization flags (Postgres). 0 ignores document length; 1 divides
+# by 1+log(length); 2 divides by length. Flag 32 (rank/(rank+1)) is a monotonic
+# squash and cannot reorder results, so it is not a length normalization — see the
+# Part F, F2-iii note in docs/lab-notes.md.
+RANK_NORMALIZATIONS = (0, 1, 2, 16, 32)
+
+# ts_rank_cd weights are ordered {D, C, B, A}; these are Postgres's defaults, made
+# explicit so the weighted-column variant states what it applies.
+_RANK_WEIGHTS = [0.1, 0.2, 0.4, 1.0]
+
+
 def keyword_search(
-    session: Session, query_text: str, *, limit: int
+    session: Session,
+    query_text: str,
+    *,
+    limit: int,
+    weighted: bool = False,
+    normalization: int = 0,
 ) -> list[dict[str, object]]:
+    """OR-of-terms full-text search.
+
+    ``weighted`` ranks against the field-weighted ``search_vector_weighted``
+    column (title lexemes A, body B) instead of the original unweighted column;
+    ``normalization`` is the ``ts_rank_cd`` normalization flag. Both default to
+    the original behaviour, so the frozen ``"or"`` results stay bit-identical
+    (brief A7: the default does not change until Phase 4 chooses).
+    """
+    if normalization not in RANK_NORMALIZATIONS:
+        raise ValueError(f"unsupported ts_rank_cd normalization flag: {normalization}")
     terms = tuple(
         dict.fromkeys(
             token.lower()
@@ -235,7 +261,18 @@ def keyword_search(
     if not terms:
         return []
     query = func.websearch_to_tsquery("english", " OR ".join(terms))
-    rank = func.ts_rank_cd(Chunk.search_vector, query)
+    if weighted:
+        # Postgres needs the weight array typed as real[].
+        rank = func.ts_rank_cd(
+            cast(_RANK_WEIGHTS, ARRAY(REAL)),
+            Chunk.search_vector_weighted,
+            query,
+            normalization,
+        )
+    elif normalization:
+        rank = func.ts_rank_cd(Chunk.search_vector, query, normalization)
+    else:
+        rank = func.ts_rank_cd(Chunk.search_vector, query)
     rows = session.execute(
         select(
             Paper.arxiv_id,
@@ -247,7 +284,11 @@ def keyword_search(
             rank.label("score"),
         )
         .join(Paper, Paper.id == Chunk.paper_id)
-        .where(Chunk.search_vector.op("@@")(query))
+        .where(
+            (Chunk.search_vector_weighted if weighted else Chunk.search_vector).op("@@")(
+                query
+            )
+        )
         .order_by(rank.desc(), Chunk.id)
         .limit(limit)
     ).all()
