@@ -217,6 +217,53 @@ cost. No default was changed (Part E is a measurement phase). The frozen baselin
 `hybrid_rerank` latency (dev p50 3896 ms) was model-load-polluted; the clean
 Phase-2 figure is 170 ms.
 
+## Phase 3 (Part F) — sparse retrieval, F1: offline BM25 ablation (September 8, 2026)
+
+Keyword is the weakest retriever in the v3 baseline. F1 asks whether that is the
+*ranking function* or the *query construction*, by scoring the same corpus with
+BM25 offline. `rank_bm25 0.2.2`, `BM25Okapi(k1=1.5, b=0.75)` over all 2,039 chunk
+texts, tokenized with `keyword_search`'s exact regex, top-200 chunks →
+`distinct_papers` → 10. **Development split only** (24 paraphrase, 16 lexical, 12
+topical); held-out is reserved for one final report on the best configuration
+(A1), and the verifier rejects a held-out row in this file. Evidence:
+`docs/evidence/phase-8-bm25-offline.json` (verified, `--kind bm25`, 52 rows).
+
+| type (dev) | FTS-OR `ts_rank_cd` | BM25 offline | gap |
+|---|--:|--:|--:|
+| all | 0.759 | 0.887 | +0.128 |
+| lexical | 0.977 | 1.000 | +0.023 |
+| paraphrase | 0.695 | 0.917 | **+0.222** |
+| topical | 0.595 | 0.675* | +0.080* |
+
+nDCG@10. Recall@10 also moves: all 0.923 → 0.981, paraphrase 0.833 → 0.958.
+
+`*` **topical is a lower bound, not a clean comparison.** BM25 did not help build
+the frozen topical judgment pools, so it surfaces papers nobody judged — all 12
+topical rows do, 2–7 unjudged ids each in the top 10 — and those are scored grade
+0. The pre-registered decision rule reads only `lexical` and `paraphrase`, whose
+relevance is a fixed known-item set with no pool, so the branch below is unaffected
+by this bias.
+
+The decision rule was written into `docs/lab-notes.md` before the ablation ran: a
+≥0.05 nDCG@10 gap on development lexical or paraphrase means the ranking function
+matters. Paraphrase came in at **+0.222**, so the ranking function is the problem.
+
+This is a **ranking failure, not a matching failure** — checked rather than
+assumed. On the two worst paraphrase questions BM25 scores 1.000 and FTS 0.000,
+yet FTS *did* match the relevant paper both times and merely ranked it 14th, just
+outside the cutoff (v3q026: 2608.03291v1, matched set 639 papers; v3q004:
+2608.01085v1, matched set 880 papers). `ts_rank_cd` scores from within-document
+term frequency and cover density only — it carries no corpus-wide IDF term — and
+at the default normalization flag it does not divide by document length, so on a
+21–25-term paraphrase the common words count as much as the rare discriminative
+ones. BM25 has both IDF and length normalization.
+
+Caveat carried in the evidence file: Postgres `english` FTS stems and this offline
+BM25 does not, so it compares ranking functions under different tokenization, not
+a single controlled variable. BM25's per-query time (dev p50 2.9 ms) is in-process
+scoring over a ~0.6 s in-memory index and is **not** comparable to the SQL path
+(A10); nothing here proposes BM25 as a served retriever.
+
 ## Protocol history
 
 The first report is retained because it showed keyword Recall@5 of 0.05 on

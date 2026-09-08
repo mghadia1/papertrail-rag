@@ -163,6 +163,31 @@ def test_rerank_verifier_requires_reranker_protocol_fields(tmp_path) -> None:
         verify_retrieval_evidence(edited3, manifest, question_set=questions)
 
 
+def test_bm25_verifier_recomputes_and_guards_the_split(tmp_path) -> None:
+    from papertrail.evidence import verify_bm25_evidence
+
+    manifest = CorpusManifest.read(ROOT / "docs/evidence/corpus-manifest-1000.json")
+    questions = load_question_set(ROOT / "eval/questions-v3.json", manifest)
+    source = ROOT / "docs/evidence/phase-8-bm25-offline.json"
+    assert verify_bm25_evidence(source, manifest, question_set=questions)["verified"] is True
+
+    # An edited aggregate must be caught by recomputation from the raw rows.
+    edited = json.loads(source.read_text())
+    edited["aggregates"]["development"]["bm25_offline"]["paraphrase"]["ndcg_at_10"] = 0.5
+    bad = tmp_path / "edited-bm25.json"
+    bad.write_text(json.dumps(edited))
+    with pytest.raises(ValueError, match="disagrees"):
+        verify_bm25_evidence(bad, manifest, question_set=questions)
+
+    # A1: this ablation is development-only; a held-out row is a protocol breach.
+    leaked = json.loads(source.read_text())
+    leaked["per_question"][0]["split"] = "heldout"
+    bad2 = tmp_path / "leaked-bm25.json"
+    bad2.write_text(json.dumps(leaked))
+    with pytest.raises(ValueError, match="development-only"):
+        verify_bm25_evidence(bad2, manifest, question_set=questions)
+
+
 def test_rag_verifier_rejects_edited_grounding_rate(tmp_path) -> None:
     manifest = CorpusManifest.read(ROOT / "docs/evidence/corpus-manifest-1000.json")
     questions = load_question_set(ROOT / "eval/questions-v2.json", manifest)

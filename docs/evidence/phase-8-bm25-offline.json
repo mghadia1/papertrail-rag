@@ -1,0 +1,2750 @@
+{
+  "schema_version": 1,
+  "kind": "bm25_offline",
+  "created_at_utc": "2026-09-08T21:13:21.052128Z",
+  "evaluation_set_frozen_at_utc": "2026-09-05T18:52:02.108316Z",
+  "evaluation_schema_version": 3,
+  "corpus_arxiv_ids_sha256": "7308d240f717df7c9b17a1dfb7140c68615a462298b42866b95bc17f93250146",
+  "protocol": {
+    "library": "rank_bm25 0.2.2",
+    "ranker": "BM25Okapi",
+    "k1": 1.5,
+    "b": 0.75,
+    "epsilon": 0.25,
+    "chunks_indexed": 2039,
+    "candidate_chunks": 200,
+    "retrieval_limit": 10,
+    "splits_evaluated": [
+      "development"
+    ],
+    "heldout_withheld_reason": "Held-out is reserved for one final report on the best development configuration (brief F3, rule A1).",
+    "tokenizer": "[A-Za-z0-9]+(?:-[A-Za-z0-9]+)* lower-cased; query terms <3 chars dropped",
+    "stemming": "none \u2014 Postgres english FTS stems and this does not, so the comparison is across different tokenization, not a controlled swap",
+    "index_build_ms": 44.067292008548975,
+    "comparison_baseline": "docs/evidence/phase-8-retrieval-v3-baseline.json (keyword mode, development)"
+  },
+  "aggregates": {
+    "development": {
+      "bm25_offline": {
+        "all": {
+          "questions": 52,
+          "recall_at_5": 0.9615384615384616,
+          "mrr": 0.9392857142857143,
+          "ndcg_at_10": 0.8868353128053754,
+          "latency_ms_p50": 2.8807497583329678,
+          "latency_ms_p95": 5.193000193685293,
+          "recall_at_10": 0.9807692307692307
+        },
+        "lexical": {
+          "questions": 16,
+          "recall_at_5": 1.0,
+          "mrr": 1.0,
+          "ndcg_at_10": 1.0,
+          "latency_ms_p50": 2.3957500234246254,
+          "latency_ms_p95": 2.7294582687318325,
+          "recall_at_10": 1.0
+        },
+        "paraphrase": {
+          "questions": 24,
+          "recall_at_5": 0.9583333333333334,
+          "mrr": 0.9041666666666667,
+          "ndcg_at_10": 0.9174076067002499,
+          "latency_ms_p50": 4.528625402599573,
+          "latency_ms_p95": 5.280583165585995,
+          "recall_at_10": 0.9583333333333334
+        },
+        "topical": {
+          "questions": 12,
+          "recall_at_5": 0.9166666666666666,
+          "mrr": 0.9285714285714285,
+          "ndcg_at_10": 0.674804475422794,
+          "latency_ms_p50": 2.58070882409811,
+          "latency_ms_p95": 3.7437081336975098,
+          "recall_at_10": 1.0
+        }
+      }
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "v3q001",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.03275v1"
+      ],
+      "relevant": {
+        "2608.03275v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03275v1",
+        "2608.01290v1",
+        "2608.01142v2",
+        "2608.03057v1",
+        "2608.03228v1",
+        "2608.01074v1",
+        "2608.02528v1",
+        "2608.01530v1",
+        "2608.00978v1",
+        "2608.00860v1"
+      ],
+      "query_terms": [
+        "parameter-efficient",
+        "tuning",
+        "method",
+        "that",
+        "stores",
+        "each",
+        "specialist",
+        "small",
+        "learnable",
+        "code",
+        "and",
+        "drives",
+        "hypernetwork",
+        "emit",
+        "per-input",
+        "low-rank",
+        "weight",
+        "updates",
+        "rather",
+        "than",
+        "one",
+        "full",
+        "stored",
+        "adapter",
+        "per"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 42.98522418159514,
+      "latency_ms": 8.311999961733818
+    },
+    {
+      "question_id": "v3q002",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.00881v1",
+        "2608.01651v1",
+        "2608.02123v1",
+        "2608.02989v1",
+        "2608.03447v1"
+      ],
+      "relevant": {
+        "2608.02123v1": 2,
+        "2608.02989v1": 2,
+        "2608.01651v1": 2,
+        "2608.03447v1": 2,
+        "2608.00881v1": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.03447v1",
+        "2608.02123v1",
+        "2608.01651v1",
+        "2608.01185v1",
+        "2608.02989v1",
+        "2608.03083v1",
+        "2608.01473v1",
+        "2608.02980v1",
+        "2608.00646v1",
+        "2608.01460v1"
+      ],
+      "query_terms": [
+        "speculative",
+        "decoding",
+        "methods",
+        "that",
+        "speed",
+        "large",
+        "language",
+        "model",
+        "inference",
+        "drafting",
+        "and",
+        "verifying",
+        "tokens"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.9357847944877146,
+      "top_score": 28.441923361989577,
+      "latency_ms": 3.7437081336975098,
+      "unjudged_ranked_ids": [
+        "2608.00646v1",
+        "2608.01185v1",
+        "2608.02980v1"
+      ]
+    },
+    {
+      "question_id": "v3q003",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.00630v1",
+        "2608.01184v1",
+        "2608.01252v1",
+        "2608.01475v1",
+        "2608.01518v1",
+        "2608.01630v1",
+        "2608.01672v1",
+        "2608.01743v1",
+        "2608.03123v1",
+        "2608.03855v1",
+        "2608.03874v1"
+      ],
+      "relevant": {
+        "2608.01475v1": 2,
+        "2608.01252v1": 2,
+        "2608.00630v1": 2,
+        "2608.01518v1": 2,
+        "2608.01184v1": 2,
+        "2608.01743v1": 2,
+        "2608.03123v1": 1,
+        "2608.01630v1": 1,
+        "2608.01672v1": 1,
+        "2608.03855v1": 1,
+        "2608.03874v1": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.01475v1",
+        "2608.01518v1",
+        "2608.03063v1",
+        "2608.01334v1",
+        "2608.03407v1",
+        "2608.00630v1",
+        "2608.03794v1",
+        "2608.01252v1",
+        "2608.01471v1",
+        "2608.01314v1"
+      ],
+      "query_terms": [
+        "preserving",
+        "plasticity",
+        "and",
+        "avoiding",
+        "catastrophic",
+        "forgetting",
+        "continual",
+        "online",
+        "learning"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.6193734758056627,
+      "top_score": 37.05696783425102,
+      "latency_ms": 2.6241247542202473,
+      "unjudged_ranked_ids": [
+        "2608.01334v1",
+        "2608.01471v1",
+        "2608.03063v1",
+        "2608.03407v1",
+        "2608.03794v1"
+      ]
+    },
+    {
+      "question_id": "v3q004",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.01085v1"
+      ],
+      "relevant": {
+        "2608.01085v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.01085v1",
+        "2608.03250v1",
+        "2608.01095v1",
+        "2608.01067v1",
+        "2608.01322v1",
+        "2608.02091v1",
+        "2608.00583v1",
+        "2608.03545v1",
+        "2608.03467v1",
+        "2608.03411v1"
+      ],
+      "query_terms": [
+        "hidden",
+        "malicious",
+        "behavior",
+        "cooperating",
+        "language",
+        "models",
+        "that",
+        "stays",
+        "dormant",
+        "until",
+        "enough",
+        "peers",
+        "accumulate",
+        "shared",
+        "signal",
+        "plus",
+        "clean-only",
+        "test-time",
+        "defense",
+        "quarantines",
+        "anomalous",
+        "updates",
+        "before",
+        "they",
+        "spread"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 45.48667749075982,
+      "latency_ms": 5.193000193685293
+    },
+    {
+      "question_id": "v3q005",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.01575v1",
+        "2608.02830v1"
+      ],
+      "relevant": {
+        "2608.02830v1": 2,
+        "2608.01575v1": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.02830v1",
+        "2608.01913v1",
+        "2608.01575v1",
+        "2608.02415v1",
+        "2608.00658v1",
+        "2608.01258v1",
+        "2608.03708v1",
+        "2608.03874v1",
+        "2608.01400v1",
+        "2608.03015v1"
+      ],
+      "query_terms": [
+        "many-shot",
+        "in-context",
+        "learning",
+        "behavior",
+        "and",
+        "failure",
+        "modes",
+        "vision-language",
+        "models"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.9639404333166532,
+      "top_score": 23.64826483702768,
+      "latency_ms": 2.415209077298641,
+      "unjudged_ranked_ids": [
+        "2608.01258v1",
+        "2608.01400v1",
+        "2608.01913v1",
+        "2608.02415v1",
+        "2608.03015v1",
+        "2608.03708v1",
+        "2608.03874v1"
+      ]
+    },
+    {
+      "question_id": "v3q006",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.03322v1"
+      ],
+      "relevant": {
+        "2608.03322v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03322v1",
+        "2608.00976v1",
+        "2608.01663v1",
+        "2608.01808v1",
+        "2608.03763v1",
+        "2608.01686v1",
+        "2608.03471v1",
+        "2608.02833v1",
+        "2608.02252v1",
+        "2608.01988v1"
+      ],
+      "query_terms": [
+        "medical",
+        "visual",
+        "grounding",
+        "trained",
+        "the",
+        "locanymed-200k",
+        "dataset"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 30.511457741090954,
+      "latency_ms": 2.2392496466636658
+    },
+    {
+      "question_id": "v3q007",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.01354v1"
+      ],
+      "relevant": {
+        "2608.01354v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.02290v1",
+        "2608.02907v1",
+        "2608.00623v1",
+        "2608.03762v1",
+        "2608.01354v1",
+        "2608.02711v1",
+        "2608.02769v1",
+        "2608.00893v1",
+        "2608.01074v1",
+        "2608.03664v1"
+      ],
+      "query_terms": [
+        "label-free",
+        "scheme",
+        "where",
+        "region-aware",
+        "multimodal",
+        "model",
+        "writes",
+        "description",
+        "for",
+        "image",
+        "area",
+        "verifies",
+        "re-identifying",
+        "that",
+        "among",
+        "confusable",
+        "candidates",
+        "and",
+        "improves",
+        "from",
+        "unlabeled",
+        "data"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.2,
+      "ndcg_at_10": 0.38685280723454163,
+      "top_score": 19.435314736511714,
+      "latency_ms": 4.545500036329031
+    },
+    {
+      "question_id": "v3q008",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.02168v1"
+      ],
+      "relevant": {
+        "2608.02168v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.02168v1",
+        "2608.03063v1",
+        "2608.03696v1",
+        "2608.01160v1",
+        "2608.02558v1",
+        "2608.01963v1",
+        "2608.02399v1",
+        "2608.00836v1",
+        "2608.02062v1",
+        "2608.03589v1"
+      ],
+      "query_terms": [
+        "billion-scale",
+        "credit",
+        "fraud",
+        "detection",
+        "weixin",
+        "pay",
+        "using",
+        "graph",
+        "neural",
+        "networks"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 48.89469419064375,
+      "latency_ms": 2.5393753312528133
+    },
+    {
+      "question_id": "v3q009",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.01724v1"
+      ],
+      "relevant": {
+        "2608.01724v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.01724v1",
+        "2608.03480v1",
+        "2608.01005v1",
+        "2608.00868v2",
+        "2608.02769v1",
+        "2608.01017v1",
+        "2608.01819v1",
+        "2608.01202v1",
+        "2608.03862v1",
+        "2608.02673v1"
+      ],
+      "query_terms": [
+        "next-speaker",
+        "prediction",
+        "the",
+        "tides",
+        "bilingual",
+        "multi-party",
+        "conversation",
+        "dataset"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 44.80799028934443,
+      "latency_ms": 2.235167194157839
+    },
+    {
+      "question_id": "v3q010",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.01397v1"
+      ],
+      "relevant": {
+        "2608.01397v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.01397v1",
+        "2608.02942v1",
+        "2608.01127v2",
+        "2608.01692v2",
+        "2608.03084v1",
+        "2608.02440v1",
+        "2608.02428v1",
+        "2608.03316v1",
+        "2608.01944v1",
+        "2608.01953v1"
+      ],
+      "query_terms": [
+        "robot",
+        "control",
+        "model",
+        "that",
+        "predicts",
+        "future",
+        "latent",
+        "states",
+        "the",
+        "representation",
+        "used",
+        "choose",
+        "actions",
+        "grounded",
+        "with",
+        "shape-and-depth",
+        "cues",
+        "and",
+        "supervised",
+        "moving-average",
+        "teacher",
+        "trained",
+        "flow",
+        "matching"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 39.36442692437825,
+      "latency_ms": 4.689167253673077
+    },
+    {
+      "question_id": "v3q011",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.02062v1"
+      ],
+      "relevant": {
+        "2608.02062v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.02062v1",
+        "2608.02320v1",
+        "2608.01963v1",
+        "2608.02274v1",
+        "2608.02168v1",
+        "2608.03589v1",
+        "2608.00869v1",
+        "2608.02172v1",
+        "2608.03490v1",
+        "2608.01090v1"
+      ],
+      "query_terms": [
+        "kolmogorov-arnold",
+        "networks",
+        "for",
+        "faster-than-nyquist",
+        "signaling",
+        "detection"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 33.42798969767524,
+      "latency_ms": 1.9633332267403603
+    },
+    {
+      "question_id": "v3q012",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.01676v1"
+      ],
+      "relevant": {
+        "2608.01676v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.01676v1",
+        "2608.03082v1",
+        "2608.01599v1",
+        "2608.00765v1",
+        "2608.02678v1",
+        "2608.03812v1",
+        "2608.02442v1",
+        "2608.01495v1",
+        "2608.02032v1",
+        "2608.03673v1"
+      ],
+      "query_terms": [
+        "auditing",
+        "how",
+        "skipping",
+        "blocks",
+        "efficient",
+        "extended-sequence",
+        "transformers",
+        "shifts",
+        "which",
+        "passages",
+        "influence",
+        "the",
+        "output",
+        "using",
+        "planted",
+        "correct",
+        "wrong",
+        "and",
+        "filler",
+        "probe",
+        "cards",
+        "several",
+        "compression",
+        "ratios"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 52.07745386435994,
+      "latency_ms": 4.599666688591242
+    },
+    {
+      "question_id": "v3q013",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.01017v1"
+      ],
+      "relevant": {
+        "2608.01017v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.01017v1",
+        "2608.03219v1",
+        "2608.02678v1",
+        "2608.03160v1",
+        "2608.01004v1",
+        "2608.01631v1",
+        "2608.02372v1",
+        "2608.02078v1",
+        "2608.02877v1",
+        "2608.01565v1"
+      ],
+      "query_terms": [
+        "why",
+        "chatbots",
+        "cave",
+        "and",
+        "drop",
+        "correct",
+        "clinical",
+        "answer",
+        "under",
+        "user",
+        "pushback",
+        "evidence",
+        "depends",
+        "dialogue",
+        "conditions",
+        "like",
+        "who",
+        "asks",
+        "timing",
+        "rather",
+        "than",
+        "fixed",
+        "per-model",
+        "rate"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 41.57881813936125,
+      "latency_ms": 4.528625402599573
+    },
+    {
+      "question_id": "v3q014",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.02250v1"
+      ],
+      "relevant": {
+        "2608.02250v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.02250v1",
+        "2608.03108v1",
+        "2608.03099v1",
+        "2608.00893v1",
+        "2608.01055v1",
+        "2608.02134v1",
+        "2608.03469v1",
+        "2608.03862v1",
+        "2608.01556v1",
+        "2608.01355v1"
+      ],
+      "query_terms": [
+        "how",
+        "skewed",
+        "noisy",
+        "unevenly",
+        "sized",
+        "local",
+        "data",
+        "affect",
+        "which",
+        "participants",
+        "privacy-preserving",
+        "decentralized",
+        "training",
+        "scheme",
+        "should",
+        "include",
+        "plus",
+        "way",
+        "score",
+        "each",
+        "participant",
+        "contribution"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 28.896935473561708,
+      "latency_ms": 4.37795789912343
+    },
+    {
+      "question_id": "v3q015",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.03106v1"
+      ],
+      "relevant": {
+        "2608.03106v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03106v1",
+        "2608.02762v1",
+        "2608.02404v1",
+        "2608.03370v1",
+        "2608.02663v1",
+        "2608.02192v1",
+        "2608.03324v1",
+        "2608.03172v1",
+        "2608.00869v1",
+        "2608.01588v1"
+      ],
+      "query_terms": [
+        "upscaling",
+        "low-quality",
+        "thermal",
+        "pictures",
+        "downstream",
+        "detectors",
+        "and",
+        "scene",
+        "parsers",
+        "stay",
+        "reliable",
+        "favoring",
+        "authentic",
+        "heat",
+        "structure",
+        "over",
+        "artificial",
+        "edge",
+        "crispness"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 25.827869829238995,
+      "latency_ms": 3.8924170657992363
+    },
+    {
+      "question_id": "v3q016",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.02302v1"
+      ],
+      "relevant": {
+        "2608.02302v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.02302v1",
+        "2608.02887v1",
+        "2608.01078v1",
+        "2608.00675v1",
+        "2608.01615v1",
+        "2608.01347v1",
+        "2608.02078v1",
+        "2608.03709v1",
+        "2608.01085v1",
+        "2608.02392v1"
+      ],
+      "query_terms": [
+        "letting",
+        "coding",
+        "assistant",
+        "flag",
+        "its",
+        "own",
+        "reasoning-phase",
+        "breakpoints",
+        "while",
+        "works",
+        "one",
+        "long",
+        "recorded",
+        "run",
+        "becomes",
+        "several",
+        "supervised",
+        "targets",
+        "including",
+        "failed-then-corrected",
+        "stretches"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 22.286127626513718,
+      "latency_ms": 4.056416917592287
+    },
+    {
+      "question_id": "v3q017",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.03612v1"
+      ],
+      "relevant": {
+        "2608.03612v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03612v1",
+        "2608.02487v1",
+        "2608.00530v1",
+        "2608.03079v1",
+        "2608.03370v1",
+        "2608.02602v1",
+        "2608.02585v1",
+        "2608.01692v2",
+        "2608.02709v1",
+        "2608.00544v1"
+      ],
+      "query_terms": [
+        "virtual",
+        "contrast",
+        "enhancement",
+        "for",
+        "breast",
+        "mri",
+        "using",
+        "flux",
+        "latent",
+        "flow",
+        "transformer"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 51.45410771937617,
+      "latency_ms": 2.7283751405775547
+    },
+    {
+      "question_id": "v3q018",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.00985v1"
+      ],
+      "relevant": {
+        "2608.00985v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.00985v1",
+        "2608.03147v1",
+        "2608.02148v1",
+        "2608.01039v1",
+        "2608.02907v1",
+        "2608.01321v1",
+        "2608.01336v1",
+        "2608.03410v1",
+        "2608.03557v1",
+        "2608.02216v1"
+      ],
+      "query_terms": [
+        "contrastive",
+        "pretraining",
+        "approach",
+        "for",
+        "scrna-seq",
+        "that",
+        "splits",
+        "each",
+        "profile",
+        "genes",
+        "into",
+        "two",
+        "co-expression",
+        "halves",
+        "and",
+        "builds",
+        "hard",
+        "negatives",
+        "shuffling",
+        "values",
+        "improve",
+        "whole-profile",
+        "embeddings"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 45.09461551564511,
+      "latency_ms": 4.43929061293602
+    },
+    {
+      "question_id": "v3q019",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.02964v1"
+      ],
+      "relevant": {
+        "2608.02964v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.02964v1",
+        "2608.01666v2",
+        "2608.02315v1",
+        "2608.03863v1",
+        "2608.00775v1",
+        "2608.00893v1",
+        "2608.02835v1",
+        "2608.00646v1",
+        "2608.01017v1",
+        "2608.01780v1"
+      ],
+      "query_terms": [
+        "deriving",
+        "per-point",
+        "thermal-emission",
+        "factors",
+        "mixed",
+        "historic",
+        "surfaces",
+        "segmenting",
+        "co-registered",
+        "color",
+        "photo",
+        "and",
+        "mapping",
+        "each",
+        "substance",
+        "reference",
+        "table",
+        "before",
+        "inverse-planck",
+        "temperature",
+        "solve",
+        "avoid",
+        "false",
+        "subsurface",
+        "flaws"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 46.815974957555206,
+      "latency_ms": 4.708915948867798
+    },
+    {
+      "question_id": "v3q020",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.01035v1",
+        "2608.01288v1",
+        "2608.03059v1",
+        "2608.03974v1"
+      ],
+      "relevant": {
+        "2608.01288v1": 2,
+        "2608.01035v1": 1,
+        "2608.03059v1": 1,
+        "2608.03974v1": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.01288v1",
+        "2608.02942v1",
+        "2608.02059v1",
+        "2608.03974v1",
+        "2608.02711v1",
+        "2608.00736v1",
+        "2608.03284v1",
+        "2608.02806v1",
+        "2608.00769v1",
+        "2608.03218v1"
+      ],
+      "query_terms": [
+        "one-step",
+        "few-step",
+        "distillation",
+        "diffusion",
+        "models",
+        "for",
+        "faster",
+        "image",
+        "editing",
+        "and",
+        "object",
+        "removal"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.7520764230169481,
+      "top_score": 26.320797075553372,
+      "latency_ms": 2.866750117391348,
+      "unjudged_ranked_ids": [
+        "2608.00769v1",
+        "2608.02806v1",
+        "2608.02942v1"
+      ]
+    },
+    {
+      "question_id": "v3q021",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.00583v1",
+        "2608.00732v1",
+        "2608.01085v1",
+        "2608.01388v1",
+        "2608.02089v1",
+        "2608.02271v1",
+        "2608.02820v1",
+        "2608.03291v1",
+        "2608.03745v1"
+      ],
+      "relevant": {
+        "2608.02820v1": 2,
+        "2608.00583v1": 2,
+        "2608.03291v1": 2,
+        "2608.02089v1": 2,
+        "2608.03745v1": 2,
+        "2608.01388v1": 1,
+        "2608.00732v1": 1,
+        "2608.02271v1": 1,
+        "2608.01085v1": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.02820v1",
+        "2608.00975v1",
+        "2608.01085v1",
+        "2608.00732v1",
+        "2608.00566v1",
+        "2608.02678v1",
+        "2608.02322v1",
+        "2608.00583v1",
+        "2608.02188v1",
+        "2608.02448v1"
+      ],
+      "query_terms": [
+        "chain-of-thought",
+        "monitoring",
+        "for",
+        "safety",
+        "and",
+        "its",
+        "vulnerability",
+        "backdoors",
+        "poisoning"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.4804327544121134,
+      "top_score": 37.17475188942188,
+      "latency_ms": 2.387791872024536,
+      "unjudged_ranked_ids": [
+        "2608.02188v1",
+        "2608.02322v1"
+      ]
+    },
+    {
+      "question_id": "v3q022",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.03927v1"
+      ],
+      "relevant": {
+        "2608.03927v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03927v1",
+        "2608.03762v1",
+        "2608.01917v1",
+        "2608.03637v1",
+        "2608.02034v1",
+        "2608.01072v1",
+        "2608.01833v1",
+        "2608.03041v1",
+        "2608.00776v1",
+        "2608.03109v1"
+      ],
+      "query_terms": [
+        "physics-flavored",
+        "network",
+        "parametrizing",
+        "contraction",
+        "dynamics",
+        "engineered",
+        "skeletal",
+        "muscle",
+        "tissues"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 61.70532505492546,
+      "latency_ms": 2.23987502977252
+    },
+    {
+      "question_id": "v3q023",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.00559v1",
+        "2608.00716v1",
+        "2608.01046v1",
+        "2608.01258v1",
+        "2608.01334v1",
+        "2608.01988v1",
+        "2608.02160v1",
+        "2608.03008v1",
+        "2608.03096v1"
+      ],
+      "relevant": {
+        "2608.01334v1": 2,
+        "2608.01988v1": 2,
+        "2608.03096v1": 2,
+        "2608.00559v1": 2,
+        "2608.02160v1": 2,
+        "2608.03008v1": 2,
+        "2608.00716v1": 2,
+        "2608.01258v1": 2,
+        "2608.01046v1": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.01334v1",
+        "2608.01258v1",
+        "2608.01988v1",
+        "2608.01410v1",
+        "2608.00617v1",
+        "2608.01053v1",
+        "2608.00548v1",
+        "2608.02059v1",
+        "2608.02039v2",
+        "2608.00582v1"
+      ],
+      "query_terms": [
+        "detecting",
+        "ai-generated",
+        "video",
+        "images",
+        "and",
+        "generalizing",
+        "newly",
+        "emerging",
+        "generators"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.525661263058062,
+      "top_score": 23.943859649531156,
+      "latency_ms": 2.373542170971632,
+      "unjudged_ranked_ids": [
+        "2608.00582v1",
+        "2608.00617v1",
+        "2608.01053v1",
+        "2608.01410v1"
+      ]
+    },
+    {
+      "question_id": "v3q024",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.01958v1"
+      ],
+      "relevant": {
+        "2608.01958v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.01958v1",
+        "2608.01588v1",
+        "2608.01178v1",
+        "2608.02006v1",
+        "2608.01761v1",
+        "2608.02206v1",
+        "2608.03379v1",
+        "2608.00931v1",
+        "2608.00950v1",
+        "2608.02145v1"
+      ],
+      "query_terms": [
+        "fourier",
+        "motion",
+        "modeling",
+        "for",
+        "dynamic",
+        "gaussian",
+        "splatting",
+        "the",
+        "n3v",
+        "benchmark"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 33.47701681099616,
+      "latency_ms": 2.566250041127205
+    },
+    {
+      "question_id": "v3q025",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.00573v1",
+        "2608.01536v1",
+        "2608.01651v1",
+        "2608.01784v1",
+        "2608.03036v1"
+      ],
+      "relevant": {
+        "2608.00573v1": 2,
+        "2608.01784v1": 2,
+        "2608.01536v1": 1,
+        "2608.03036v1": 1,
+        "2608.01651v1": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.00573v1",
+        "2608.03036v1",
+        "2608.00577v1",
+        "2608.03048v1",
+        "2608.03216v1",
+        "2608.03851v1",
+        "2608.03918v1",
+        "2608.01575v1",
+        "2608.02070v1",
+        "2608.03842v1"
+      ],
+      "query_terms": [
+        "efficient",
+        "serving",
+        "and",
+        "inference",
+        "mixture-of-experts",
+        "language",
+        "models",
+        "with",
+        "layer",
+        "skipping",
+        "early",
+        "exit"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.5846607834833523,
+      "top_score": 37.11906038398129,
+      "latency_ms": 2.8922921046614647,
+      "unjudged_ranked_ids": [
+        "2608.00577v1",
+        "2608.03048v1",
+        "2608.03842v1",
+        "2608.03851v1",
+        "2608.03918v1"
+      ]
+    },
+    {
+      "question_id": "v3q026",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.03291v1"
+      ],
+      "relevant": {
+        "2608.03291v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03291v1",
+        "2608.03469v1",
+        "2608.02442v1",
+        "2608.02678v1",
+        "2608.01017v1",
+        "2608.01547v1",
+        "2608.03143v1",
+        "2608.03046v1",
+        "2608.01664v1",
+        "2608.01676v1"
+      ],
+      "query_terms": [
+        "spotting",
+        "when",
+        "chatbot",
+        "step-by-step",
+        "derivation",
+        "drifting",
+        "toward",
+        "wrong",
+        "answer",
+        "tracking",
+        "how",
+        "evolves",
+        "satisfiability",
+        "puzzles",
+        "then",
+        "fixing",
+        "errors",
+        "with",
+        "targeted",
+        "proof-search",
+        "prompt"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 24.780111121322182,
+      "latency_ms": 4.145833197981119
+    },
+    {
+      "question_id": "v3q027",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.01488v1"
+      ],
+      "relevant": {
+        "2608.01488v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03912v1",
+        "2608.01488v1",
+        "2608.01410v1",
+        "2608.00586v1",
+        "2608.03893v1",
+        "2608.02365v1",
+        "2608.00943v1",
+        "2608.01130v1",
+        "2608.03620v1",
+        "2608.03890v1"
+      ],
+      "query_terms": [
+        "shrinking",
+        "multi-sensor",
+        "object",
+        "tracker",
+        "slimming",
+        "its",
+        "prediction",
+        "head",
+        "and",
+        "closing",
+        "the",
+        "resulting",
+        "gap",
+        "with",
+        "two-stream",
+        "teacher-student",
+        "transfer",
+        "that",
+        "separates",
+        "where-to-track",
+        "from",
+        "what-to-track"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.5,
+      "ndcg_at_10": 0.6309297535714574,
+      "top_score": 24.11106461227241,
+      "latency_ms": 4.3277922086417675
+    },
+    {
+      "question_id": "v3q028",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.01930v1"
+      ],
+      "relevant": {
+        "2608.01930v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.01930v1",
+        "2608.01922v1",
+        "2608.01548v1",
+        "2608.01979v1",
+        "2608.03517v1",
+        "2608.01271v1",
+        "2608.01821v1",
+        "2608.03450v1",
+        "2608.01631v1",
+        "2608.01543v1"
+      ],
+      "query_terms": [
+        "evidence",
+        "that",
+        "multimodal",
+        "models",
+        "lean",
+        "stale",
+        "wording",
+        "from",
+        "earlier",
+        "chain",
+        "thought",
+        "instead",
+        "re-reading",
+        "the",
+        "current",
+        "picture",
+        "plus",
+        "training-free",
+        "firewall",
+        "isolates",
+        "fresh",
+        "visual",
+        "computation"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 42.05803682072095,
+      "latency_ms": 4.379957914352417
+    },
+    {
+      "question_id": "v3q029",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.03796v1"
+      ],
+      "relevant": {
+        "2608.03796v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03796v1",
+        "2608.03494v1",
+        "2608.02032v1",
+        "2608.01023v1",
+        "2608.01035v1",
+        "2608.03974v1",
+        "2608.01651v1",
+        "2608.00577v1",
+        "2608.01975v1",
+        "2608.01985v1"
+      ],
+      "query_terms": [
+        "efficient",
+        "llm",
+        "distillation",
+        "with",
+        "offline",
+        "top-k",
+        "logits",
+        "and",
+        "fused",
+        "chunked",
+        "loss"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 45.54179307055794,
+      "latency_ms": 2.61991610750556
+    },
+    {
+      "question_id": "v3q030",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.01495v1"
+      ],
+      "relevant": {
+        "2608.01495v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.01495v1",
+        "2608.02208v1",
+        "2608.00869v1",
+        "2608.00836v1",
+        "2608.00678v1",
+        "2608.03008v1",
+        "2608.02401v1",
+        "2608.02662v1",
+        "2608.01588v1",
+        "2608.03035v1"
+      ],
+      "query_terms": [
+        "what",
+        "pretrained",
+        "two-dimensional",
+        "detectors",
+        "implicitly",
+        "encode",
+        "about",
+        "depth",
+        "and",
+        "camera-relative",
+        "placement",
+        "things",
+        "recovered",
+        "from",
+        "their",
+        "embeddings",
+        "with",
+        "linear",
+        "non-linear",
+        "readouts",
+        "despite",
+        "three-dimensional",
+        "supervision"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 39.150938074752524,
+      "latency_ms": 4.405499901622534
+    },
+    {
+      "question_id": "v3q031",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.00726v1"
+      ],
+      "relevant": {
+        "2608.00726v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.00726v1",
+        "2608.01899v1",
+        "2608.01355v1",
+        "2608.00976v1",
+        "2608.03083v1",
+        "2608.01383v1",
+        "2608.03631v1",
+        "2608.00925v1",
+        "2608.02183v1",
+        "2608.02124v1"
+      ],
+      "query_terms": [
+        "evidence",
+        "that",
+        "apparent",
+        "spatial",
+        "blindness",
+        "frozen",
+        "visual",
+        "encoders",
+        "stems",
+        "from",
+        "the",
+        "single",
+        "global",
+        "embedding",
+        "readout",
+        "and",
+        "attention-pooled",
+        "query-conditioned",
+        "restores",
+        "most",
+        "local",
+        "feature-association",
+        "signal"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 46.51869954239943,
+      "latency_ms": 4.480249714106321
+    },
+    {
+      "question_id": "v3q032",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.01743v1",
+        "2608.03855v1",
+        "2608.03874v1",
+        "2608.03887v1"
+      ],
+      "relevant": {
+        "2608.03887v1": 2,
+        "2608.01743v1": 2,
+        "2608.03874v1": 1,
+        "2608.03855v1": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.00533v1",
+        "2608.03507v1",
+        "2608.01518v1",
+        "2608.02595v1",
+        "2608.01314v1",
+        "2608.03063v1",
+        "2608.01743v1",
+        "2608.03855v1",
+        "2608.03874v1",
+        "2608.01575v1"
+      ],
+      "query_terms": [
+        "retaining",
+        "prior",
+        "capabilities",
+        "when",
+        "fine-tuning",
+        "large",
+        "language",
+        "models",
+        "measuring",
+        "and",
+        "penalizing",
+        "forgetting"
+      ],
+      "recall_at_5": 0.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.14285714285714285,
+      "ndcg_at_10": 0.27758295879998923,
+      "top_score": 17.85643417768258,
+      "latency_ms": 2.839207649230957,
+      "unjudged_ranked_ids": [
+        "2608.01518v1",
+        "2608.03507v1"
+      ]
+    },
+    {
+      "question_id": "v3q033",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.03160v1"
+      ],
+      "relevant": {
+        "2608.03160v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03160v1",
+        "2608.02966v1",
+        "2608.03388v1",
+        "2608.03631v1",
+        "2608.02415v1",
+        "2608.01660v1",
+        "2608.01598v1",
+        "2608.04008v1",
+        "2608.00667v1",
+        "2608.03629v1"
+      ],
+      "query_terms": [
+        "separating",
+        "two",
+        "failure",
+        "modes",
+        "when",
+        "clips",
+        "are",
+        "queried",
+        "about",
+        "which",
+        "event",
+        "came",
+        "first",
+        "whether",
+        "the",
+        "captured",
+        "frames",
+        "even",
+        "contain",
+        "events",
+        "versus",
+        "they",
+        "trusted",
+        "over",
+        "user",
+        "plus",
+        "forward-and-reversed",
+        "scoring",
+        "test"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 47.77184272917035,
+      "latency_ms": 5.280583165585995
+    },
+    {
+      "question_id": "v3q034",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.00950v1"
+      ],
+      "relevant": {
+        "2608.00950v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.00950v1",
+        "2608.00694v1",
+        "2608.03444v1",
+        "2608.03763v1",
+        "2608.00985v1",
+        "2608.01963v1",
+        "2608.03490v1",
+        "2608.03666v1",
+        "2608.01258v1",
+        "2608.02332v1"
+      ],
+      "query_terms": [
+        "underwater",
+        "reconstruction",
+        "results",
+        "the",
+        "barbados",
+        "dataset",
+        "compared",
+        "with",
+        "watersplatting"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 34.152980885906395,
+      "latency_ms": 2.3957500234246254
+    },
+    {
+      "question_id": "v3q035",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.01457v1"
+      ],
+      "relevant": {
+        "2608.01457v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.01457v1",
+        "2608.00687v1",
+        "2608.03517v1",
+        "2608.01470v1",
+        "2608.01338v1",
+        "2608.01014v1",
+        "2608.03296v1",
+        "2608.01060v1",
+        "2608.02668v1",
+        "2608.03589v1"
+      ],
+      "query_terms": [
+        "onboard",
+        "learned",
+        "codec",
+        "for",
+        "earth-observation",
+        "spacecraft",
+        "that",
+        "spends",
+        "bytes",
+        "cloud-free",
+        "ground",
+        "rather",
+        "than",
+        "clouds",
+        "without",
+        "sending",
+        "cloud",
+        "map",
+        "plus",
+        "deadline-aware",
+        "scheduler",
+        "brief",
+        "intermittent",
+        "contacts"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 73.54942978187167,
+      "latency_ms": 4.507916048169136
+    },
+    {
+      "question_id": "v3q036",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.03579v1"
+      ],
+      "relevant": {
+        "2608.03579v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03579v1",
+        "2608.00916v1",
+        "2608.03036v1",
+        "2608.01142v2",
+        "2608.01751v1",
+        "2608.01530v1",
+        "2608.03275v1",
+        "2608.01575v1",
+        "2608.01630v1",
+        "2608.00814v1"
+      ],
+      "query_terms": [
+        "ultra-low-rank",
+        "lora",
+        "serving",
+        "with",
+        "subspace-aligned",
+        "centroid-residual",
+        "training",
+        "vllm"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 39.593562697381806,
+      "latency_ms": 2.2500422783195972
+    },
+    {
+      "question_id": "v3q037",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.01130v1",
+        "2608.01556v1",
+        "2608.02034v1",
+        "2608.02509v1",
+        "2608.03069v1",
+        "2608.03562v1",
+        "2608.03875v1"
+      ],
+      "relevant": {
+        "2608.03562v1": 2,
+        "2608.02509v1": 2,
+        "2608.03069v1": 1,
+        "2608.01556v1": 1,
+        "2608.02034v1": 1,
+        "2608.01130v1": 1,
+        "2608.03875v1": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.03562v1",
+        "2608.02831v1",
+        "2608.03092v1",
+        "2608.02508v2",
+        "2608.01717v1",
+        "2608.02455v1",
+        "2608.03077v1",
+        "2608.03215v1",
+        "2608.02181v1",
+        "2608.00536v1"
+      ],
+      "query_terms": [
+        "robustness",
+        "and",
+        "uncertainty",
+        "reinforcement",
+        "learning",
+        "objectives",
+        "under",
+        "misspecified",
+        "rewards",
+        "utilities"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.43479148433596204,
+      "top_score": 21.061121196203544,
+      "latency_ms": 2.5555002503097057,
+      "unjudged_ranked_ids": [
+        "2608.01717v1",
+        "2608.02455v1",
+        "2608.03077v1"
+      ]
+    },
+    {
+      "question_id": "v3q038",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.03228v1"
+      ],
+      "relevant": {
+        "2608.03228v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03228v1",
+        "2608.00528v1",
+        "2608.01631v1",
+        "2608.02901v1",
+        "2608.01662v2",
+        "2608.02691v1",
+        "2608.02032v1",
+        "2608.01247v1",
+        "2608.02134v1",
+        "2608.01848v1"
+      ],
+      "query_terms": [
+        "score-aware",
+        "low-rank",
+        "key",
+        "indexing",
+        "for",
+        "long-context",
+        "cache",
+        "compression",
+        "saki"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 40.893061279321614,
+      "latency_ms": 2.4270000867545605
+    },
+    {
+      "question_id": "v3q039",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.01035v1"
+      ],
+      "relevant": {
+        "2608.01035v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.01035v1",
+        "2608.03796v1",
+        "2608.03483v1",
+        "2608.03216v1",
+        "2608.02975v1",
+        "2608.03851v1",
+        "2608.01356v1",
+        "2608.03269v1",
+        "2608.03610v1",
+        "2608.03100v1"
+      ],
+      "query_terms": [
+        "autoregressive-to-diffusion",
+        "distillation",
+        "for",
+        "efficient",
+        "autonomous-driving",
+        "vla"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 26.32905426822264,
+      "latency_ms": 2.006916329264641
+    },
+    {
+      "question_id": "v3q040",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.03270v1"
+      ],
+      "relevant": {
+        "2608.03270v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03270v1",
+        "2608.03471v1",
+        "2608.02470v1",
+        "2608.01535v1",
+        "2608.01662v2",
+        "2608.00976v1",
+        "2608.03322v1",
+        "2608.02449v1",
+        "2608.02790v1",
+        "2608.01899v1"
+      ],
+      "query_terms": [
+        "coarse-to-fine",
+        "cropping",
+        "for",
+        "gui",
+        "grounding",
+        "with",
+        "general-purpose",
+        "vlms"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 40.75540613414745,
+      "latency_ms": 2.2608330473303795
+    },
+    {
+      "question_id": "v3q041",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.03990v1"
+      ],
+      "relevant": {
+        "2608.03990v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03990v1",
+        "2608.01298v1",
+        "2608.01990v1",
+        "2608.03620v1",
+        "2608.03082v1",
+        "2608.03117v1",
+        "2608.02053v1",
+        "2608.01599v1",
+        "2608.01547v1",
+        "2608.02558v1"
+      ],
+      "query_terms": [
+        "evaluating",
+        "conditional",
+        "diffusion",
+        "for",
+        "synthetic",
+        "histopathology",
+        "with",
+        "pathology-specific",
+        "fid"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 35.699741583484084,
+      "latency_ms": 2.413875423371792
+    },
+    {
+      "question_id": "v3q042",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.01321v1",
+        "2608.01359v1",
+        "2608.01597v1",
+        "2608.01867v2",
+        "2608.03223v1",
+        "2608.03467v1",
+        "2608.04007v1"
+      ],
+      "relevant": {
+        "2608.01321v1": 2,
+        "2608.01597v1": 2,
+        "2608.04007v1": 2,
+        "2608.01359v1": 2,
+        "2608.03223v1": 2,
+        "2608.03467v1": 1,
+        "2608.01867v2": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.01321v1",
+        "2608.01358v1",
+        "2608.01359v1",
+        "2608.00584v1",
+        "2608.01055v1",
+        "2608.03223v1",
+        "2608.01597v1",
+        "2608.01056v1",
+        "2608.02391v1",
+        "2608.02585v1"
+      ],
+      "query_terms": [
+        "process-level",
+        "reward",
+        "and",
+        "credit",
+        "assignment",
+        "for",
+        "search-augmented",
+        "tool-using",
+        "reasoning",
+        "agents"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.6889017447244109,
+      "top_score": 36.55513420413176,
+      "latency_ms": 2.58070882409811,
+      "unjudged_ranked_ids": [
+        "2608.01055v1",
+        "2608.01056v1",
+        "2608.02391v1"
+      ]
+    },
+    {
+      "question_id": "v3q043",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.03218v1",
+        "2608.03269v1"
+      ],
+      "relevant": {
+        "2608.03218v1": 2,
+        "2608.03269v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03218v1",
+        "2608.03269v1",
+        "2608.03796v1",
+        "2608.02975v1",
+        "2608.02124v1",
+        "2608.00586v1",
+        "2608.03990v1",
+        "2608.01663v1",
+        "2608.03629v1",
+        "2608.02315v1"
+      ],
+      "query_terms": [
+        "dataset",
+        "distillation",
+        "that",
+        "compresses",
+        "training",
+        "set",
+        "into",
+        "small",
+        "synthetic",
+        "for",
+        "pretrained",
+        "encoders"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 36.36437654247291,
+      "latency_ms": 2.8807497583329678,
+      "unjudged_ranked_ids": [
+        "2608.01663v1",
+        "2608.02124v1",
+        "2608.02315v1",
+        "2608.03629v1"
+      ]
+    },
+    {
+      "question_id": "v3q044",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.03017v1"
+      ],
+      "relevant": {
+        "2608.03017v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03017v1",
+        "2608.03247v1",
+        "2608.02803v1",
+        "2608.02769v1",
+        "2608.02965v1",
+        "2608.03990v1",
+        "2608.02052v1",
+        "2608.03540v1",
+        "2608.02081v1",
+        "2608.01559v1"
+      ],
+      "query_terms": [
+        "paired-recipient",
+        "evaluation",
+        "survival",
+        "prediction",
+        "for",
+        "deceased-donor",
+        "kidney",
+        "transplants",
+        "using",
+        "srtr",
+        "data"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 43.064988680351675,
+      "latency_ms": 2.7294582687318325
+    },
+    {
+      "question_id": "v3q045",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.02034v1"
+      ],
+      "relevant": {
+        "2608.02034v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.02034v1",
+        "2608.03483v1",
+        "2608.01302v1",
+        "2608.02365v1",
+        "2608.03502v1",
+        "2608.01833v1",
+        "2608.02950v1",
+        "2608.00881v1",
+        "2608.03910v1",
+        "2608.02053v1"
+      ],
+      "query_terms": [
+        "estimating",
+        "action",
+        "values",
+        "from",
+        "logged",
+        "interaction",
+        "data",
+        "swapping",
+        "the",
+        "symmetric",
+        "several-back",
+        "temporal-difference",
+        "loss",
+        "for",
+        "asymmetric",
+        "one",
+        "which",
+        "counters",
+        "pessimistic",
+        "bias",
+        "that",
+        "grows",
+        "with",
+        "longer",
+        "horizons"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 51.01031999816209,
+      "latency_ms": 4.897958133369684
+    },
+    {
+      "question_id": "v3q046",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.02428v1"
+      ],
+      "relevant": {
+        "2608.02428v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.02428v1",
+        "2608.01397v1",
+        "2608.02411v1",
+        "2608.03910v1",
+        "2608.02331v1",
+        "2608.03044v1",
+        "2608.03084v1",
+        "2608.01845v1",
+        "2608.02558v1",
+        "2608.01905v1"
+      ],
+      "query_terms": [
+        "predicting",
+        "future",
+        "scene",
+        "descriptors",
+        "for",
+        "self-driving",
+        "robots",
+        "entirely",
+        "latent",
+        "space",
+        "and",
+        "reading",
+        "task",
+        "outputs",
+        "straight",
+        "from",
+        "those",
+        "predictions",
+        "dropping",
+        "the",
+        "heavy",
+        "module",
+        "that",
+        "usually",
+        "maps",
+        "states",
+        "tasks"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 40.69890231803936,
+      "latency_ms": 5.1460410468280315
+    },
+    {
+      "question_id": "v3q047",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "lexical",
+      "relevant_arxiv_ids": [
+        "2608.03250v1"
+      ],
+      "relevant": {
+        "2608.03250v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03250v1",
+        "2608.00869v1",
+        "2608.02575v1",
+        "2608.02671v1",
+        "2608.03096v1",
+        "2608.01906v1",
+        "2608.03148v1",
+        "2608.00701v1",
+        "2608.00608v1",
+        "2608.01230v2"
+      ],
+      "query_terms": [
+        "hybrid",
+        "android",
+        "malware",
+        "detection",
+        "combining",
+        "random",
+        "forest",
+        "and",
+        "multilayer",
+        "perceptron"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 49.87778685679703,
+      "latency_ms": 2.564874943345785
+    },
+    {
+      "question_id": "v3q048",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.03812v1"
+      ],
+      "relevant": {
+        "2608.03812v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03812v1",
+        "2608.03083v1",
+        "2608.03419v1",
+        "2608.03580v1",
+        "2608.03112v1",
+        "2608.02134v1",
+        "2608.03681v1",
+        "2608.03991v1",
+        "2608.00837v2",
+        "2608.01644v1"
+      ],
+      "query_terms": [
+        "training-free",
+        "way",
+        "shrink",
+        "redundant",
+        "audio",
+        "and",
+        "visual",
+        "sequences",
+        "for",
+        "combined-sensory",
+        "chat",
+        "systems",
+        "pruning",
+        "structurally",
+        "before",
+        "the",
+        "network",
+        "consolidating",
+        "semantically",
+        "inside",
+        "hold",
+        "accuracy",
+        "tiny",
+        "budgets"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 38.15391242144426,
+      "latency_ms": 4.650583025068045
+    },
+    {
+      "question_id": "v3q049",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.02135v1"
+      ],
+      "relevant": {
+        "2608.02135v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.02135v1",
+        "2608.03086v1",
+        "2608.00835v1",
+        "2608.01535v1",
+        "2608.03225v1",
+        "2608.03502v1",
+        "2608.03927v1",
+        "2608.02519v1",
+        "2608.02352v1",
+        "2608.03724v1"
+      ],
+      "query_terms": [
+        "review",
+        "patient-specific",
+        "heart-and-vessel",
+        "computer",
+        "models",
+        "that",
+        "update",
+        "with",
+        "clinical",
+        "measurements",
+        "contrasting",
+        "mechanistic",
+        "simulations",
+        "scalable",
+        "learned",
+        "and",
+        "hybrid",
+        "graph",
+        "methods",
+        "for",
+        "diagnosis",
+        "therapy",
+        "planning"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 48.25461201567878,
+      "latency_ms": 4.514290951192379
+    },
+    {
+      "question_id": "v3q050",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "topical",
+      "relevant_arxiv_ids": [
+        "2608.03107v1",
+        "2608.03540v1",
+        "2608.03664v1"
+      ],
+      "relevant": {
+        "2608.03664v1": 2,
+        "2608.03540v1": 2,
+        "2608.03107v1": 1
+      },
+      "ranked_arxiv_ids": [
+        "2608.03664v1",
+        "2608.03508v1",
+        "2608.03540v1",
+        "2608.02688v1",
+        "2608.03990v1",
+        "2608.01407v1",
+        "2608.03322v1",
+        "2608.01370v1",
+        "2608.01823v2",
+        "2608.03106v1"
+      ],
+      "query_terms": [
+        "super-resolution",
+        "medical",
+        "pathology",
+        "images",
+        "that",
+        "preserves",
+        "fine",
+        "cellular",
+        "structure"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.8344475896326595,
+      "top_score": 22.907708557509846,
+      "latency_ms": 2.41637509316206,
+      "unjudged_ranked_ids": [
+        "2608.01370v1",
+        "2608.01407v1"
+      ]
+    },
+    {
+      "question_id": "v3q051",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.01186v1"
+      ],
+      "relevant": {
+        "2608.01186v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.02145v1",
+        "2608.01659v1",
+        "2608.02191v1",
+        "2608.00950v1",
+        "2608.03279v1",
+        "2608.01588v1",
+        "2608.01492v1",
+        "2608.02437v2",
+        "2608.03895v1",
+        "2608.03323v1"
+      ],
+      "query_terms": [
+        "feed-forward",
+        "gaussian",
+        "scene",
+        "reconstructor",
+        "that",
+        "separates",
+        "shape",
+        "modeling",
+        "from",
+        "color",
+        "detail",
+        "into",
+        "two",
+        "branches",
+        "letting",
+        "work",
+        "without",
+        "known",
+        "camera",
+        "poses",
+        "and",
+        "render",
+        "crisper",
+        "novel",
+        "views"
+      ],
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "top_score": 32.0396353958012,
+      "latency_ms": 4.800917115062475
+    },
+    {
+      "question_id": "v3q052",
+      "split": "development",
+      "mode": "bm25_offline",
+      "type": "paraphrase",
+      "relevant_arxiv_ids": [
+        "2608.03101v1"
+      ],
+      "relevant": {
+        "2608.03101v1": 2
+      },
+      "ranked_arxiv_ids": [
+        "2608.03101v1",
+        "2608.03539v1",
+        "2608.03395v1",
+        "2608.03926v1",
+        "2608.04008v1",
+        "2608.01301v2",
+        "2608.02176v1",
+        "2608.03612v1",
+        "2608.01276v1",
+        "2608.03108v1"
+      ],
+      "query_terms": [
+        "toughening",
+        "learned",
+        "near-duplicate",
+        "image",
+        "matchers",
+        "adversarial",
+        "tweaks",
+        "cannot",
+        "slip",
+        "past",
+        "with",
+        "model",
+        "re-fitting",
+        "randomized",
+        "smoothing",
+        "match",
+        "time",
+        "plus",
+        "imperceptible",
+        "mark",
+        "added",
+        "reference",
+        "images",
+        "before",
+        "release"
+      ],
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "top_score": 43.17397883752613,
+      "latency_ms": 4.68608271330595
+    }
+  ],
+  "claim_boundary": "Offline in-process BM25 over chunk text, development split only. Latencies are in-process scoring time and are NOT comparable to the SQL keyword path (A10). BM25 did not contribute to the frozen topical judgment pools, so topical scores are a lower bound: papers it surfaces that nobody judged are scored grade 0 and listed in unjudged_ranked_ids."
+}

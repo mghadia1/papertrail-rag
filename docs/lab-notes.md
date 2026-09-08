@@ -647,3 +647,90 @@ changed; no question set was touched.
 
 Follow-up opened: a model-specific citation prompt for `gpt-oss-120b`, to be tuned
 and measured on development questions only before any further RAG evidence.
+
+## 2026-09-08 — Phase 3 (Part F): Sparse retrieval
+
+Pre-run: 66 tests passed; DB up, manifest verified (1,000 IDs, sha 7308d240…);
+package reinstalled into `.venv-ml` — `papertrail-rag 0.1.0`, site-packages in
+`.venv-ml/lib/python3.12` (F5 check); frozen v2 (90 rows) and v3 baseline (312
+rows) both verify.
+
+Why this phase: keyword is the weakest retriever in the v3 baseline — dev nDCG@10
+0.759 overall, 0.695 on paraphrase, and 0.497 on the 6 held-out topical questions.
+Today it is OR-of-all-terms ranked by `ts_rank_cd`, with no length normalization
+and no field weighting.
+
+**Decision rule, pre-registered before running anything (brief Part F):**
+> If offline BM25 beats Postgres FTS by **≥ 0.05 nDCG@10** on development
+> `lexical` **or** `paraphrase`, the *ranking function* is what matters, and I go
+> to F2-iii (field weights + length normalization). If the gap is **< 0.05**, the
+> *query construction* matters more, and I do F2-i (AND-then-OR cascade) first.
+
+Recording this before I look at any BM25 number so the branch is not chosen after
+the fact. Known confound to state up front, not to "fix": Postgres FTS stems
+(`english` config) and the offline BM25 does not tokenize-and-stem the same way,
+so this is a ranking-function comparison under different tokenization, not a
+controlled single-variable swap (brief trap).
+
+**F1 — offline BM25 ablation.** `eval/tools/bm25_ablation.py` (read-only, no DB
+writes). `rank_bm25 0.2.2`, `BM25Okapi(k1=1.5, b=0.75, epsilon=0.25)` over all
+2,039 chunk texts, tokenized with exactly `keyword_search`'s regex
+(`[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*`) lower-cased; query terms under 3 characters
+dropped, as `keyword_search` does. Top-200 chunks → `distinct_papers` → 10.
+Evidence: `docs/evidence/phase-8-bm25-offline.json` (verified, `--kind bm25`,
+52 rows).
+
+**Development-only, deliberately.** Held-out is reserved for the one final report
+on the best development configuration (F3 / A1), so this diagnostic never touched
+it. The verifier enforces it: a held-out row in this file is a hard error.
+
+nDCG@10, development, versus the frozen v3 baseline's `keyword` rows:
+
+| type | FTS-OR (`ts_rank_cd`) | BM25 offline | gap |
+|---|--:|--:|--:|
+| all | 0.759 | 0.887 | +0.128 |
+| lexical | 0.977 | 1.000 | +0.023 |
+| paraphrase | 0.695 | 0.917 | **+0.222** |
+| topical | 0.595 | 0.675* | +0.080* |
+
+Recall@10 moves too: all 0.923 → 0.981, paraphrase 0.833 → 0.958.
+`*` topical is a **lower bound**: BM25 was not one of the four retrievers that
+built the frozen topical pools, so it surfaces unjudged papers — all 12 topical
+rows do, 2–7 unjudged ids each in the top 10 — and those score grade 0. Do not
+read the topical row as a clean comparison.
+
+**Decision rule fires on paraphrase (+0.222 ≫ 0.05): the ranking function
+matters → F2-iii next.** The rule was pre-registered above before any BM25 number
+existed, and it happens to read the two types (lexical, paraphrase) whose
+relevance is a fixed known-item set with no pool, so the pooling bias above cannot
+have influenced the branch.
+
+**Why FTS loses, confirmed rather than assumed.** On the two worst paraphrase
+questions the gap is total — BM25 nDCG 1.000 vs FTS 0.000:
+
+| question | relevant paper | BM25 paper-rank | FTS paper-rank | FTS matched set |
+|---|---|--:|--:|--:|
+| v3q026 | 2608.03291v1 | 1 | **14** | 978 chunks / 639 papers |
+| v3q004 | 2608.01085v1 | 1 | **14** | 1,486 chunks / 880 papers |
+
+FTS **did** match the right paper in both cases and simply ranked it 14th, just
+outside the top-10 cutoff. So this is a **ranking failure, not a matching
+failure** — which is exactly what the decision rule's branch claims, and it is why
+the fix belongs in the rank expression rather than in the query builder. Mechanism:
+`ts_rank_cd` scores from within-document term frequency and cover density only —
+it has no corpus-wide IDF term — and at the default normalization flag it does not
+divide by document length. On a 21–25-term natural-language paraphrase, common
+words then contribute as much as the rare discriminative ones ("satisfiability",
+"dormant"). BM25 weights by IDF and normalizes by length (`b=0.75`). F2-iii adds
+both of the missing pieces on the Postgres side: `setweight` field weights and
+`ts_rank_cd(..., 32)`, whose flag divides by document length.
+
+Design choice: kept BM25 unstemmed rather than matching the Postgres `english`
+stemmer. Matching stemmers would be a different study; leaving it means this is a
+ranking-function comparison *under different tokenization*, stated in the evidence
+file's claim boundary rather than papered over.
+
+Not measured: BM25 as a *served* retriever. This is an in-process index built in
+~0.6 s over 2k chunks; its per-query time (dev p50 2.9 ms) is in-process scoring
+and is **not** comparable to the SQL path (A10). Whether ParadeDB/`pg_search`
+would be worth it is F2-iv, and only if F2-iii fails to close the gap.

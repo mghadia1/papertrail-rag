@@ -242,6 +242,83 @@ def verify_hnsw_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]
     return {"verified": True, "kind": "hnsw", "rows": len(rows)}
 
 
+def verify_bm25_evidence(
+    path: Path,
+    manifest: CorpusManifest,
+    *,
+    question_set: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Recompute the offline BM25 ablation (Part F, F1) from its raw rows."""
+    report = json.loads(path.read_text(encoding="utf-8"))
+    _verify_freeze_precedes_report(report)
+    if report.get("corpus_arxiv_ids_sha256") != manifest.arxiv_ids_sha256:
+        raise ValueError("bm25 evidence corpus hash does not match manifest")
+    rows = report.get("per_question", [])
+    if not rows:
+        raise ValueError("bm25 evidence has no raw rows")
+
+    protocol = report.get("protocol", {})
+    if not str(protocol.get("library", "")).startswith("rank_bm25"):
+        raise ValueError("bm25 evidence must record the rank_bm25 library version")
+    for key in ("k1", "b"):
+        if not isinstance(protocol.get(key), (int, float)):
+            raise ValueError(f"bm25 evidence protocol.{key} missing")
+
+    # A1 guard: this ablation is development-only; held-out is reserved for the
+    # single final report, so a held-out row here would be a protocol violation.
+    splits = sorted({row["split"] for row in rows})
+    if splits != ["development"]:
+        raise ValueError(f"bm25 evidence must be development-only; found splits {splits}")
+    if list(protocol.get("splits_evaluated", [])) != ["development"]:
+        raise ValueError("bm25 evidence protocol.splits_evaluated must be ['development']")
+
+    for row in rows:
+        graded = {str(k): int(v) for k, v in row["relevant"].items()}
+        ranked = [str(identifier) for identifier in row["ranked_arxiv_ids"]]
+        tag = f"{row['question_id']}/{row['mode']}"
+        _close(recall_at(ranked, graded, 5), row["recall_at_5"], f"{tag} recall_at_5")
+        _close(recall_at(ranked, graded, 10), row["recall_at_10"], f"{tag} recall_at_10")
+        _close(reciprocal_rank(ranked, graded), row["reciprocal_rank"], f"{tag} mrr")
+        _close(ndcg_at(ranked, graded, 10), row["ndcg_at_10"], f"{tag} ndcg_at_10")
+
+    if question_set is not None:
+        expected = sorted(
+            q["id"] for q in question_set["retrieval_questions"]
+            if q["split"] == "development"
+        )
+        if sorted(row["question_id"] for row in rows) != expected:
+            raise ValueError("bm25 rows do not match the development question ids")
+        pools = {
+            q["id"]: set(q["pool"])
+            for q in question_set["retrieval_questions"]
+            if q.get("pool")
+        }
+        # BM25 did not build the topical pools, so it may rank unjudged papers.
+        # Those must be recorded per row (scored grade 0), never silently dropped.
+        for row in rows:
+            pool = pools.get(row["question_id"])
+            if pool is None:
+                continue
+            out_of_pool = sorted(set(row["ranked_arxiv_ids"]) - pool)
+            if sorted(row.get("unjudged_ranked_ids", [])) != out_of_pool:
+                raise ValueError(
+                    f"{row['question_id']} unjudged_ranked_ids does not match the "
+                    "ids outside its judged pool"
+                )
+
+    for mode, published in report["aggregates"]["development"].items():
+        slice_rows = [row for row in rows if row["mode"] == mode]
+        for type_key, metrics in _aggregate_by_type(slice_rows).items():
+            if type_key not in published:
+                raise ValueError(f"aggregates.development.{mode} missing type '{type_key}'")
+            for key, value in metrics.items():
+                _close(float(value), published[type_key][key],
+                       f"aggregates.development.{mode}.{type_key}.{key}")
+
+    return {"verified": True, "kind": "bm25", "raw_rows": len(rows),
+            "unjudged_topical_rows": sum(1 for r in rows if r.get("unjudged_ranked_ids"))}
+
+
 def verify_gate_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]:
     """Recompute the abstention-gate selection (D2/D3) from its embedded rows."""
     report = json.loads(path.read_text(encoding="utf-8"))
