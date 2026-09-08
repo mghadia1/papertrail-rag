@@ -179,13 +179,24 @@ def test_bm25_verifier_recomputes_and_guards_the_split(tmp_path) -> None:
     with pytest.raises(ValueError, match="disagrees"):
         verify_bm25_evidence(bad, manifest, question_set=questions)
 
-    # A1: this ablation is development-only; a held-out row is a protocol breach.
+    # A1: a file must declare exactly the splits it ran, so a held-out row leaking
+    # into a declared development-only ablation is a hard error.
     leaked = json.loads(source.read_text())
     leaked["per_question"][0]["split"] = "heldout"
     bad2 = tmp_path / "leaked-bm25.json"
     bad2.write_text(json.dumps(leaked))
-    with pytest.raises(ValueError, match="development-only"):
+    with pytest.raises(ValueError, match="declares splits"):
         verify_bm25_evidence(bad2, manifest, question_set=questions)
+
+    # And a file may never mix both splits, even if it declares both — that would
+    # let an exploration run quietly accumulate held-out numbers.
+    mixed = json.loads(source.read_text())
+    mixed["per_question"][0]["split"] = "heldout"
+    mixed["protocol"]["splits_evaluated"] = ["development", "heldout"]
+    bad3 = tmp_path / "mixed-bm25.json"
+    bad3.write_text(json.dumps(mixed))
+    with pytest.raises(ValueError, match="development-only or heldout-only"):
+        verify_bm25_evidence(bad3, manifest, question_set=questions)
 
 
 def test_rag_verifier_rejects_edited_grounding_rate(tmp_path) -> None:

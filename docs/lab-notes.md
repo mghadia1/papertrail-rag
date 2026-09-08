@@ -800,3 +800,84 @@ matters by a wide margin (+0.222) *and* iii did not close the gap.
 
 No default changed: `keyword_search` still ranks the unweighted column with the
 original expression unless `weighted=`/`normalization=` are passed (A7).
+
+**F2-i — AND-then-OR cascade.** `keyword_search(strategy="cascade")`: AND of every
+term first (each term quoted so a hyphenated token is a lexeme, not an operator),
+then fill the remainder from the OR query with AND rows kept in front. Default
+stays `"or"` (A7). Evidence: `docs/evidence/phase-8-keyword-cascade.json`.
+
+Development: all 0.759 → **0.766**, lexical 0.977 → **1.000**, paraphrase 0.695 →
+0.695, topical 0.595 → 0.595. The gain is lexical-only, and the mechanism is
+measured: the AND branch returns at least one row on **8 of 16** lexical questions
+(mean 8.9 query terms) and on **0 of 24** paraphrase and **0 of 12** topical ones
+(mean 23.7 and 10.5 terms). ANDing two dozen terms matches nothing, so on 36 of 52
+development questions the cascade is a provable no-op that falls through to the
+identical OR query.
+
+Both brief traps checked directly against Postgres rather than assumed, and both
+turned out milder than written: an all-stop-word AND (`'the' & 'and' & 'for'`)
+yields an **empty tsquery, not an error**, which matches nothing and falls through
+to the OR fill; and a hyphenated token parses as a lexeme with a phrase expansion
+(`'state-of-the-art' <-> 'state' <3> 'art'`) whether or not it is quoted, so the
+hyphen is never read as NOT. The terms are quoted anyway, and both cases are
+covered by tests (`tests/test_keyword_strategies.py`) so a future Postgres that is
+stricter fails loudly.
+
+**F2-ii — phrase boost. Negative.** `strategy="cascade_phrase"` ranks
+`phraseto_tsquery` matches (quoted spans, then adjacent capitalised word pairs)
+ahead of the cascade. Applicability is small by construction: only **3 of 52**
+development queries contain a quoted span and **4** contain an adjacent capitalised
+pair. Development: all 0.766 → **0.746**, lexical 1.000 → **0.935**; paraphrase and
+topical unchanged. Forcing phrase hits to the front promotes chunks that contain the
+bigram but are worse overall, displacing better AND/OR matches. The brief guessed
+this "may do nothing"; measured, it does something small and harmful.
+
+**F3 — report and recommendation.** Development, every row measured by the same
+harness (`eval/tools/keyword_variants.py`, 52 questions), nDCG@10:
+
+| variant | all | lexical | paraphrase | topical |
+|---|--:|--:|--:|--:|
+| FTS-OR (current default) | 0.759 | 0.977 | 0.695 | 0.595 |
+| `or-depth200` (depth control) | 0.759 | 0.977 | 0.695 | 0.595 |
+| cascade (F2-i) | **0.766** | 1.000 | 0.695 | 0.595 |
+| cascade + phrase (F2-ii) | 0.746 | 0.935 | 0.695 | 0.595 |
+| cascade + weights (F2-iii) | 0.721 | 1.000 | 0.602 | 0.588 |
+| weights only, n0 | 0.721 | 1.000 | 0.602 | 0.588 |
+| weights, n1 (÷1+log len) | 0.729 | 1.000 | 0.623 | 0.580 |
+| weights, n2 (÷ len) | 0.480 | 0.923 | 0.314 | 0.222 |
+| **BM25 offline (F1)** | **0.887** | 1.000 | **0.917** | 0.675* |
+
+Held-out, run **once** on the best development configuration (cascade), against
+the frozen baseline's held-out keyword row — no extra held-out read was needed for
+the baseline because it already exists in the frozen file:
+
+| held-out | all | lexical | paraphrase | topical |
+|---|--:|--:|--:|--:|
+| FTS-OR (frozen) | 0.762 | 1.000 | 0.735 | 0.497 |
+| cascade | 0.762 | 1.000 | 0.735 | 0.497 |
+| gap | +0.000 | +0.000 | +0.000 | +0.000 |
+
+**The cascade's development gain did not replicate: it is exactly zero on
+held-out, on every type.** The reason is visible rather than mysterious — the whole
+dev gain was lexical 0.977 → 1.000, and held-out lexical was *already* 1.000, so
+there was nothing left to win. A sub-question-sized improvement on a near-saturated
+type is not a result.
+
+**Recommendation to Phase 4: change nothing in the keyword path.** Every
+Postgres-side lever was measured and none earns adoption — cascade is +0.007 on
+development and +0.000 on held-out, the phrase boost is negative, and field
+weighting and length normalization are negative. The one large, reproducible signal
+is BM25's **+0.222** on development paraphrase, and its cause is IDF, which
+`ts_rank_cd` structurally does not have and which none of Postgres's rank knobs can
+supply. Closing it means a different ranking engine (F2-iv, ParadeDB `pg_search`) —
+a second Compose service and explicitly not part of the default stack — which is a
+Phase 4 decision for Mayank, not something to adopt inside a measurement phase.
+
+Worth carrying into Phase 4: keyword is only one of two RRF inputs, and the
+vector+rerank path already handles paraphrase well (dev `hybrid_rerank` paraphrase
+0.964 vs keyword 0.695), so keyword's paraphrase weakness is partly absorbed by
+fusion. Whether it should be down-weighted rather than repaired is exactly the
+Part G question.
+
+Post-run: 75 tests pass (8 new keyword-strategy tests); every prior evidence file
+still verifies (v2, v3 baseline, 8 rerank, hnsw, gate, 10 sparse); manifest intact.

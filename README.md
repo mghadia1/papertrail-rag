@@ -115,6 +115,22 @@ reranking reorders a complete top-10 rather than adding recall. No default was
 changed; at pool 50 the first stage reaches outside the depth-20 judged pool, so
 those topical scores are recorded lower bounds. See [`docs/results.md`](docs/results.md).
 
+## Sparse-retrieval study
+
+Keyword is the weakest retriever, so Phase 3 asked whether that is the ranking
+function or the query construction: an offline BM25 ablation beat Postgres FTS by
+**+0.222 nDCG@10 on development paraphrase** queries, and on the two worst cases
+FTS had *matched* the relevant paper and merely ranked it 14th — a ranking failure,
+not a matching failure. Every Postgres-side fix was then measured and none earned
+adoption: an AND-then-OR cascade gained +0.007 on development and **exactly +0.000
+on held-out**, while a phrase boost and field weighting with length normalization
+both made things worse (field weighting boosts the title, and 23 of 24 paraphrase
+queries share no title word with their relevant paper). The gap is IDF, which
+`ts_rank_cd` structurally lacks, so the keyword default is unchanged and a real
+BM25 engine is left as a Phase 4 decision. See [`docs/results.md`](docs/results.md)
+and the verified `docs/evidence/phase-8-bm25-offline.json` /
+`phase-8-keyword-*.json`.
+
 ## Run locally
 
 ```bash

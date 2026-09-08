@@ -233,46 +233,55 @@ RANK_NORMALIZATIONS = (0, 1, 2, 16, 32)
 _RANK_WEIGHTS = [0.1, 0.2, 0.4, 1.0]
 
 
-def keyword_search(
-    session: Session,
-    query_text: str,
-    *,
-    limit: int,
-    weighted: bool = False,
-    normalization: int = 0,
-) -> list[dict[str, object]]:
-    """OR-of-terms full-text search.
+KEYWORD_STRATEGIES = ("or", "cascade", "cascade_phrase")
 
-    ``weighted`` ranks against the field-weighted ``search_vector_weighted``
-    column (title lexemes A, body B) instead of the original unweighted column;
-    ``normalization`` is the ``ts_rank_cd`` normalization flag. Both default to
-    the original behaviour, so the frozen ``"or"`` results stay bit-identical
-    (brief A7: the default does not change until Phase 4 chooses).
-    """
-    if normalization not in RANK_NORMALIZATIONS:
-        raise ValueError(f"unsupported ts_rank_cd normalization flag: {normalization}")
-    terms = tuple(
+_QUOTED_SPAN_RE = re.compile(r"[\"“]([^\"”]{3,})[\"”]")
+_WORD_RE = re.compile(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
+
+
+def phrase_candidates(query_text: str) -> list[str]:
+    """Phrases worth an exact-order match: quoted spans, then adjacent capitalised
+    word pairs (a cheap proxy for a named entity such as "Chain of Thought")."""
+    phrases: list[str] = [
+        span.strip() for span in _QUOTED_SPAN_RE.findall(query_text) if span.strip()
+    ]
+    words = _WORD_RE.findall(query_text)
+    for first, second in zip(words, words[1:]):
+        if first[:1].isupper() and second[:1].isupper():
+            phrases.append(f"{first} {second}")
+    return list(dict.fromkeys(phrases))
+
+
+def keyword_terms(query_text: str) -> tuple[str, ...]:
+    """Query terms: the shared regex, lower-cased, <3 chars dropped, de-duplicated."""
+    return tuple(
         dict.fromkeys(
             token.lower()
             for token in re.findall(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*", query_text)
             if len(token) >= 3
         )
     )
-    if not terms:
-        return []
-    query = func.websearch_to_tsquery("english", " OR ".join(terms))
+
+
+def _keyword_rows(
+    session: Session,
+    query,
+    *,
+    limit: int,
+    weighted: bool,
+    normalization: int,
+) -> list[dict[str, object]]:
+    """Run one tsquery and return ranked chunk rows."""
+    column = Chunk.search_vector_weighted if weighted else Chunk.search_vector
     if weighted:
         # Postgres needs the weight array typed as real[].
         rank = func.ts_rank_cd(
-            cast(_RANK_WEIGHTS, ARRAY(REAL)),
-            Chunk.search_vector_weighted,
-            query,
-            normalization,
+            cast(_RANK_WEIGHTS, ARRAY(REAL)), column, query, normalization
         )
     elif normalization:
-        rank = func.ts_rank_cd(Chunk.search_vector, query, normalization)
+        rank = func.ts_rank_cd(column, query, normalization)
     else:
-        rank = func.ts_rank_cd(Chunk.search_vector, query)
+        rank = func.ts_rank_cd(column, query)
     rows = session.execute(
         select(
             Paper.arxiv_id,
@@ -284,11 +293,7 @@ def keyword_search(
             rank.label("score"),
         )
         .join(Paper, Paper.id == Chunk.paper_id)
-        .where(
-            (Chunk.search_vector_weighted if weighted else Chunk.search_vector).op("@@")(
-                query
-            )
-        )
+        .where(column.op("@@")(query))
         .order_by(rank.desc(), Chunk.id)
         .limit(limit)
     ).all()
@@ -304,6 +309,90 @@ def keyword_search(
         }
         for row in rows
     ]
+
+
+def keyword_search(
+    session: Session,
+    query_text: str,
+    *,
+    limit: int,
+    weighted: bool = False,
+    normalization: int = 0,
+    strategy: str = "or",
+) -> list[dict[str, object]]:
+    """Full-text search over chunk text.
+
+    ``strategy="or"`` (the default, unchanged) is one OR-of-all-terms query.
+    ``strategy="cascade"`` runs an AND of every term first and, if that returns
+    fewer than ``limit`` rows, fills the remainder from the OR query, keeping the
+    AND rows ahead of the OR rows.
+
+    ``weighted`` ranks against the field-weighted ``search_vector_weighted``
+    column (title lexemes A, body B) instead of the original unweighted column;
+    ``normalization`` is the ``ts_rank_cd`` normalization flag. Every argument
+    defaults to the original behaviour, so the frozen ``"or"`` results stay
+    bit-identical (brief A7: the default does not change until Phase 4 chooses).
+    """
+    if normalization not in RANK_NORMALIZATIONS:
+        raise ValueError(f"unsupported ts_rank_cd normalization flag: {normalization}")
+    if strategy not in KEYWORD_STRATEGIES:
+        raise ValueError(f"unsupported keyword strategy: {strategy!r}")
+    terms = keyword_terms(query_text)
+    if not terms:
+        return []
+
+    or_query = func.websearch_to_tsquery("english", " OR ".join(terms))
+    if strategy == "or":
+        return _keyword_rows(
+            session, or_query, limit=limit, weighted=weighted, normalization=normalization
+        )
+
+    ordered: list[dict[str, object]] = []
+    seen: set[int] = set()
+
+    def extend(rows: list[dict[str, object]]) -> None:
+        for row in rows:
+            chunk_id = int(row["chunk_id"])
+            if chunk_id not in seen:
+                seen.add(chunk_id)
+                ordered.append(row)
+
+    if strategy == "cascade_phrase":
+        # Exact-order phrase matches rank ahead of everything else. phraseto_tsquery
+        # yields an empty query for an all-stop-word phrase, which simply matches
+        # nothing.
+        for phrase in phrase_candidates(query_text):
+            extend(
+                _keyword_rows(
+                    session,
+                    func.phraseto_tsquery("english", phrase),
+                    limit=limit,
+                    weighted=weighted,
+                    normalization=normalization,
+                )
+            )
+            if len(ordered) >= limit:
+                return ordered[:limit]
+
+    # Cascade: AND of every term first. Each term is quoted so a hyphenated token
+    # ("state-of-the-art") is parsed as a lexeme rather than as an operator. An
+    # all-stop-word query yields an empty tsquery, which matches nothing and simply
+    # falls through to the OR fill below rather than erroring.
+    and_query = func.to_tsquery("english", " & ".join(f"'{term}'" for term in terms))
+    extend(
+        _keyword_rows(
+            session, and_query, limit=limit, weighted=weighted, normalization=normalization
+        )
+    )
+    if len(ordered) >= limit:
+        return ordered[:limit]
+
+    extend(
+        _keyword_rows(
+            session, or_query, limit=limit, weighted=weighted, normalization=normalization
+        )
+    )
+    return ordered[:limit]
 
 
 def require_vector_search_ready(

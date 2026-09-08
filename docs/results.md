@@ -315,6 +315,58 @@ document length, and is provably order-preserving (verified: flags 0 and 32 give
 identical top-15); and the migration is additive rather than replacing, so the
 frozen keyword rows stay reproducible.
 
+## Phase 3 (Part F) — F3: sparse-retrieval summary and recommendation (September 8, 2026)
+
+Every row below is measured by one harness (`eval/tools/keyword_variants.py` and
+`eval/tools/bm25_ablation.py`, same candidate collapse and metrics) over the 52
+development questions. nDCG@10. Evidence: `docs/evidence/phase-8-keyword-*.json`
+and `phase-8-bm25-offline.json` (all verified, `--kind sparse`).
+
+| variant | all | lexical | paraphrase | topical |
+|---|--:|--:|--:|--:|
+| FTS-OR (current default) | 0.759 | 0.977 | 0.695 | 0.595 |
+| `or-depth200` (depth control) | 0.759 | 0.977 | 0.695 | 0.595 |
+| cascade, AND-then-OR (F2-i) | **0.766** | 1.000 | 0.695 | 0.595 |
+| cascade + phrase (F2-ii) | 0.746 | 0.935 | 0.695 | 0.595 |
+| cascade + weights (F2-iii) | 0.721 | 1.000 | 0.602 | 0.588 |
+| weights only | 0.721 | 1.000 | 0.602 | 0.588 |
+| weights ÷ 1+log(len) | 0.729 | 1.000 | 0.623 | 0.580 |
+| weights ÷ len | 0.480 | 0.923 | 0.314 | 0.222 |
+| **BM25 offline (F1)** | **0.887** | 1.000 | **0.917** | 0.675* |
+
+`*` topical is a lower bound for BM25 and the weighted variants (they did not build
+the frozen topical pools, so papers they surface that nobody judged score 0).
+
+The cascade helps `lexical` only, and the mechanism is measured: its AND branch
+returns rows on 8 of 16 lexical questions but on **0 of 24 paraphrase and 0 of 12
+topical** — ANDing a 24-term paraphrase matches nothing, so on 36 of 52 questions
+the cascade provably degenerates to the OR query.
+
+Held-out, run **once** on the best development configuration (cascade), compared
+against the frozen baseline's existing held-out keyword row:
+
+| held-out | all | lexical | paraphrase | topical |
+|---|--:|--:|--:|--:|
+| FTS-OR (frozen) | 0.762 | 1.000 | 0.735 | 0.497 |
+| cascade | 0.762 | 1.000 | 0.735 | 0.497 |
+
+**The development gain did not replicate — it is exactly zero on held-out, on every
+type.** The entire dev gain was lexical 0.977 → 1.000, and held-out lexical was
+already 1.000.
+
+**Recommendation to Phase 4: change nothing in the keyword path.** Every
+Postgres-side lever was measured and none earns adoption (cascade +0.007 dev /
++0.000 held-out; phrase boost negative; field weights and length normalization
+negative). The one large, reproducible signal is BM25's +0.222 on development
+paraphrase, caused by IDF — which `ts_rank_cd` structurally lacks and no Postgres
+rank knob supplies. Closing it requires a different ranking engine (ParadeDB
+`pg_search`, a separate Compose service deliberately not in the default stack),
+which is a Phase 4 decision rather than a change to make inside a measurement
+phase. Note also that keyword is only one of two RRF inputs and the vector+rerank
+path already handles paraphrase well (dev `hybrid_rerank` paraphrase 0.964 vs
+keyword 0.695), so whether keyword should be down-weighted rather than repaired is
+the Part G fusion question.
+
 ## Protocol history
 
 The first report is retained because it showed keyword Recall@5 of 0.05 on

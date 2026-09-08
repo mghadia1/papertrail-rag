@@ -50,30 +50,33 @@ LIMIT = 10
 # `retrieve()` uses min(200, max(50, limit * 10)) = 100 candidate chunks at limit 10.
 DEFAULT_CANDIDATES = 100
 
-# name -> (candidate_chunks, weighted, normalization)
-VARIANTS: dict[str, tuple[int, bool, int]] = {
-    "or": (DEFAULT_CANDIDATES, False, 0),
-    "or-depth200": (200, False, 0),
-    "weighted-n0": (DEFAULT_CANDIDATES, True, 0),
-    "weighted-n1": (DEFAULT_CANDIDATES, True, 1),
-    "weighted-n2": (DEFAULT_CANDIDATES, True, 2),
+# name -> (candidate_chunks, weighted, normalization, strategy)
+VARIANTS: dict[str, tuple[int, bool, int, str]] = {
+    "or": (DEFAULT_CANDIDATES, False, 0, "or"),
+    "or-depth200": (200, False, 0, "or"),
+    "weighted-n0": (DEFAULT_CANDIDATES, True, 0, "or"),
+    "weighted-n1": (DEFAULT_CANDIDATES, True, 1, "or"),
+    "weighted-n2": (DEFAULT_CANDIDATES, True, 2, "or"),
+    "cascade": (DEFAULT_CANDIDATES, False, 0, "cascade"),
+    "cascade-weighted-n0": (DEFAULT_CANDIDATES, True, 0, "cascade"),
+    "cascade-phrase": (DEFAULT_CANDIDATES, False, 0, "cascade_phrase"),
 }
 
 
-def run_variant(session, question_set, manifest, name: str) -> dict:
-    candidates, weighted, normalization = VARIANTS[name]
+def run_variant(session, question_set, manifest, name: str, split: str = "development") -> dict:
+    candidates, weighted, normalization, strategy = VARIANTS[name]
     pools = {
         q["id"]: set(q["pool"])
         for q in question_set["retrieval_questions"]
         if q.get("pool")
     }
     items = [
-        q for q in question_set["retrieval_questions"] if q["split"] == "development"
+        q for q in question_set["retrieval_questions"] if q["split"] == split
     ]
 
     # One discarded warm-up so the first query's plan/cache cost is not measured.
     keyword_search(session, items[0]["query"], limit=candidates,
-                   weighted=weighted, normalization=normalization)
+                   weighted=weighted, normalization=normalization, strategy=strategy)
 
     rows: list[dict] = []
     for item in items:
@@ -81,7 +84,7 @@ def run_variant(session, question_set, manifest, name: str) -> dict:
         started = time.perf_counter()
         hits = keyword_search(
             session, item["query"], limit=candidates,
-            weighted=weighted, normalization=normalization,
+            weighted=weighted, normalization=normalization, strategy=strategy,
         )
         selected = distinct_papers(hits, limit=LIMIT)
         latency_ms = (time.perf_counter() - started) * 1000
@@ -122,22 +125,30 @@ def run_variant(session, question_set, manifest, name: str) -> dict:
         "evaluation_schema_version": question_set["schema_version"],
         "corpus_arxiv_ids_sha256": manifest.arxiv_ids_sha256,
         "protocol": {
-            "query_construction": "websearch_to_tsquery('english', ' OR '.join(terms))",
+            "keyword_strategy": strategy,
+            "query_construction": (
+                "websearch_to_tsquery('english', ' OR '.join(terms))" if strategy == "or"
+                else ("phraseto_tsquery spans first, then " if strategy == "cascade_phrase" else "")
+                     + "to_tsquery('english', \" & \".join(quoted terms)) then OR-fill to limit"
+            ),
             "rank_expression": rank_expression,
             "search_vector_column": "search_vector_weighted" if weighted else "search_vector",
             "ts_rank_cd_normalization": normalization,
             "candidate_chunks": candidates,
             "retrieval_limit": LIMIT,
-            "splits_evaluated": ["development"],
-            "heldout_withheld_reason": (
+            "splits_evaluated": [split],
+            "split_note": (
                 "Held-out is reserved for one final report on the best development "
                 "configuration (brief F3, rule A1)."
+                if split == "development"
+                else "Single final held-out confirmation of the best development "
+                     "configuration (brief F3); no tuning was done on this split."
             ),
             "tokenizer": "[A-Za-z0-9]+(?:-[A-Za-z0-9]+)* lower-cased; terms <3 chars dropped",
             "stemming": "Postgres english configuration (stems)",
             "latency_warmups_discarded": 1,
         },
-        "aggregates": {"development": {f"keyword-{name}": _aggregate_by_type(rows)}},
+        "aggregates": {split: {f"keyword-{name}": _aggregate_by_type(rows)}},
         "per_question": rows,
         "claim_boundary": (
             "Postgres keyword retrieval on the development split only. Latencies are "
@@ -146,14 +157,20 @@ def run_variant(session, question_set, manifest, name: str) -> dict:
             "nobody judged is scored grade 0 and listed in unjudged_ranked_ids."
         ),
     }
-    out = EVIDENCE / f"phase-8-keyword-{name}.json"
+    suffix = "" if split == "development" else f"-{split}"
+    out = EVIDENCE / f"phase-8-keyword-{name}{suffix}.json"
     out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return {"variant": name, "output": str(out.relative_to(ROOT)),
-            "aggregates": report["aggregates"]["development"][f"keyword-{name}"]}
+            "aggregates": report["aggregates"][split][f"keyword-{name}"]}
 
 
 def main() -> int:
-    names = sys.argv[1:] or list(VARIANTS)
+    argv = sys.argv[1:]
+    split = "development"
+    if "--heldout" in argv:
+        argv.remove("--heldout")
+        split = "heldout"
+    names = argv or list(VARIANTS)
     unknown = [n for n in names if n not in VARIANTS]
     if unknown:
         raise SystemExit(f"unknown variant(s): {unknown}; choose from {list(VARIANTS)}")
@@ -162,7 +179,7 @@ def main() -> int:
     results = []
     with session_scope() as session:
         for name in names:
-            results.append(run_variant(session, question_set, manifest, name))
+            results.append(run_variant(session, question_set, manifest, name, split))
     for r in results:
         a = r["aggregates"]
         print(f"{r['variant']:14s} all={a['all']['ndcg_at_10']:.3f} "

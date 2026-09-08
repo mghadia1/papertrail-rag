@@ -279,13 +279,19 @@ def verify_sparse_evidence(
     else:
         raise ValueError(f"unknown sparse evidence kind: {kind!r}")
 
-    # A1 guard: this ablation is development-only; held-out is reserved for the
-    # single final report, so a held-out row here would be a protocol violation.
+    # A1 guard: a file must declare exactly the splits it actually ran, and may
+    # only ever be a development ablation or the single final held-out report —
+    # never both, so an exploration run cannot quietly accumulate held-out numbers.
     splits = sorted({row["split"] for row in rows})
-    if splits != ["development"]:
-        raise ValueError(f"sparse evidence must be development-only; found splits {splits}")
-    if list(protocol.get("splits_evaluated", [])) != ["development"]:
-        raise ValueError("sparse evidence protocol.splits_evaluated must be ['development']")
+    declared = sorted(protocol.get("splits_evaluated", []))
+    if declared != splits:
+        raise ValueError(
+            f"sparse evidence declares splits {declared} but its rows are {splits}"
+        )
+    if splits not in (["development"], ["heldout"]):
+        raise ValueError(
+            f"sparse evidence must be development-only or heldout-only; found {splits}"
+        )
 
     for row in rows:
         graded = {str(k): int(v) for k, v in row["relevant"].items()}
@@ -299,10 +305,10 @@ def verify_sparse_evidence(
     if question_set is not None:
         expected = sorted(
             q["id"] for q in question_set["retrieval_questions"]
-            if q["split"] == "development"
+            if q["split"] == splits[0]
         )
         if sorted(row["question_id"] for row in rows) != expected:
-            raise ValueError("bm25 rows do not match the development question ids")
+            raise ValueError(f"sparse rows do not match the {splits[0]} question ids")
         pools = {
             q["id"]: set(q["pool"])
             for q in question_set["retrieval_questions"]
@@ -321,14 +327,15 @@ def verify_sparse_evidence(
                     "ids outside its judged pool"
                 )
 
-    for mode, published in report["aggregates"]["development"].items():
+    split = splits[0]
+    for mode, published in report["aggregates"][split].items():
         slice_rows = [row for row in rows if row["mode"] == mode]
         for type_key, metrics in _aggregate_by_type(slice_rows).items():
             if type_key not in published:
-                raise ValueError(f"aggregates.development.{mode} missing type '{type_key}'")
+                raise ValueError(f"aggregates.{split}.{mode} missing type '{type_key}'")
             for key, value in metrics.items():
                 _close(float(value), published[type_key][key],
-                       f"aggregates.development.{mode}.{type_key}.{key}")
+                       f"aggregates.{split}.{mode}.{type_key}.{key}")
 
     return {"verified": True, "kind": kind, "raw_rows": len(rows),
             "unjudged_topical_rows": sum(1 for r in rows if r.get("unjudged_ranked_ids"))}
