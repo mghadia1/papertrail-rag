@@ -367,6 +367,62 @@ path already handles paraphrase well (dev `hybrid_rerank` paraphrase 0.964 vs
 keyword 0.695), so whether keyword should be down-weighted rather than repaired is
 the Part G fusion question.
 
+## Phase 4 (Part G) — fusion ablation (September 9, 2026)
+
+RRF `k=60`, equal weights and the 50–200 candidate pool were inherited and never
+ablated. The sweep covers `k ∈ {10,30,60,100}` × `w_vec ∈ {1,2,3}`, plus convex
+fusion `alpha ∈ {0.5,0.7,0.9}`, each × `candidate_limit ∈ {50,200}` × keyword
+`{or, cascade}` — 60 configurations × 52 development questions = 3,120 rows.
+Evidence: `docs/evidence/phase-8-fusion-sweep-dev.json` and
+`phase-8-fusion-heldout.json` (both verified, `--kind fusion`).
+
+Each question's candidate lists are fetched once per (pool, keyword strategy) and
+every configuration is fused from those same cached lists, so differences between
+cells come from the fusion alone. Per-config latency is therefore **not measured**
+and is not reported; candidate-fetch latency is recorded per pool instead (cl50 p50
+44 ms, cl200 p50 69 ms).
+
+**Development: `k` is what matters, not the candidate pool** (unweighted RRF, OR
+keyword, nDCG@10 on `all`):
+
+| k | pool 50 | pool 200 |
+|---|--:|--:|
+| 10 | 0.892 | **0.900** |
+| 30 | 0.875 | 0.876 |
+| 60 (current) | 0.875 | 0.877 |
+| 100 | 0.875 | 0.877 |
+
+Widening the pool is worth +0.008 at k=10 and ~+0.001 elsewhere. RRF discounts by
+`1/(k+rank)`, and at k=60 that is nearly flat over the top ten (1/61 vs 1/70, a 13%
+spread), so fusion barely separates rank 1 from rank 10 and the weaker keyword list
+drags good vector hits down; at k=10 the spread is 45%. Consistently, up-weighting
+the vector side at k=60 buys most of the same effect (w_vec 1→3: 0.877 → 0.895),
+and is unnecessary once k=10.
+
+The pre-registered rule selected **`rrf-k10-wv1-cl200-or`**.
+
+**Held-out, run once, against the v2-style baseline** (k=60, equal weights, pool
+50, `ef_search` at the Postgres default, OR keyword):
+
+| held-out | baseline | chosen | gap |
+|---|--:|--:|--:|
+| all (26) | 0.916 | 0.921 | +0.005 |
+| paraphrase (12) | 0.969 | 0.969 | +0.000 |
+| lexical (8) | 1.000 | 1.000 | +0.000 |
+| topical (6) | 0.698 | 0.721 | +0.023 |
+
+Recall@10 is 1.000 for both on every type. **The development gain largely does not
+transfer**: +0.025 on development becomes +0.005 held-out, and the only cell that
+moves is topical, on 6 questions. Paraphrase and lexical are flat to three
+decimals. No default was changed.
+
+One prediction the data corrected: the baseline was expected to truncate its vector
+candidate list to 40 (the Phase 1 `ef_search` trap), but per-row
+`vector_candidates` came back 50, and `EXPLAIN (ANALYZE)` shows the planner runs an
+exact Seq Scan at both LIMIT 50 and LIMIT 200 rather than the HNSW index — so the
+ef cap never binds. At 2,039 vectors the Phase 1 truncation concern does not affect
+production.
+
 ## Protocol history
 
 The first report is retained because it showed keyword Recall@5 of 0.05 on

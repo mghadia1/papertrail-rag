@@ -1,7 +1,12 @@
 import pytest
 
 from papertrail import retrieval
-from papertrail.retrieval import distinct_papers, reciprocal_rank_fusion, retrieve
+from papertrail.retrieval import (
+    convex_fusion,
+    distinct_papers,
+    reciprocal_rank_fusion,
+    retrieve,
+)
 
 
 def hit(chunk_id: int, arxiv_id: str) -> dict[str, object]:
@@ -124,3 +129,81 @@ def test_rerank_pool_below_limit_is_rejected(monkeypatch) -> None:
             reranker=_IdentityReranker(),
             rerank_pool=5,
         )
+
+
+def scored(chunk_id: int, arxiv_id: str, score: float) -> dict[str, object]:
+    item = hit(chunk_id, arxiv_id)
+    item["score"] = score
+    return item
+
+
+def test_weighted_rrf_scales_each_source_contribution() -> None:
+    # vector ranks a1 first, keyword ranks a2 first. With w_vec=3 the vector
+    # source's contribution triples, so a1 must win.
+    fused = reciprocal_rank_fusion(
+        {
+            "vector": [hit(1, "a1v1"), hit(2, "a2v1")],
+            "keyword": [hit(2, "a2v1"), hit(1, "a1v1")],
+        },
+        k=60,
+        weights={"vector": 3.0, "keyword": 1.0},
+    )
+    assert [item["arxiv_id"] for item in fused] == ["a1v1", "a2v1"]
+    # a1: 3/(60+1) from vector + 1/(60+2) from keyword
+    assert fused[0]["score"] == pytest.approx(3 / 61 + 1 / 62)
+    # a2: 3/(60+2) from vector + 1/(60+1) from keyword
+    assert fused[1]["score"] == pytest.approx(3 / 62 + 1 / 61)
+
+
+def test_rrf_weights_none_matches_explicit_unit_weights() -> None:
+    rankings = {"vector": [hit(1, "a1v1"), hit(2, "a2v1")], "keyword": [hit(2, "a2v1")]}
+    assert reciprocal_rank_fusion(rankings, k=60) == reciprocal_rank_fusion(
+        rankings, k=60, weights={"vector": 1.0, "keyword": 1.0}
+    )
+
+
+def test_convex_fusion_three_documents_hand_computed() -> None:
+    # vector scores 1.0 / 0.5 / 0.0 -> min-max 1.0 / 0.5 / 0.0
+    # keyword scores 10 / 5        -> min-max 1.0 / 0.0
+    # alpha = 0.7:
+    #   a1 = 0.7*1.0 + 0.3*0    (absent from keyword) = 0.70
+    #   a2 = 0.7*0.5 + 0.3*1.0                        = 0.65
+    #   a3 = 0.7*0.0 + 0.3*0.0                        = 0.00
+    fused = convex_fusion(
+        {
+            "vector": [scored(1, "a1v1", 1.0), scored(2, "a2v1", 0.5), scored(3, "a3v1", 0.0)],
+            "keyword": [scored(2, "a2v1", 10.0), scored(3, "a3v1", 5.0)],
+        },
+        alpha=0.7,
+    )
+    assert [item["arxiv_id"] for item in fused] == ["a1v1", "a2v1", "a3v1"]
+    assert [item["score"] for item in fused] == pytest.approx([0.70, 0.65, 0.00])
+    assert fused[1]["component_ranks"] == {"keyword": 1, "vector": 2}
+
+
+def test_convex_fusion_min_max_puts_the_last_candidate_at_zero() -> None:
+    # Documented trap: min-max over a truncated list makes its worst member
+    # exactly 0.0 for that source, even though it did match.
+    fused = convex_fusion(
+        {"vector": [scored(1, "a1v1", 0.9), scored(2, "a2v1", 0.8)]}, alpha=1.0
+    )
+    assert fused[-1]["score"] == pytest.approx(0.0)
+
+
+def test_convex_fusion_all_equal_scores_normalize_to_one() -> None:
+    fused = convex_fusion(
+        {"vector": [scored(1, "a1v1", 0.4), scored(2, "a2v1", 0.4)]}, alpha=1.0
+    )
+    assert [item["score"] for item in fused] == pytest.approx([1.0, 1.0])
+
+
+def test_convex_fusion_rejects_bad_alpha_and_unknown_sources() -> None:
+    with pytest.raises(ValueError, match="alpha must be within"):
+        convex_fusion({"vector": [hit(1, "a1v1")]}, alpha=1.5)
+    with pytest.raises(ValueError, match="expects vector/keyword"):
+        convex_fusion({"rerank": [hit(1, "a1v1")]}, alpha=0.5)
+
+
+def test_rrf_rejects_negative_weight() -> None:
+    with pytest.raises(ValueError, match="non-negative"):
+        reciprocal_rank_fusion({"vector": [hit(1, "a1v1")]}, weights={"vector": -1.0})

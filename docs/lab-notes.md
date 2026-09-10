@@ -881,3 +881,120 @@ Part G question.
 
 Post-run: 75 tests pass (8 new keyword-strategy tests); every prior evidence file
 still verifies (v2, v3 baseline, 8 rerank, hnsw, gate, 10 sparse); manifest intact.
+
+## 2026-09-09 — Phase 4 (Part G): Fusion ablation
+
+Pre-run: 75 tests passed; DB up, manifest verified (1,000 IDs, sha 7308d240…);
+package reinstalled into `.venv-ml` — `papertrail-rag 0.1.0` (F5 check); frozen v2
+and v3 baseline both verify; tree clean at `bca31fc`.
+
+Why this phase: RRF `k=60`, equal weights, and the 50–200 candidate pool were
+inherited, never ablated. Phase 3 also left an open question — keyword is the
+weakest retriever (dev nDCG 0.759 vs `hybrid_rerank` 0.942) and no Postgres fix
+helped, so the live question is whether fusion should *down-weight* keyword rather
+than try to repair it. Phase 1 additionally flagged that the default
+`hnsw.ef_search=40` truncates the vector candidate list below `candidate_limit`
+(50–200), which this phase must avoid by setting `ef_search` explicitly.
+
+**Selection rule, pre-registered before the sweep runs (brief G3):**
+> Choose the configuration with the highest **development** nDCG@10 on `all`.
+> Ties broken by `paraphrase`, then `lexical`. Among configurations still tied,
+> prefer the **simplest**: unweighted RRF over weighted, and the smaller candidate
+> pool over the larger.
+
+Recorded now, before any sweep number exists, so the winner cannot be chosen after
+the fact. Two things I am binding myself to up front (brief G traps): the sweep is
+**development only** and is *not* a reportable result — only the G4 held-out run
+is; and no default changes in this phase without Mayank seeing G4 first (A18/G6).
+
+**G1–G2 — parameterized fusion and the sweep.** `reciprocal_rank_fusion` gained
+`weights` (each source contributes `w/(k+rank)`; `weights=None` is the original
+function, and the existing RRF tests pass unchanged). Added `convex_fusion`:
+min-max normalize each source's own scores into [0,1], then
+`alpha*vector + (1-alpha)*keyword`, missing source contributes 0, same
+deterministic tie-break. `retrieve()` gained `weights`, `fusion`, `alpha`,
+`candidate_limit`, `ef_search`, `keyword_strategy`.
+
+Sweep: `k ∈ {10,30,60,100}` × `w_vec ∈ {1,2,3}` plus `alpha ∈ {0.5,0.7,0.9}`, each
+× `candidate_limit ∈ {50,200}` × keyword `{or, cascade}` = **60 configurations ×
+52 development questions = 3,120 rows**, in 26 s. Evidence:
+`docs/evidence/phase-8-fusion-sweep-dev.json` (verified, `--kind fusion`).
+
+Design choice worth defending: for each question the two candidate lists are
+fetched **once** per (pool, keyword strategy) and every configuration is fused from
+those same cached lists. So a difference between cells is caused by the fusion and
+nothing else. The cost is that **per-config latency is not measured**, and rather
+than emit a fabricated `0.0` I made `_aggregate` omit latency keys when no row
+carries a measurement (A5). Candidate-fetch latency is recorded per
+(pool, strategy) instead: cl50 p50 44 ms, cl200 p50 69 ms.
+
+**What actually moves the number — k, not the pool:**
+
+| k (unweighted RRF, OR) | dev all @ cl50 | @ cl200 |
+|---|--:|--:|
+| 10 | 0.892 | **0.900** |
+| 30 | 0.875 | 0.876 |
+| 60 (current) | 0.875 | 0.877 |
+| 100 | 0.875 | 0.877 |
+
+Widening the candidate pool 50 → 200 is worth +0.008 at k=10 and +0.001 elsewhere.
+Nearly the whole development gain is **k**. Mechanism: RRF's discount is
+`1/(k+rank)`, and at k=60 that is almost flat across the top ten — 1/61 vs 1/70 is
+a 13% spread — so fusion barely distinguishes rank 1 from rank 10 and the weaker
+keyword list drags good vector hits down. At k=10 the spread is 1/11 vs 1/20, 45%,
+so the top of each list dominates. Consistent with that reading, up-weighting the
+vector side at k=60 buys most of the same thing by another route (w_vec 1 → 3:
+0.877 → 0.895), and once k=10 the weighting is unnecessary.
+
+**G3 — selection.** The pre-registered rule picked **`rrf-k10-wv1-cl200-or`**
+(RRF k=10, unweighted, pool 200, ef_search 200, OR keyword). Honest note on the
+tie-break: the top two cells — the `or` and `cascade` keyword variants — are tied
+to the last floating-point digit on every type (0.9001742652741194 on `all`), even
+though their ranked lists differ on 3 of 52 questions. My first sort broke that tie
+by alphabetical config id, which picked `cascade` for no reason at all. I extended
+the "simplest" clause of the rule to prefer the incumbent `or`, put it in
+`select_fusion_config` so the sweep tool and the verifier use one implementation,
+and the verifier now recomputes it.
+
+**G4 — held-out, once, chosen vs the v2-style baseline** (k=60, equal weights,
+pool 50, `ef_search` at the Postgres default, OR keyword). Evidence:
+`docs/evidence/phase-8-fusion-heldout.json` (verified, cross-checked against the
+sweep).
+
+| held-out (n=26) | baseline | chosen | gap |
+|---|--:|--:|--:|
+| all | 0.916 | 0.921 | +0.005 |
+| paraphrase (12) | 0.969 | 0.969 | +0.000 |
+| lexical (8) | 1.000 | 1.000 | +0.000 |
+| topical (6) | 0.698 | 0.721 | +0.023 |
+
+Recall@10 is 1.000 for both on every type; latency p50 60.3 ms chosen vs 61.7 ms
+baseline (within-file only, A10).
+
+**The development gain does not transfer.** +0.025 on development becomes **+0.005
+on held-out**, and the only cell that moves at all is topical — **6 questions**
+(A11). Paraphrase and lexical are flat to three decimals. I am not going to call a
++0.005 overall change on 26 questions a win.
+
+**A prediction of mine that the data killed.** I set the baseline's `ef_search`
+unset expecting it to truncate the vector list to 40 — the Phase 1 trap — and wrote
+that into the file's protocol note. The per-row `vector_candidates` came back
+**50, not 40**. `EXPLAIN (ANALYZE)` explains why: at LIMIT 50 *and* LIMIT 200 the
+planner runs an exact **Seq Scan** rather than the HNSW index, so the ef cap never
+binds. `SHOW hnsw.ef_search` is indeed 40; it simply does not apply when the index
+is not used. So at 2,039 vectors the Phase 1 truncation concern **does not bite in
+production**. I corrected the false note and re-ran before committing — the run is
+deterministic and every metric was byte-identical, and no committed file ever
+carried the wrong claim.
+
+**G5 — verifier.** `verify_fusion_evidence` (`--kind fusion`) recomputes every row
+and every per-config aggregate, enforces sweep = development-only / held-out =
+heldout-only, checks RRF k against the report's **own** declared `rrf_k_values`
+rather than the frozen constant 60, and — given `--sweep` — recomputes the
+selection rule over the sweep and rejects a held-out file that names anything other
+than the development-best configuration. Tested both ways.
+
+**G6 — no default changed.** Stopping here for Mayank to see the G4 table (A18).
+
+Post-run: 83 tests pass; every prior evidence file still verifies (v2, v3 baseline,
+8 rerank, 10 sparse, hnsw, gate); manifest intact.

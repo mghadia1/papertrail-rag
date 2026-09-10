@@ -20,6 +20,7 @@ from .evaluation import (
     ndcg_at,
     recall_at,
     reciprocal_rank,
+    select_fusion_config,
 )
 
 # Tie-break ordering for the gate selection rule (must match score_gate.py).
@@ -343,6 +344,120 @@ def verify_sparse_evidence(
 
 # Kept so the F1 command line in the notes/commits keeps working.
 verify_bm25_evidence = verify_sparse_evidence
+
+
+def _verify_pool_bookkeeping(rows, question_set) -> None:
+    """Any ranked paper outside a topical question's frozen pool is unjudged and
+    must be recorded per row, since it is scored grade 0."""
+    pools = {
+        q["id"]: set(q["pool"])
+        for q in question_set["retrieval_questions"]
+        if q.get("pool")
+    }
+    for row in rows:
+        pool = pools.get(row["question_id"])
+        if pool is None:
+            continue
+        out_of_pool = sorted(set(row["ranked_arxiv_ids"]) - pool)
+        if sorted(row.get("unjudged_ranked_ids", [])) != out_of_pool:
+            raise ValueError(
+                f"{row['question_id']} unjudged_ranked_ids does not match the ids "
+                "outside its judged pool"
+            )
+
+
+def verify_fusion_evidence(
+    path: Path,
+    manifest: CorpusManifest,
+    *,
+    question_set: dict[str, Any] | None = None,
+    sweep_path: Path | None = None,
+) -> dict[str, Any]:
+    """Recompute a Part G fusion artifact (the dev sweep or the held-out run).
+
+    G5: RRF k is checked against the report's own declared protocol rather than
+    the frozen constant 60, because ablating k is the point of this phase; and a
+    held-out file must name the configuration the pre-registered selection rule
+    picks from the sweep, which is recomputed here from the sweep file.
+    """
+    report = json.loads(path.read_text(encoding="utf-8"))
+    _verify_freeze_precedes_report(report)
+    if report.get("corpus_arxiv_ids_sha256") != manifest.arxiv_ids_sha256:
+        raise ValueError("fusion evidence corpus hash does not match manifest")
+    kind = report.get("kind")
+    if kind not in ("fusion_sweep", "fusion_heldout"):
+        raise ValueError(f"unknown fusion evidence kind: {kind!r}")
+    rows = report.get("per_question", [])
+    if not rows:
+        raise ValueError("fusion evidence has no raw rows")
+
+    protocol = report.get("protocol", {})
+    splits = sorted({row["split"] for row in rows})
+    declared = sorted(protocol.get("splits_evaluated", []))
+    if declared != splits:
+        raise ValueError(f"fusion evidence declares splits {declared} but rows are {splits}")
+    expected_split = ["development"] if kind == "fusion_sweep" else ["heldout"]
+    if splits != expected_split:
+        raise ValueError(f"{kind} must be {expected_split[0]}-only; found {splits}")
+
+    for row in rows:
+        graded = {str(k): int(v) for k, v in row["relevant"].items()}
+        ranked = [str(identifier) for identifier in row["ranked_arxiv_ids"]]
+        tag = f"{row['question_id']}/{row['config_id']}"
+        _close(recall_at(ranked, graded, 5), row["recall_at_5"], f"{tag} recall_at_5")
+        _close(recall_at(ranked, graded, 10), row["recall_at_10"], f"{tag} recall_at_10")
+        _close(reciprocal_rank(ranked, graded), row["reciprocal_rank"], f"{tag} mrr")
+        _close(ndcg_at(ranked, graded, 10), row["ndcg_at_10"], f"{tag} ndcg_at_10")
+
+    if question_set is not None:
+        _verify_pool_bookkeeping(rows, question_set)
+
+    if kind == "fusion_sweep":
+        by_config = report["by_config"]
+        declared_k = set(protocol.get("rrf_k_values", []))
+        for config_id, config in by_config.items():
+            # G5: k is checked against this report's declared sweep, not the 60 constant.
+            if config["fusion"] == "rrf" and int(config["k"]) not in declared_k:
+                raise ValueError(f"{config_id} uses k={config['k']} outside protocol.rrf_k_values")
+            selected = [row for row in rows if row["config_id"] == config_id]
+            if not selected:
+                raise ValueError(f"by_config lists {config_id} with no rows")
+            for type_key, metrics in _aggregate_by_type(selected).items():
+                for key, value in metrics.items():
+                    _close(float(value), config["aggregates"][type_key][key],
+                           f"by_config.{config_id}.{type_key}.{key}")
+        return {"verified": True, "kind": kind, "raw_rows": len(rows),
+                "configurations": len(by_config)}
+
+    # Held-out run: recompute both configurations' aggregates ...
+    for label, published in report["aggregates"]["heldout"].items():
+        selected = [row for row in rows if row["config_id"] == label]
+        if not selected:
+            raise ValueError(f"held-out aggregates list {label} with no rows")
+        for type_key, metrics in _aggregate_by_type(selected).items():
+            for key, value in metrics.items():
+                _close(float(value), published[type_key][key],
+                       f"aggregates.heldout.{label}.{type_key}.{key}")
+
+    # ... and confirm the configuration run here is the one the rule selects.
+    chosen_id = report.get("chosen_config_id")
+    if not chosen_id:
+        raise ValueError("held-out fusion evidence must name chosen_config_id")
+    if sweep_path is not None:
+        sweep = json.loads(Path(sweep_path).read_text(encoding="utf-8"))
+        expected = select_fusion_config(sweep["by_config"])
+        if expected != chosen_id:
+            raise ValueError(
+                f"held-out configuration {chosen_id!r} is not the development-best "
+                f"{expected!r} under the pre-registered selection rule"
+            )
+        swept = {k: v for k, v in sweep["by_config"][chosen_id].items() if k != "aggregates"}
+        for key, value in swept.items():
+            if report["chosen_config"].get(key) != value:
+                raise ValueError(f"chosen_config.{key} disagrees with the sweep entry")
+    return {"verified": True, "kind": kind, "raw_rows": len(rows),
+            "chosen_config_id": chosen_id,
+            "sweep_cross_checked": sweep_path is not None}
 
 
 def verify_gate_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]:

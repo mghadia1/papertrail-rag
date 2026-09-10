@@ -104,6 +104,35 @@ def ndcg_at(ranked_ids: list[str], relevant: "set[str] | dict[str, int]", k: int
     return dcg / ideal if ideal else 0.0
 
 
+def select_fusion_config(by_config: dict[str, Any]) -> str:
+    """The Part G, G3 selection rule, shared by the sweep tool and the verifier.
+
+    Highest development nDCG@10 on ``all``; ties broken by ``paraphrase`` then
+    ``lexical``; among configurations still tied, prefer the simplest — unweighted
+    RRF over weighted, the smaller candidate pool over the larger, and the
+    incumbent ``"or"`` keyword strategy over the cascade. That last clause matters:
+    on this sweep the top two cells tie to the last floating-point digit, so
+    without it the winner would be decided by alphabetical order of the config id,
+    which is not a criterion.
+    """
+
+    def sort_key(item: tuple[str, dict[str, Any]]):
+        config_id, config = item
+        aggregates = config["aggregates"]
+        unweighted = config["fusion"] == "rrf" and float(config.get("w_vec", 1.0)) == 1.0
+        return (
+            -float(aggregates["all"]["ndcg_at_10"]),
+            -float(aggregates["paraphrase"]["ndcg_at_10"]),
+            -float(aggregates["lexical"]["ndcg_at_10"]),
+            0 if unweighted else 1,
+            int(config["candidate_limit"]),
+            0 if config.get("keyword_strategy") == "or" else 1,
+            config_id,
+        )
+
+    return sorted(by_config.items(), key=sort_key)[0][0]
+
+
 def _percentile(values: list[float], percentile: float) -> float:
     if not values:
         return 0.0
@@ -206,14 +235,20 @@ def load_question_set(path: Path, manifest: CorpusManifest) -> dict[str, Any]:
 
 
 def _aggregate(rows: list[dict[str, Any]]) -> dict[str, float | int]:
-    return {
+    aggregate: dict[str, float | int] = {
         "questions": len(rows),
         "recall_at_5": statistics.fmean(row["recall_at_5"] for row in rows),
         "mrr": statistics.fmean(row["reciprocal_rank"] for row in rows),
         "ndcg_at_10": statistics.fmean(row["ndcg_at_10"] for row in rows),
-        "latency_ms_p50": _percentile([row["latency_ms"] for row in rows], 0.50),
-        "latency_ms_p95": _percentile([row["latency_ms"] for row in rows], 0.95),
     }
+    # Latency is reported only when every row actually carries a measurement. The
+    # fusion sweep fuses many configurations from one cached candidate fetch, so it
+    # has no per-config latency, and emitting a fabricated 0.0 would be a made-up
+    # number in evidence (A5).
+    if rows and all("latency_ms" in row for row in rows):
+        aggregate["latency_ms_p50"] = _percentile([row["latency_ms"] for row in rows], 0.50)
+        aggregate["latency_ms_p95"] = _percentile([row["latency_ms"] for row in rows], 0.95)
+    return aggregate
 
 
 def _aggregate_typed(rows: list[dict[str, Any]]) -> dict[str, float | int]:

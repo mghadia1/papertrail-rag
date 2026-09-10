@@ -13,6 +13,7 @@ from .config import get_settings
 from .embedding import get_encoder
 from .evaluation import evaluate, evaluate_rag, load_question_set
 from .evidence import (
+    verify_fusion_evidence,
     verify_sparse_evidence,
     verify_gate_evidence,
     verify_hnsw_evidence,
@@ -112,10 +113,13 @@ def build_parser() -> argparse.ArgumentParser:
     evidence = commands.add_parser(
         "verify-evidence", help="recompute and verify a retrieval or RAG report"
     )
-    evidence.add_argument("--kind", choices=("retrieval", "rag", "hnsw", "gate", "bm25", "sparse"), required=True)
+    evidence.add_argument("--kind", choices=("retrieval", "rag", "hnsw", "gate", "bm25", "sparse", "fusion"), required=True)
     evidence.add_argument("--report", type=Path, required=True)
     evidence.add_argument("--manifest", type=Path, required=True)
     evidence.add_argument("--questions", type=Path)
+    evidence.add_argument("--sweep", type=Path,
+                          help="fusion sweep evidence, so a held-out fusion file can be "
+                               "checked against the development-best configuration")
     evidence.add_argument("--abstain-threshold", type=float, default=None,
                           help="expected RAG abstain threshold (defaults to the config value)")
     return parser
@@ -280,6 +284,15 @@ def main() -> int:
         manifest = CorpusManifest.read(args.manifest)
         if args.kind == "hnsw":
             result = verify_hnsw_evidence(args.report, manifest)
+        elif args.kind == "fusion":
+            question_set = (
+                load_question_set(args.questions, manifest)
+                if args.questions is not None
+                else None
+            )
+            result = verify_fusion_evidence(
+                args.report, manifest, question_set=question_set, sweep_path=args.sweep
+            )
         elif args.kind in ("bm25", "sparse"):
             question_set = (
                 load_question_set(args.questions, manifest)

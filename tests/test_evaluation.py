@@ -214,3 +214,35 @@ def test_rag_verifier_rejects_edited_grounding_rate(tmp_path) -> None:
         verify_rag_evidence(
             edited, question_set=questions, expected_threshold=0.03239446668849102
         )
+
+
+def test_fusion_verifier_checks_heldout_matches_the_dev_best(tmp_path) -> None:
+    from papertrail.evidence import verify_fusion_evidence
+
+    manifest = CorpusManifest.read(ROOT / "docs/evidence/corpus-manifest-1000.json")
+    questions = load_question_set(ROOT / "eval/questions-v3.json", manifest)
+    sweep = ROOT / "docs/evidence/phase-8-fusion-sweep-dev.json"
+    heldout = ROOT / "docs/evidence/phase-8-fusion-heldout.json"
+
+    assert verify_fusion_evidence(sweep, manifest, question_set=questions)["verified"] is True
+    result = verify_fusion_evidence(
+        heldout, manifest, question_set=questions, sweep_path=sweep
+    )
+    assert result["verified"] is True and result["sweep_cross_checked"] is True
+
+    # G5: a held-out file naming a configuration that is not the development-best
+    # under the pre-registered rule must be rejected.
+    tampered = json.loads(heldout.read_text())
+    tampered["chosen_config_id"] = "rrf-k60-wv1-cl50-or"
+    bad = tmp_path / "wrong-config.json"
+    bad.write_text(json.dumps(tampered))
+    with pytest.raises(ValueError, match="not the development-best"):
+        verify_fusion_evidence(bad, manifest, question_set=questions, sweep_path=sweep)
+
+    # And the sweep may never contain held-out rows.
+    leaked = json.loads(sweep.read_text())
+    leaked["per_question"][0]["split"] = "heldout"
+    bad2 = tmp_path / "leaked-sweep.json"
+    bad2.write_text(json.dumps(leaked))
+    with pytest.raises(ValueError, match="declares splits"):
+        verify_fusion_evidence(bad2, manifest, question_set=questions)
