@@ -93,12 +93,11 @@ Exact scan: p50 23.1 ms, p95 34.5 ms (n=78). recall@50 is undefined below ef=50
 values at ef<50 are truncation, not approximation error, and the metric is only
 meaningful from ef=100 up (0.998). Two findings at this corpus size: the default
 ef=40 returns fewer rows (40) than the retrieval candidate pool asks for (50–200),
-capping the vector side **when the index is used**; and Postgres's planner picks
-the HNSW index only at ef≤40 and reverts to an exact scan above that (`natural
-scan` column). Followed up in Phase 4 and the concern turned out **not** to apply
-in production: `EXPLAIN (ANALYZE)` on the real retrieval query shows an exact Seq
-Scan at both LIMIT 50 and LIMIT 200, and the measured `vector_candidates` are 50
-and 200, so the ef cap never binds at this corpus size. The table latencies include per-call connection setup (a fresh
+silently capping the vector side; and Postgres's planner picks the HNSW index only
+at ef≤40 and reverts to an exact scan above that (`natural scan` column).
+**Confirmed in Phase 4: with `ef_search` unset the production query uses the index
+and returns 40 candidates regardless of `candidate_limit`; the cap is real.**
+Whether to set `ef_search` explicitly in `retrieve()` is a G6 decision. The table latencies include per-call connection setup (a fresh
 session per call), so read them only relative to each other within this file
 (A10); with that setup excluded, an EXPLAIN ANALYZE execution-only comparison was
 exact ~10 ms vs index ~2 ms (versus the table's exact p50 of 23.1 ms, which
@@ -239,6 +238,8 @@ topical); held-out is reserved for one final report on the best configuration
 | topical | 0.595 | 0.675* | +0.080* |
 
 nDCG@10. Recall@10 also moves: all 0.923 → 0.981, paraphrase 0.833 → 0.958.
+Note the `all` row averages over the starred topical component, so it inherits that
+lower bound; **the defensible headline is the paraphrase gap (+0.222), not `all`.**
 
 `*` **topical is a lower bound, not a clean comparison.** BM25 did not help build
 the frozen topical judgment pools, so it surfaces papers nobody judged — all 12
@@ -404,27 +405,40 @@ and is unnecessary once k=10.
 
 The pre-registered rule selected **`rrf-k10-wv1-cl200-or`**.
 
-**Held-out, run once, against the v2-style baseline** (k=60, equal weights, pool
-50, `ef_search` at the Postgres default, OR keyword):
+A caveat on the sweep itself: its `cl50` cells set `ef_search=50`, and its `cl200`
+cells `ef_search=200`, so **no sweep cell is the production configuration**, which
+leaves `ef_search` unset and is capped at 40. Every sweep call passes `ef_search`
+explicitly, so the sweep was not affected by the session-state leak described
+below.
 
-| held-out | baseline | chosen | gap |
-|---|--:|--:|--:|
-| all (26) | 0.916 | 0.921 | +0.005 |
-| paraphrase (12) | 0.969 | 0.969 | +0.000 |
-| lexical (8) | 1.000 | 1.000 | +0.000 |
-| topical (6) | 0.698 | 0.721 | +0.023 |
+**Held-out, three configurations, one run each.** Evidence:
+`docs/evidence/phase-8-fusion-heldout-v2.json` (verified). This supersedes
+`phase-8-fusion-heldout.json`, whose "baseline" row inherited
+`hnsw.ef_search = 200` from the chosen configuration because both ran in one
+transaction — it reported 50 vector candidates and 0.916 on `all` where production
+sees 40 and 0.913. The superseded file is kept unedited (A3).
 
-Recall@10 is 1.000 for both on every type. **The development gain largely does not
-transfer**: +0.025 on development becomes +0.005 held-out, and the only cell that
-moves is topical, on 6 questions. Paraphrase and lexical are flat to three
-decimals. No default was changed.
+| held-out (26) | production as-is | production, ef fixed | chosen | chosen − production |
+|---|--:|--:|--:|--:|
+| vector candidates | **40** | 50 | 200 | |
+| all | 0.913 | 0.916 | 0.921 | +0.009 |
+| paraphrase (12) | 0.969 | 0.969 | 0.969 | +0.000 |
+| lexical (8) | 1.000 | 1.000 | 1.000 | +0.000 |
+| topical (6) | 0.683 | 0.699 | 0.721 | +0.038 |
+| latency p50 ms | 34.8 | 38.6 | 39.5 | |
 
-One prediction the data corrected: the baseline was expected to truncate its vector
-candidate list to 40 (the Phase 1 `ef_search` trap), but per-row
-`vector_candidates` came back 50, and `EXPLAIN (ANALYZE)` shows the planner runs an
-exact Seq Scan at both LIMIT 50 and LIMIT 200 rather than the HNSW index — so the
-ef cap never binds. At 2,039 vectors the Phase 1 truncation concern does not affect
-production.
+`production as-is` is k=60, pool 50, `ef_search` unset — and it reproduces the
+frozen v3 baseline's held-out hybrid nDCG of **0.913** exactly, which is the check
+that the corrected run is measuring the real system. `production, ef fixed` differs
+only by `ef_search=50`, isolating the cap: **lifting the cap alone is worth +0.003
+on `all` and +0.016 on topical**. The remaining +0.005 / +0.022 comes from k=10 plus
+the wider pool.
+
+Recall@10 is 1.000 for all three on every type. **The development gain largely does
+not transfer**: +0.025 on development becomes +0.009 held-out, and every cell that
+moves is topical — 6 questions (A11). Paraphrase and lexical are flat to three
+decimals. No default was changed; the `ef_search` and RRF-`k` decisions are G6
+items.
 
 ## Protocol history
 

@@ -439,6 +439,22 @@ def verify_fusion_evidence(
                 _close(float(value), published[type_key][key],
                        f"aggregates.heldout.{label}.{type_key}.{key}")
 
+    # A configuration that declares how many vector candidates it should see must
+    # actually have seen that many on every row. This is what catches a leaked
+    # SET LOCAL: the production configuration is capped at 40 by hnsw.ef_search,
+    # and a run that inherited a wider ef from a previous configuration in the
+    # same transaction would show more (review F1/F3, rule A12b).
+    for label, config in (report.get("configs") or {}).items():
+        expected = config.get("expected_vector_candidates")
+        if expected is None:
+            continue
+        seen = sorted({row["vector_candidates"] for row in rows if row["config_id"] == label})
+        if seen != [int(expected)]:
+            raise ValueError(
+                f"{label} declares {expected} vector candidates but its rows show {seen}; "
+                "a transaction-scoped SET LOCAL may have leaked between configurations"
+            )
+
     # ... and confirm the configuration run here is the one the rule selects.
     chosen_id = report.get("chosen_config_id")
     if not chosen_id:

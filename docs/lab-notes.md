@@ -998,3 +998,73 @@ than the development-best configuration. Tested both ways.
 
 Post-run: 83 tests pass; every prior evidence file still verifies (v2, v3 baseline,
 8 rerank, 10 sparse, hnsw, gate); manifest intact.
+
+### Correction (2026-09-10, review F1–F4): the Phase 4 ef_search conclusion was wrong
+
+An independent review found that my "the ef cap never binds in production" finding
+was an artifact of **leaked Postgres session state**, and it is right. I reproduced
+it before changing anything:
+
+| call (one transaction) | rows |
+|---|--:|
+| `vector_search(limit=50)` first in a fresh transaction | **40** |
+| `vector_search(limit=50, ef_search=200)` | 50 |
+| `vector_search(limit=50)` again, same transaction | **50** ← inherited |
+| `vector_search(limit=200)` again, same transaction | **200** ← inherited |
+| `vector_search(limit=50)` in a new transaction | **40** |
+| `vector_search(limit=200)` in a new transaction | **40** |
+
+`SET LOCAL` lasts for the rest of the transaction, and `vector_search` only issued
+one when `exact=True` or `ef_search` was given — so a call passing neither inherited
+whatever came before. `fusion_heldout.py` ran the chosen configuration
+(`ef_search=200`) and then the baseline (unset) inside one `session_scope`, so the
+baseline silently ran at ef=200.
+
+**The Phase 1 truncation finding was correct all along.** With `ef_search` unset the
+production query uses the index and returns **40** candidates regardless of
+`candidate_limit` — including at `candidate_limit=200`. My earlier `EXPLAIN` "proof"
+misled me because I wrote a different query form (`WHERE embedding IS NOT NULL` with
+a raw `<=>`), not the production one, and that form planned as a Seq Scan.
+
+Fixes, in order:
+- **F2** (`28fd055`): `vector_search` now sets **every** GUC it touches on every
+  call, to a value or to `DEFAULT`; validation moved ahead of the first `SET LOCAL`.
+  New skipped-without-a-DB integration tests pin all three leaks. Added **A12b** to
+  the brief.
+- **F3**: G4 re-run as three configurations, each in **its own transaction**, into
+  `docs/evidence/phase-8-fusion-heldout-v2.json`. The old file is kept unedited and
+  marked superseded (A3). The verifier now asserts a configuration's declared
+  `expected_vector_candidates` against every row, which is exactly what catches a
+  leak.
+- **F4**: the false prose is reverted in `docs/results.md` (both the Phase 1 and
+  Phase 4 sections) and here. Commit `cfdd6b7` was wrong.
+
+Corrected held-out numbers:
+
+| held-out (26) | production as-is | production, ef fixed | chosen |
+|---|--:|--:|--:|
+| vector candidates | **40** | 50 | 200 |
+| all | 0.913 | 0.916 | 0.921 |
+| paraphrase (12) | 0.969 | 0.969 | 0.969 |
+| lexical (8) | 1.000 | 1.000 | 1.000 |
+| topical (6) | 0.683 | 0.699 | 0.721 |
+| latency p50 ms | 34.8 | 38.6 | 39.5 |
+
+The strongest check that this run is measuring the real system: `production as-is`
+reproduces the **frozen v3 baseline's held-out hybrid nDCG of 0.913 exactly**. The
+leaked run had read 0.916.
+
+Decomposition of the +0.009: **lifting the ef cap alone is worth +0.003 on `all`
+and +0.016 on topical**; k=10 plus the wider pool adds the remaining +0.005 /
++0.022. Every cell that moves is topical — 6 questions.
+
+Not over-read: `fusion_sweep.py` passes `ef_search` explicitly on **every** call, so
+the development sweep was never contaminated. Its `cl50` cells ran at ef=50 and its
+`cl200` cells at ef=200, which means no sweep cell is the production configuration.
+`hnsw_study.py` was accidentally safe because it opens a session per call.
+
+Lesson worth keeping: a helper that mutates session state must restore it, and a
+harness that runs configurations back to back in one transaction will silently
+compare a configuration against itself. The tell was available and I missed it —
+`vector_candidates` was recorded per row all along, and 50 in the baseline should
+have contradicted a documented cap of 40.
