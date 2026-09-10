@@ -93,9 +93,12 @@ Exact scan: p50 23.1 ms, p95 34.5 ms (n=78). recall@50 is undefined below ef=50
 values at ef<50 are truncation, not approximation error, and the metric is only
 meaningful from ef=100 up (0.998). Two findings at this corpus size: the default
 ef=40 returns fewer rows (40) than the retrieval candidate pool asks for (50–200),
-silently capping the vector side — a Phase 4 concern; and Postgres's planner picks
+capping the vector side **when the index is used**; and Postgres's planner picks
 the HNSW index only at ef≤40 and reverts to an exact scan above that (`natural
-scan` column). The table latencies include per-call connection setup (a fresh
+scan` column). Followed up in Phase 4 and the concern turned out **not** to apply
+in production: `EXPLAIN (ANALYZE)` on the real retrieval query shows an exact Seq
+Scan at both LIMIT 50 and LIMIT 200, and the measured `vector_candidates` are 50
+and 200, so the ef cap never binds at this corpus size. The table latencies include per-call connection setup (a fresh
 session per call), so read them only relative to each other within this file
 (A10); with that setup excluded, an EXPLAIN ANALYZE execution-only comparison was
 exact ~10 ms vs index ~2 ms (versus the table's exact p50 of 23.1 ms, which
