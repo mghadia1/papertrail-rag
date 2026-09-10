@@ -86,6 +86,19 @@ current transaction. With SQLAlchemy `Session`, issue it via
 and do not `commit()` in between. Verify it took effect by reading it back with
 `SHOW hnsw.ef_search` in the same transaction the first time you implement it.
 
+**A12b. A `SET LOCAL` issued by a helper persists for the rest of the
+transaction.** It is not scoped to the next statement. So every helper that
+touches a GUC must set **every** GUC it touches on **every** call — either to a
+value or explicitly back to `DEFAULT`. Otherwise a later call in the same session
+silently inherits an earlier call's setting.
+
+This is not hypothetical: on 2026-09-09 `fusion_heldout.py` ran the chosen
+configuration (`ef_search=200`) and then the baseline (`ef_search` unset) inside
+one `session_scope`. The baseline inherited `hnsw.ef_search = 200`, returned 50
+vector candidates instead of the production 40, and produced a wrong conclusion
+that the Phase 1 truncation "does not bind in production". A study that opens one
+session per call (like `hnsw_study.py`) is accidentally safe; do not rely on that.
+
 **A13. pgvector HNSW facts you will otherwise get wrong.**
 - HNSW returns at most `hnsw.ef_search` rows. Default is 40. If you ask
   `LIMIT 50` with `ef_search = 40` you silently get 40 rows. Always set
