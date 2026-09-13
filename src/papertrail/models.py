@@ -23,6 +23,19 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 EMBEDDING_DIMENSIONS = 384
 
+# Per-model embedding columns for the Phase 5 encoder ablation (brief Part H).
+# "embedding" is MiniLM's frozen column and is never re-embedded. The mapping is a
+# whitelist: every column parameter is validated against it, so a column name can
+# never reach SQL unchecked.
+EMBEDDING_COLUMNS: dict[str, int] = {
+    "embedding": 384,
+    "embedding_bge_small": 384,
+    "embedding_e5_small": 384,
+    "embedding_e5_small_noprefix": 384,
+    "embedding_gte_small": 384,
+    "embedding_bge_base": 768,
+}
+
 
 class Base(DeclarativeBase):
     pass
@@ -59,6 +72,17 @@ class Chunk(Base):
             postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
         Index("ix_chunks_search_vector_gin", "search_vector", postgresql_using="gin"),
+        *(
+            Index(
+                f"ix_chunks_{column}_hnsw_cosine",
+                column,
+                postgresql_using="hnsw",
+                postgresql_with={"m": 16, "ef_construction": 64},
+                postgresql_ops={column: "vector_cosine_ops"},
+            )
+            for column in EMBEDDING_COLUMNS
+            if column != "embedding"
+        ),
         Index(
             "ix_chunks_search_vector_weighted_gin",
             "search_vector_weighted",
@@ -75,6 +99,12 @@ class Chunk(Base):
     embedding: Mapped[list[float] | None] = mapped_column(
         VECTOR(EMBEDDING_DIMENSIONS), nullable=True
     )
+    # Phase 5 ablation columns; all nullable so an un-run model is simply empty.
+    embedding_bge_small: Mapped[list[float] | None] = mapped_column(VECTOR(384), nullable=True)
+    embedding_e5_small: Mapped[list[float] | None] = mapped_column(VECTOR(384), nullable=True)
+    embedding_e5_small_noprefix: Mapped[list[float] | None] = mapped_column(VECTOR(384), nullable=True)
+    embedding_gte_small: Mapped[list[float] | None] = mapped_column(VECTOR(384), nullable=True)
+    embedding_bge_base: Mapped[list[float] | None] = mapped_column(VECTOR(768), nullable=True)
     search_vector: Mapped[str] = mapped_column(
         TSVECTOR,
         Computed("to_tsvector('english', coalesce(text, ''))", persisted=True),
@@ -108,6 +138,10 @@ class EmbeddingRun(Base):
     status: Mapped[str] = mapped_column(Text, nullable=False)
     embedded_chunk_count: Mapped[int] = mapped_column(Integer, nullable=False)
     total_chunk_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Where this run's vectors live, and the prefixes it was built with.
+    column_name: Mapped[str] = mapped_column(Text, nullable=False, server_default="embedding")
+    query_prefix: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    passage_prefix: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

@@ -78,3 +78,51 @@ def test_exact_does_not_leak_into_a_later_approximate_call() -> None:
     assert approx_rows == 40
     assert index_scan_enabled == "on"
     assert bitmap_enabled == "on"
+
+
+@needs_db
+def test_vector_search_reads_the_column_it_is_given() -> None:
+    """Different encoders live in different columns; searching one must not silently
+    read another's vectors (brief H trap)."""
+    from sqlalchemy import select
+
+    from papertrail.models import EmbeddingRun
+    from papertrail.repository import require_vector_search_ready
+
+    with session_scope() as session:
+        runs = session.execute(
+            select(EmbeddingRun.model_name, EmbeddingRun.column_name, EmbeddingRun.status)
+        ).all()
+        by_column = {r.column_name: (r.model_name, r.status) for r in runs}
+
+        # MiniLM's frozen column is always present and complete.
+        require_vector_search_ready(
+            session,
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            dimensions=384,
+            column="embedding",
+        )
+        # Asking for the right model in the wrong column must fail, even though that
+        # model has a complete run elsewhere — the check is per (model, column).
+        other = next(
+            (c for c in by_column if c != "embedding"), None
+        )
+        if other is not None:
+            with pytest.raises(ValueError, match="no embedding run recorded"):
+                require_vector_search_ready(
+                    session,
+                    model_name="sentence-transformers/all-MiniLM-L6-v2",
+                    dimensions=384,
+                    column=other,
+                )
+
+        # And a column with no run at all fails rather than returning empty results.
+        unused = next(
+            (c for c in ("embedding_bge_base", "embedding_gte_small") if c not in by_column),
+            None,
+        )
+        if unused is not None:
+            with pytest.raises(ValueError, match="no embedding run recorded"):
+                require_vector_search_ready(
+                    session, model_name="whatever/model", dimensions=384, column=unused
+                )

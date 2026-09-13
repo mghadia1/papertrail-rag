@@ -59,6 +59,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     embed.add_argument("manifest", type=Path)
     embed.add_argument("--batch-size", type=int, default=32)
+    embed.add_argument("--model", default=None,
+                       help="encoder to embed with (default: the configured model)")
+    embed.add_argument("--column", default="embedding",
+                       help="embedding column to fill (default: embedding, MiniLM's frozen column)")
+    embed.add_argument("--passage-prefix", default="",
+                       help="prefix applied to chunk text at index time (e.g. 'passage: ')")
+    embed.add_argument("--query-prefix", default="",
+                       help="query prefix this column is meant to be searched with; recorded "
+                            "in the run row so evaluation can default to it")
     search = commands.add_parser("search", help="search embedded paper chunks")
     search.add_argument("query")
     search.add_argument(
@@ -99,6 +108,22 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
         help="explicit CrossEncoder max_length (bge-reranker-base needs 512)",
+    )
+    evaluation.add_argument("--model", default=None,
+                            help="query encoder (default: the configured model)")
+    evaluation.add_argument("--column", default="embedding",
+                            help="embedding column to search (default: embedding)")
+    evaluation.add_argument(
+        "--splits", nargs="+", choices=("development", "heldout"),
+        default=["development", "heldout"],
+        help="splits to evaluate. Use 'development' alone while comparing "
+             "configurations so held-out stays reserved for one final report (A1).",
+    )
+    evaluation.add_argument(
+        "--query-prefix", default=None,
+        help="query prefix. Omit to use the prefix recorded in this column's embedding "
+             "run, which is the safe default; pass it explicitly only to deliberately "
+             "mismatch it, as the Phase 5 negative control does.",
     )
     rag_eval = commands.add_parser(
         "evaluate-rag", help="run held-out generation, abstention, and citation checks"
@@ -194,8 +219,24 @@ def main() -> int:
         return 0
     if args.command == "embed":
         manifest = CorpusManifest.read(args.manifest)
+        if args.model is None and args.column == "embedding" and not args.passage_prefix:
+            encoder = get_encoder()
+        else:
+            from .embedding import SentenceTransformerEncoder
+            from .models import EMBEDDING_COLUMNS
+
+            if args.column not in EMBEDDING_COLUMNS:
+                raise SystemExit(
+                    f"unknown column {args.column!r}; expected one of {sorted(EMBEDDING_COLUMNS)}"
+                )
+            encoder = SentenceTransformerEncoder(
+                args.model,
+                dimensions=EMBEDDING_COLUMNS[args.column],
+                query_prefix=args.query_prefix,
+                passage_prefix=args.passage_prefix,
+            )
         result = embed_manifest_corpus(
-            manifest, get_encoder(), batch_size=args.batch_size
+            manifest, encoder, batch_size=args.batch_size, column=args.column
         )
         print(json.dumps(result))
         return 0
@@ -235,6 +276,36 @@ def main() -> int:
         manifest = CorpusManifest.read(args.manifest)
         question_set = load_question_set(args.questions, manifest)
         modes = tuple(args.modes) if args.modes else None
+        # Query prefix defaults to whatever this column was embedded to expect, so
+        # the "right prefix at index time, forgotten at query time" trap cannot
+        # happen by omission. An explicit --query-prefix overrides it.
+        from .models import EMBEDDING_COLUMNS
+
+        if args.column not in EMBEDDING_COLUMNS:
+            raise SystemExit(
+                f"unknown column {args.column!r}; expected one of {sorted(EMBEDDING_COLUMNS)}"
+            )
+        query_prefix = args.query_prefix
+        if query_prefix is None:
+            from sqlalchemy import select as _select
+
+            from .models import EmbeddingRun as _Run
+
+            with session_scope() as probe:
+                run = probe.scalar(
+                    _select(_Run).where(_Run.column_name == args.column)
+                )
+                query_prefix = run.query_prefix if run is not None else ""
+        if args.model is None and args.column == "embedding" and not query_prefix:
+            encoder = get_encoder()
+        else:
+            from .embedding import SentenceTransformerEncoder
+
+            encoder = SentenceTransformerEncoder(
+                args.model,
+                dimensions=EMBEDDING_COLUMNS[args.column],
+                query_prefix=query_prefix,
+            )
         rerank_modes = {"hybrid_rerank", "vector_rerank"}
         reranker = None
         if args.reranker is not None or (modes and any(m in rerank_modes for m in modes)):
@@ -250,13 +321,19 @@ def main() -> int:
                 session,
                 question_set=question_set,
                 manifest=manifest,
-                encoder=get_encoder(),
+                encoder=encoder,
                 output_path=args.output,
                 modes=modes,
                 reranker=reranker,
                 rerank_pool=args.rerank_pool,
+                embedding_column=args.column,
+                splits=tuple(args.splits),
             )
-        print(json.dumps({"output": str(args.output), **report["aggregates"], "abstention": report["abstention"]}))
+        summary = {"output": str(args.output), **report["aggregates"]}
+        # A split-restricted run has no abstention block (it needs both splits).
+        if "abstention" in report:
+            summary["abstention"] = report["abstention"]
+        print(json.dumps(summary))
         return 0
     if args.command == "evaluate-rag":
         manifest = CorpusManifest.read(args.manifest)

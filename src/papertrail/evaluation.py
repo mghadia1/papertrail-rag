@@ -314,8 +314,13 @@ def evaluate(
     modes: "tuple[SearchMode, ...] | None" = None,
     reranker: object | None = None,
     rerank_pool: int | None = None,
+    embedding_column: str = "embedding",
+    splits: "tuple[str, ...]" = ("development", "heldout"),
 ) -> dict[str, Any]:
     schema = int(question_set["schema_version"])
+    unknown_splits = set(splits) - {"development", "heldout"}
+    if unknown_splits or not splits:
+        raise ValueError(f"invalid splits {splits!r}")
     graded_mode = schema >= 3
     modes = tuple(modes) if modes is not None else _modes_for_schema(schema)
     rerank_modes = {"hybrid_rerank", "vector_rerank"}
@@ -326,6 +331,7 @@ def evaluate(
             "mode": mode,
             "limit": limit,
             "encoder": encoder if mode != "keyword" else None,
+            "embedding_column": embedding_column,
         }
         if mode in rerank_modes:
             kwargs["reranker"] = reranker
@@ -346,9 +352,12 @@ def evaluate(
         if q.get("pool")
     }
 
+    evaluated_questions = [
+        item for item in question_set["retrieval_questions"] if item["split"] in splits
+    ]
     rows: list[dict[str, Any]] = []
     hybrid_scores: dict[str, float] = {}
-    for item in question_set["retrieval_questions"]:
+    for item in evaluated_questions:
         graded = item.get("relevant") or {rid: 1 for rid in item["relevant_arxiv_ids"]}
         for mode in modes:
             started = time.perf_counter()
@@ -386,48 +395,50 @@ def evaluate(
     # when hybrid is not among the evaluated modes (e.g. a rerank-only study run)
     # so the frozen threshold is still selected on the same signal.
     if "hybrid" not in modes:
-        for item in question_set["retrieval_questions"]:
+        for item in evaluated_questions:
             hits = retrieve(session, item["query"], mode="hybrid", limit=10, encoder=encoder)
             hybrid_scores[item["id"]] = float(hits[0]["score"]) if hits else 0.0
 
+    measure_abstention = "development" in splits and "heldout" in splits
     negative_scores: dict[str, float] = {}
-    for item in question_set["abstention_questions"]:
+    for item in question_set["abstention_questions"] if measure_abstention else []:
         hits = retrieve(
             session, item["query"], mode="hybrid", limit=5, encoder=encoder
         )
         negative_scores[item["id"]] = float(hits[0]["score"]) if hits else 0.0
 
-    development_positive = [
-        hybrid_scores[item["id"]]
-        for item in question_set["retrieval_questions"]
-        if item["split"] == "development"
-    ]
-    development_negative = [
-        negative_scores[item["id"]]
-        for item in question_set["abstention_questions"]
-        if item["split"] == "development"
-    ]
-    threshold = _choose_threshold(development_positive, development_negative)
-    frozen = threshold["threshold"]
-    heldout_positive = [
-        hybrid_scores[item["id"]]
-        for item in question_set["retrieval_questions"]
-        if item["split"] == "heldout"
-    ]
-    heldout_negative = [
-        negative_scores[item["id"]]
-        for item in question_set["abstention_questions"]
-        if item["split"] == "heldout"
-    ]
-    heldout_positive_accept = statistics.fmean(
-        float(score >= frozen) for score in heldout_positive
-    )
-    heldout_negative_abstain = statistics.fmean(
-        float(score < frozen) for score in heldout_negative
-    )
+    if measure_abstention:
+        development_positive = [
+            hybrid_scores[item["id"]]
+            for item in question_set["retrieval_questions"]
+            if item["split"] == "development"
+        ]
+        development_negative = [
+            negative_scores[item["id"]]
+            for item in question_set["abstention_questions"]
+            if item["split"] == "development"
+        ]
+        threshold = _choose_threshold(development_positive, development_negative)
+        frozen = threshold["threshold"]
+        heldout_positive = [
+            hybrid_scores[item["id"]]
+            for item in question_set["retrieval_questions"]
+            if item["split"] == "heldout"
+        ]
+        heldout_negative = [
+            negative_scores[item["id"]]
+            for item in question_set["abstention_questions"]
+            if item["split"] == "heldout"
+        ]
+        heldout_positive_accept = statistics.fmean(
+            float(score >= frozen) for score in heldout_positive
+        )
+        heldout_negative_abstain = statistics.fmean(
+            float(score < frozen) for score in heldout_negative
+        )
 
     aggregates: dict[str, Any] = {}
-    for split in ("development", "heldout"):
+    for split in splits:
         aggregates[split] = {}
         for mode in modes:
             slice_rows = [
@@ -456,6 +467,9 @@ def evaluate(
             "threshold_selected_on": "development positives and development negatives only",
             "threshold_tie_break": "balanced accuracy, then positive accept rate, then lower threshold",
             "topical_grade_provenance": question_set.get("topical_grade_provenance"),
+            "embedding_column": embedding_column,
+            "query_prefix": getattr(encoder, "query_prefix", ""),
+            "splits_evaluated": list(splits),
         }
         if has_rerank:
             reranker_model = getattr(reranker, "model_name", None) or (
@@ -504,7 +518,11 @@ def evaluate(
         "embedding_model": encoder.model_name,
         "protocol": protocol,
         "aggregates": aggregates,
-        "abstention": {
+        "per_question": rows,
+        "claim_boundary": claim_boundary,
+    }
+    if measure_abstention:
+        report["abstention"] = {
             **threshold,
             "heldout_positive_accept_rate": heldout_positive_accept,
             "heldout_negative_abstain_rate": heldout_negative_abstain,
@@ -516,10 +534,15 @@ def evaluate(
             "development_negative_scores": development_negative,
             "heldout_positive_scores": heldout_positive,
             "heldout_negative_scores": heldout_negative,
-        },
-        "per_question": rows,
-        "claim_boundary": claim_boundary,
-    }
+        }
+    else:
+        # The gate is selected on development and reported on held-out, so it is not
+        # measurable from one split alone. Omitted rather than filled with a
+        # placeholder number (A5).
+        report["abstention_note"] = (
+            "not measured: the abstention gate needs both splits and this run "
+            f"evaluated only {list(splits)}"
+        )
     output_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return report
 

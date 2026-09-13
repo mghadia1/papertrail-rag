@@ -102,8 +102,11 @@ def _verify_retrieval_evidence_v3(
     # 2. If the question set is supplied, derive the expected coverage from it
     #    (replaces the hard-coded 90/20/10) and check the pooled-topical rows only
     #    ranked ids that were actually judged.
+    present_splits = sorted({row["split"] for row in rows})
     if question_set is not None:
-        for split in ("development", "heldout"):
+        # Only check the splits this file actually evaluated: a split-restricted run
+        # (Part H holds held-out back for one final model) legitimately has none.
+        for split in present_splits:
             expected_ids = sorted(
                 q["id"]
                 for q in question_set["retrieval_questions"]
@@ -145,7 +148,7 @@ def _verify_retrieval_evidence_v3(
                 )
 
     # 3. Recompute the per-type and "all" aggregates and check the published block.
-    for split in ("development", "heldout"):
+    for split in present_splits:
         for mode in modes:
             slice_rows = [
                 row for row in rows if row["split"] == split and row["mode"] == mode
@@ -165,10 +168,23 @@ def _verify_retrieval_evidence_v3(
                         f"aggregates.{split}.{mode}.{type_key}.{key}",
                     )
 
-    _verify_abstention(report)
+    # A split-restricted run (Part H keeps held-out for one final model) cannot
+    # measure the gate, so the block is absent and must not be invented.
+    declared_splits = report.get("protocol", {}).get("splits_evaluated")
+    actual_splits = sorted({row["split"] for row in rows})
+    if declared_splits is not None and sorted(declared_splits) != actual_splits:
+        raise ValueError(
+            f"retrieval evidence declares splits {sorted(declared_splits)} but its rows "
+            f"are {actual_splits}"
+        )
+    if "abstention" in report:
+        _verify_abstention(report)
+    elif actual_splits == ["development", "heldout"]:
+        raise ValueError("retrieval evidence covers both splits but omits the abstention block")
     if report.get("protocol", {}).get("rrf_k") != 60:
         raise ValueError("retrieval evidence does not use frozen RRF k=60")
-    return {"verified": True, "kind": "retrieval", "raw_rows": len(rows), "modes": modes}
+    return {"verified": True, "kind": "retrieval", "raw_rows": len(rows),
+            "modes": modes, "splits": actual_splits}
 
 
 def verify_retrieval_evidence(

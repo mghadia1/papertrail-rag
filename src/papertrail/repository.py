@@ -10,7 +10,21 @@ from sqlalchemy.orm import Session
 
 from .arxiv import ArxivPaper
 from .chunking import chunks_for_paper
-from .models import Chunk, EmbeddingRun, Paper
+from .models import EMBEDDING_COLUMNS, Chunk, EmbeddingRun, Paper
+
+
+def embedding_column(name: str):
+    """Resolve a per-model embedding column against the whitelist (brief H trap).
+
+    Every caller must pass the column explicitly; nothing interpolates a caller's
+    string into SQL, so an unknown column is a clear error rather than an injection
+    surface or a silent read of the wrong vectors.
+    """
+    if name not in EMBEDDING_COLUMNS:
+        raise ValueError(
+            f"unknown embedding column {name!r}; expected one of {sorted(EMBEDDING_COLUMNS)}"
+        )
+    return getattr(Chunk, name)
 
 
 def upsert_paper(session: Session, paper: ArxivPaper) -> tuple[int, int]:
@@ -64,10 +78,13 @@ def stored_arxiv_ids(session: Session) -> tuple[str, ...]:
     return tuple(session.execute(select(Paper.arxiv_id).order_by(Paper.arxiv_id)).scalars())
 
 
-def unembedded_chunks(session: Session, *, limit: int) -> list[tuple[int, str]]:
+def unembedded_chunks(
+    session: Session, *, limit: int, column: str = "embedding"
+) -> list[tuple[int, str]]:
+    target = embedding_column(column)
     rows = session.execute(
         select(Chunk.id, Chunk.text)
-        .where(Chunk.embedding.is_(None))
+        .where(target.is_(None))
         .order_by(Chunk.id)
         .limit(limit)
     ).all()
@@ -75,21 +92,27 @@ def unembedded_chunks(session: Session, *, limit: int) -> list[tuple[int, str]]:
 
 
 def save_embeddings(
-    session: Session, chunk_ids: list[int], vectors: list[list[float]]
+    session: Session,
+    chunk_ids: list[int],
+    vectors: list[list[float]],
+    *,
+    column: str = "embedding",
 ) -> None:
     if len(chunk_ids) != len(vectors):
         raise ValueError("chunk ID and embedding counts differ")
+    embedding_column(column)  # validate before building any statement
     for chunk_id, vector in zip(chunk_ids, vectors, strict=True):
         session.execute(
-            update(Chunk).where(Chunk.id == chunk_id).values(embedding=vector)
+            update(Chunk).where(Chunk.id == chunk_id).values(**{column: vector})
         )
 
 
-def embedding_counts(session: Session) -> tuple[int, int]:
+def embedding_counts(session: Session, *, column: str = "embedding") -> tuple[int, int]:
+    target = embedding_column(column)
     total = int(session.scalar(select(func.count()).select_from(Chunk)) or 0)
     embedded = int(
         session.scalar(
-            select(func.count()).select_from(Chunk).where(Chunk.embedding.is_not(None))
+            select(func.count()).select_from(Chunk).where(target.is_not(None))
         )
         or 0
     )
@@ -104,29 +127,50 @@ def record_embedding_run(
     corpus_arxiv_ids_sha256: str,
     embedded_chunk_count: int,
     total_chunk_count: int,
+    column_name: str = "embedding",
+    query_prefix: str = "",
+    passage_prefix: str = "",
 ) -> tuple[int, bool]:
-    latest = session.scalar(select(EmbeddingRun).order_by(EmbeddingRun.id.desc()).limit(1))
-    expected = (model_name, dimensions, corpus_arxiv_ids_sha256, total_chunk_count)
-    if latest is not None:
-        actual = (
-            latest.model_name,
-            latest.dimensions,
-            latest.corpus_arxiv_ids_sha256,
-            latest.total_chunk_count,
+    """Find or open the run for this (model, column), returning (id, should_run).
+
+    Keyed on the model/column pair rather than "the latest run", because Phase 5
+    keeps several models side by side in their own columns. The prefixes are part of
+    a run's provenance: the same model indexed with a different passage prefix is a
+    different run and must not silently resume the old one.
+    """
+    embedding_column(column_name)
+    existing = session.scalar(
+        select(EmbeddingRun).where(
+            EmbeddingRun.model_name == model_name,
+            EmbeddingRun.column_name == column_name,
         )
-        if latest.status == "running":
-            if actual != expected:
-                raise ValueError("an incompatible embedding run is already in progress")
-            return int(latest.id), True
-        if (
-            latest.status == "complete"
-            and actual == expected
-            and embedded_chunk_count == total_chunk_count
-        ):
-            return int(latest.id), False
+    )
+    expected = (
+        dimensions,
+        corpus_arxiv_ids_sha256,
+        total_chunk_count,
+        query_prefix,
+        passage_prefix,
+    )
+    if existing is not None:
+        actual = (
+            existing.dimensions,
+            existing.corpus_arxiv_ids_sha256,
+            existing.total_chunk_count,
+            existing.query_prefix,
+            existing.passage_prefix,
+        )
+        if actual != expected:
+            raise ValueError(
+                f"an incompatible embedding run already exists for {model_name} in "
+                f"{column_name}: stored={actual}, requested={expected}"
+            )
+        if existing.status == "complete" and embedded_chunk_count == total_chunk_count:
+            return int(existing.id), False
+        return int(existing.id), True
     if embedded_chunk_count:
         raise ValueError(
-            "database contains embeddings without a compatible resumable run; "
+            f"{column_name} already contains embeddings without a matching run; "
             "refusing to mix model provenance"
         )
     run = EmbeddingRun(
@@ -137,6 +181,9 @@ def record_embedding_run(
         status="running",
         embedded_chunk_count=0,
         total_chunk_count=total_chunk_count,
+        column_name=column_name,
+        query_prefix=query_prefix,
+        passage_prefix=passage_prefix,
     )
     session.add(run)
     session.flush()
@@ -163,8 +210,13 @@ def vector_search(
     limit: int,
     exact: bool = False,
     ef_search: int | None = None,
+    column: str = "embedding",
 ) -> list[dict[str, object]]:
     """Cosine vector search over embedded chunks.
+
+    ``column`` selects which per-model embedding column to search; the study must
+    pass it explicitly so a run can never read another model's vectors (brief H
+    trap). Each column has its own HNSW index.
 
     By default this uses the pgvector HNSW index (m=16, ef_construction=64,
     vector_cosine_ops) at the server's ``hnsw.ef_search`` (default 40).
@@ -207,7 +259,8 @@ def vector_search(
         session.execute(text(f"SET LOCAL hnsw.ef_search = {int(ef_search)}"))
     else:
         session.execute(text("SET LOCAL hnsw.ef_search TO DEFAULT"))
-    distance = Chunk.embedding.cosine_distance(query_embedding)
+    target = embedding_column(column)
+    distance = target.cosine_distance(query_embedding)
     rows = session.execute(
         select(
             Paper.arxiv_id,
@@ -219,7 +272,7 @@ def vector_search(
             (1.0 - distance).label("score"),
         )
         .join(Paper, Paper.id == Chunk.paper_id)
-        .where(Chunk.embedding.is_not(None))
+        .where(target.is_not(None))
         .order_by(distance, Chunk.id)
         .limit(limit)
     ).all()
@@ -411,17 +464,35 @@ def keyword_search(
 
 
 def require_vector_search_ready(
-    session: Session, *, model_name: str, dimensions: int
+    session: Session, *, model_name: str, dimensions: int, column: str = "embedding"
 ) -> None:
-    latest = session.scalar(select(EmbeddingRun).order_by(EmbeddingRun.id.desc()).limit(1))
-    embedded, total = embedding_counts(session)
-    if latest is None or latest.status != "complete" or embedded != total or total == 0:
-        raise ValueError(
-            f"vector search is not ready: embedded {embedded}/{total} chunks"
+    """Assert the run for this (model, column) is complete before querying it.
+
+    Checks the ``embedding_runs`` row for the chosen model and column rather than
+    "the latest run" (brief H1), so evaluating one model cannot pass because a
+    different model finished, and an unfinished column fails loudly.
+    """
+    embedding_column(column)
+    run = session.scalar(
+        select(EmbeddingRun).where(
+            EmbeddingRun.model_name == model_name,
+            EmbeddingRun.column_name == column,
         )
-    if latest.model_name != model_name or latest.dimensions != dimensions:
+    )
+    embedded, total = embedding_counts(session, column=column)
+    if run is None:
+        raise ValueError(
+            f"no embedding run recorded for {model_name} in {column}; "
+            f"embedded {embedded}/{total} chunks"
+        )
+    if run.status != "complete" or embedded != total or total == 0:
+        raise ValueError(
+            f"vector search is not ready for {model_name} in {column}: "
+            f"run status {run.status}, embedded {embedded}/{total} chunks"
+        )
+    if run.dimensions != dimensions:
         raise ValueError(
             "query encoder does not match stored embedding provenance: "
-            f"stored={latest.model_name}/{latest.dimensions}, "
+            f"stored={run.model_name}/{run.dimensions} in {column}, "
             f"query={model_name}/{dimensions}"
         )

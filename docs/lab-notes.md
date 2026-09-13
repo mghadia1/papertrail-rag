@@ -1101,3 +1101,55 @@ byte-for-byte. That is the expected cost of fixing the cap.
 **(b) Declined — RRF `k` stays 60.** The sweep's k=10 winner gains +0.009 on held-out
 `all` over production, but +0.003 of that is the ef fix above and every remaining
 cell that moves is topical, on 6 questions. Not evidence at that n (A11).
+
+## 2026-09-13 — Phase 5 (Part H): Embedding model ablation
+
+Pre-run: 86 tests passed (83 + the 3 DB-only session-state tests, which skip when
+no database is up); DB restarted — Docker Desktop had stopped between sessions
+again (A9) — manifest verified (1,000 IDs, sha 7308d240…); package reinstalled into
+`.venv-ml` (`papertrail-rag 0.1.0`); frozen v3 baseline verifies (312 rows). The
+database is 30 MB with one complete embedding run (MiniLM, 384-d, 2,039 chunks), so
+there is room for per-model columns at ~3 MB each.
+
+**H2 — prefixes checked against the model cards, not the brief's table.** The brief
+says to verify; the table turned out to be correct, and here are the primary-source
+lines.
+
+- `all-MiniLM-L6-v2` (384-d, max_seq 256): card documents no prefix. None/none.
+- `BAAI/bge-small-en-v1.5` and `BAAI/bge-base-en-v1.5` (384-d / **768-d**, max_seq
+  512): the Model List table gives the query instruction as
+  `Represent this sentence for searching relevant passages: `, and the card is
+  explicit about the asymmetry — "If you need to search the relevant passages to a
+  query, we suggest to add the instruction to the query; in other cases, no
+  instruction is needed… In all cases, **no instruction** needs to be added to
+  passages." So query prefix = that instruction, passage prefix = none.
+- `intfloat/e5-small-v2` (384-d, max_seq 512): "Each input text should start with
+  "query: " or "passage: "." → `query: ` / `passage: `.
+- `thenlper/gte-small` (384-d, max_seq 512): no prefix mentioned anywhere in the
+  card. None/none.
+
+Two things the cards say that the brief's table cannot:
+1. **bge v1.5 was specifically trained to work without the instruction** — the card's
+   release note says v1.5 "enhance[s] its retrieval ability **without**
+   instruction", and frames the instruction as for "s2p (short query to long
+   passage)" retrieval. Our paraphrase queries average ~24 content words, which is
+   not a short query. So the instruction may buy little here. Since bge's passage
+   prefix is empty, the indexed vectors are prefix-free and I can test this from the
+   **same column** by changing only the query prefix — a free ablation, added as
+   `bge-small-noinstruct`.
+2. `SentenceTransformer.prompts` reports `{'query': '', 'document': ''}` for **every**
+   one of these models, i.e. empty defaults from sentence-transformers 5.x rather
+   than model-specific prompts. So the library will not apply any prefix for us;
+   prefixes must be applied explicitly by our own code. Worth knowing — relying on
+   `model.prompts` would have silently produced the no-prefix case everywhere.
+
+Storage decision: **per-model columns**, the brief's preferred option. The frozen
+`embedding` column is never touched, which makes the H4 byte-identical check
+structural rather than a matter of re-embedding determinism.
+
+Controls planned, beyond the four models:
+- `e5-small-noprefix` — its own column, no prefix at index or query time (H3.4 as
+  written).
+- `e5-small-query-prefix-missing` — the **main** e5 column (indexed with
+  `passage: `) queried with no prefix. This is precisely the trap the brief names,
+  and it costs nothing since it reuses the correct column.

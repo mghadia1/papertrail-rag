@@ -177,6 +177,7 @@ def retrieve(
     candidate_limit: int | None = None,
     ef_search: int | None = None,
     keyword_strategy: str = "or",
+    embedding_column: str = "embedding",
 ) -> list[dict[str, object]]:
     if not 1 <= limit <= 50:
         raise ValueError("limit must be between 1 and 50")
@@ -198,7 +199,10 @@ def retrieve(
     if encoder is None:
         raise ValueError(f"{mode} retrieval requires an encoder")
     require_vector_search_ready(
-        session, model_name=encoder.model_name, dimensions=encoder.dimensions
+        session,
+        model_name=encoder.model_name,
+        dimensions=encoder.dimensions,
+        column=embedding_column,
     )
     query_embedding = encoder.encode([query], batch_size=1)[0]
     # HNSW returns at most ef_search rows, so leaving it unset caps the vector
@@ -209,7 +213,8 @@ def retrieve(
     # docs/evidence/phase-8-fusion-heldout-v2.json.
     effective_ef = ef_search if ef_search is not None else max(candidate_limit, 40)
     vector_hits = vector_search(
-        session, query_embedding, limit=candidate_limit, ef_search=effective_ef
+        session, query_embedding, limit=candidate_limit, ef_search=effective_ef,
+        column=embedding_column,
     )
     if mode == "vector":
         return distinct_papers(vector_hits, limit=limit)
