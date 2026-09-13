@@ -115,6 +115,17 @@ reranking reorders a complete top-10 rather than adding recall. No default was
 changed; at pool 50 the first stage reaches outside the depth-20 judged pool, so
 those topical scores are recorded lower bounds. See [`docs/results.md`](docs/results.md).
 
+## Candidate-pool correctness fix
+
+`retrieve()` asks Postgres for 50–200 vector candidates, but HNSW returns at most
+`hnsw.ef_search` rows and that server default is 40 — so the vector side was capped
+at 40 regardless of the pool size, including when 200 were requested. `retrieve()`
+now sets `ef_search` to the pool size, which lifts the live vector candidate count
+from 40 to 100 at the default `limit=10`. The abstention gate was re-checked first:
+its accept/refuse decision flipped on zero of the 70 development questions, so the
+frozen threshold is unchanged. Evidence:
+[`docs/evidence/phase-8-fusion-heldout-v2.json`](docs/evidence/phase-8-fusion-heldout-v2.json).
+
 ## Sparse-retrieval study
 
 Keyword is the weakest retriever, so Phase 3 asked whether that is the ranking

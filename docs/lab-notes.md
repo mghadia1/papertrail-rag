@@ -1068,3 +1068,36 @@ harness that runs configurations back to back in one transaction will silently
 compare a configuration against itself. The tell was available and I missed it —
 `vector_candidates` was recorded per row all along, and 50 in the baseline should
 have contradicted a documented cap of 40.
+
+### G6 decision (2026-09-12): adopt the ef_search fix, keep RRF k=60
+
+Mayank approved the reviewer's recommendation (a) and declined (b).
+
+**(a) Adopted — `retrieve()` defaults `ef_search` to `max(candidate_limit, 40)`.**
+This is a correctness fix, not a tuning choice: the function asked for 50–200 vector
+candidates and silently got 40. Live effect at the default `limit=10`: 40 → 100
+candidates. Evidence: `docs/evidence/phase-8-fusion-heldout-v2.json`
+(production as-is 0.913 vs production with the cap lifted 0.916 on held-out `all`;
++0.016 on topical).
+
+Check I ran before adopting, because the abstention threshold was selected under the
+40-candidate regime and nobody had asked whether more candidates move `rrf_top`:
+
+| development | rrf_top changed | gate decision flipped |
+|---|--:|--:|
+| positives (52) | 1 | **0** |
+| negatives (18) | 6 | **0** |
+
+Zero flips on all 70, so the frozen threshold `0.03239446668849102` remains valid
+and the gate study does not need redoing. Top-10 ordering changes on 41 of 52
+development questions — that is the fix working, not a side effect.
+
+Consequence to state plainly: the frozen v3 baseline, the Phase 2 rerank files and
+the v2 evidence were all produced under the 40-candidate regime. They still verify
+(verification recomputes from stored rows) and they remain the honest record of that
+configuration, but a fresh run of `evaluate` will no longer reproduce them
+byte-for-byte. That is the expected cost of fixing the cap.
+
+**(b) Declined — RRF `k` stays 60.** The sweep's k=10 winner gains +0.009 on held-out
+`all` over production, but +0.003 of that is the ef fix above and every remaining
+cell that moves is topical, on 6 questions. Not evidence at that n (A11).

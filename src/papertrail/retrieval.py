@@ -201,10 +201,15 @@ def retrieve(
         session, model_name=encoder.model_name, dimensions=encoder.dimensions
     )
     query_embedding = encoder.encode([query], batch_size=1)[0]
-    # HNSW returns at most ef_search rows, so an unset ef_search silently caps the
-    # vector candidate list at the server default of 40 (Phase 1 finding, A13).
+    # HNSW returns at most ef_search rows, so leaving it unset caps the vector
+    # candidate list at the server default of 40 however many candidate_limit asks
+    # for — measured in Phase 1 and confirmed in Phase 4 (40 rows even at
+    # candidate_limit=200). Defaulting ef_search to the pool size makes
+    # candidate_limit mean what it says. Evidence:
+    # docs/evidence/phase-8-fusion-heldout-v2.json.
+    effective_ef = ef_search if ef_search is not None else max(candidate_limit, 40)
     vector_hits = vector_search(
-        session, query_embedding, limit=candidate_limit, ef_search=ef_search
+        session, query_embedding, limit=candidate_limit, ef_search=effective_ef
     )
     if mode == "vector":
         return distinct_papers(vector_hits, limit=limit)

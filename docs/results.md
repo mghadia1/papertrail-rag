@@ -97,7 +97,13 @@ silently capping the vector side; and Postgres's planner picks the HNSW index on
 at ef≤40 and reverts to an exact scan above that (`natural scan` column).
 **Confirmed in Phase 4: with `ef_search` unset the production query uses the index
 and returns 40 candidates regardless of `candidate_limit`; the cap is real.**
-Whether to set `ef_search` explicitly in `retrieve()` is a G6 decision. The table latencies include per-call connection setup (a fresh
+**Adopted (G6):** `retrieve()` now defaults `ef_search` to `max(candidate_limit, 40)`,
+so `candidate_limit` means what it says — the vector side went from 40 candidates to
+100 at the default `limit=10`. Checked before adopting: across the 70 development
+questions the abstention gate's accept/refuse decision flipped on **zero** of them
+(`rrf_top` moved on 1 of 52 positives and 6 of 18 negatives), so the frozen
+threshold `0.03239446668849102` stays valid; top-10 ordering does change on 41 of 52,
+which is the point of the fix. RRF `k` was **not** changed — see Phase 4. The table latencies include per-call connection setup (a fresh
 session per call), so read them only relative to each other within this file
 (A10); with that setup excluded, an EXPLAIN ANALYZE execution-only comparison was
 exact ~10 ms vs index ~2 ms (versus the table's exact p50 of 23.1 ms, which
