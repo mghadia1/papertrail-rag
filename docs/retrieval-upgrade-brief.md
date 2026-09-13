@@ -147,7 +147,13 @@ evidence file. Do not push. Do not squash earlier commits. Do not amend.
    extra). Print `pip show papertrail-rag` (name / version / location) into the
    lab-notes so a stale non-editable install cannot silently run old code (review
    F5, 2026-09-07).
-4. `python -m pytest -q` green. Record the count.
+4. `python -m pytest -q` green in **both** interpreters. `.venv-ml` is the canonical
+   one for running studies, but CI installs `.[dev]` only, so a test that reaches for
+   anything from the `ml` extra — `numpy` included, which arrives via
+   sentence-transformers — passes locally and fails in CI. Run
+   `./.venv/bin/python -m pytest -q` as the CI proxy before pushing. (Learned the
+   hard way on 2026-09-13: a hermetic fake encoder built its return value with numpy
+   and turned main red.) Record the count.
 5. Frozen v2 and v3 evidence verify:
 ```bash
 papertrail verify-evidence --kind retrieval --report docs/evidence/phase-6-retrieval-evaluation-v2.json --manifest docs/evidence/corpus-manifest-1000.json

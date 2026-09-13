@@ -26,10 +26,21 @@ class _FakeST:
         return self.dimensions
 
     def encode(self, texts, **kwargs):
-        import numpy as np
-
         self.seen.append(list(texts))
-        return np.zeros((len(texts), self.dimensions), dtype="float32")
+        # The encoder calls .tolist() on whatever the model returns. Returning a
+        # stub rather than a numpy array keeps this test hermetic: numpy only
+        # arrives with the `ml` extra, and CI installs `.[dev]` alone.
+        return _ArrayStub([[0.0] * self.dimensions for _ in texts])
+
+
+class _ArrayStub:
+    """Minimal stand-in for the numpy array SentenceTransformer.encode returns."""
+
+    def __init__(self, rows: list[list[float]]) -> None:
+        self._rows = rows
+
+    def tolist(self) -> list[list[float]]:
+        return self._rows
 
 
 def _encoder(monkeypatch, dimensions=384, **kwargs) -> tuple[SentenceTransformerEncoder, _FakeST]:
