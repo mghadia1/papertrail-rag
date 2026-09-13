@@ -519,10 +519,12 @@ under `hybrid_rerank` +0.006. Changing the encoder only changes the candidate li
 cross-encoder re-scores, and every model converges to 0.913–0.942 under
 `hybrid_rerank` — including the deliberately broken prefix configuration at 0.942.
 
-**Recommendation: keep MiniLM-L6.** bge-base costs 3.7× the embed wall time, 6.3× the
+**Decided: keep MiniLM-L6.** bge-base costs 3.7× the embed wall time, 6.3× the
 per-chunk encode time, 2× the index size and ~2× the query-time vector latency to
 return −0.001 on held-out hybrid. A product serving pure vector search should pick
-bge-base; this one does not. No default was changed.
+bge-base; this one does not. Mayank reviewed the held-out table on 2026-09-13 and kept
+MiniLM, so no default changed. The alternative columns, their embedding runs and this
+evidence all remain, so the decision is reproducible and revisitable.
 
 ## Protocol history
 

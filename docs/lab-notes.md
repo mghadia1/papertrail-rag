@@ -1248,8 +1248,13 @@ which is the sharpest illustration that reranking masks encoder quality.
 **Recommendation: do not change the default.** bge-base costs 3.7× the embed wall
 time, 6.3× the per-chunk encode time, 2× the index size and ~2× the query-time vector
 latency, and returns −0.001 on held-out `hybrid`. The case for switching would be a
-product that serves pure vector search, which this one does not. No default changed
-(H5: Mayank decides).
+product that serves pure vector search, which this one does not.
+
+**Decision (2026-09-13, Mayank): keep `all-MiniLM-L6-v2`.** No default changed. The
+alternative columns and their runs stay in the database and the evidence stays on
+record, so the comparison is reproducible and the decision is revisitable if the
+serving path ever changes — in particular, if PaperTrail ever exposed pure vector
+search, `bge-base-en-v1.5` is the measured pick.
 
 Worth naming as a cross-phase pattern, since it is now four for four: Phase 2 (a
 better reranker), Phase 3 (a better sparse ranker), Phase 4 (better fusion
