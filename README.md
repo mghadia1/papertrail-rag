@@ -142,6 +142,21 @@ BM25 engine is left as a Phase 4 decision. See [`docs/results.md`](docs/results.
 and the verified `docs/evidence/phase-8-bm25-offline.json` /
 `phase-8-keyword-*.json`.
 
+## Embedding model study
+
+MiniLM-L6 was the only encoder ever tried, so Phase 5 embedded four alternatives into
+their own columns and measured them. `bge-base-en-v1.5` (768-d) is genuinely the better
+encoder — development vector nDCG@10 0.918 vs MiniLM's 0.876, and +0.018 on held-out —
+but in the configuration PaperTrail actually serves, hybrid fusion, the held-out
+difference is **−0.001**, for 2× the index size and ~2× the query-time latency, so the
+default stays MiniLM. Two controls quantify the classic asymmetric-embedding mistake:
+indexing e5 with `passage: ` and then querying without `query: ` scores 0.823, worse
+than using no prefixes at all (0.833) and well below correct usage (0.852) — the CLI now
+defaults the query prefix from the column's embedding run so it cannot happen by
+accident. Topical scores for non-MiniLM encoders are recorded lower bounds, because the
+frozen judgment pools were built from MiniLM-based retrievers. See
+[`docs/results.md`](docs/results.md) and the verified `docs/evidence/phase-8-embed-*.json`.
+
 ## Run locally
 
 ```bash

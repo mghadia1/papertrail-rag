@@ -384,9 +384,15 @@ def evaluate(
                     row["rerank_pool_size"] = (
                         int(hits[0]["rerank_pool_size"]) if hits else 0
                     )
-                    pool = pools.get(item["id"])
-                    if pool is not None:
-                        row["unjudged_ranked_ids"] = sorted(set(ranked) - pool)
+                # Topical relevance is judged only inside a frozen pool, and that
+                # pool was built from MiniLM-based retrievers. Any retriever that
+                # differs — a deeper rerank pool, or a different encoder entirely —
+                # can surface papers nobody judged, which are scored grade 0. Record
+                # them on every mode so the understatement is auditable rather than
+                # silent, and so a cross-encoder comparison cannot hide it.
+                pool = pools.get(item["id"])
+                if pool is not None:
+                    row["unjudged_ranked_ids"] = sorted(set(ranked) - pool)
             rows.append(row)
             if mode == "hybrid":
                 hybrid_scores[item["id"]] = row["top_score"]

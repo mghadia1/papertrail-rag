@@ -448,6 +448,82 @@ moves is topical — 6 questions (A11). Paraphrase and lexical are flat to three
 decimals. No default was changed; the `ef_search` and RRF-`k` decisions are G6
 items.
 
+## Phase 5 (Part H) — embedding model ablation (September 13, 2026)
+
+MiniLM-L6 was the only encoder ever tried. Four alternatives were embedded into their
+own columns (migration `20260913_0004`, additive so MiniLM's frozen column is never
+touched), plus two prefix controls. Development only for the comparison; held-out read
+once for the incumbent and the winner. Evidence: `docs/evidence/phase-8-embed-*.json`
+(10 files, all verified).
+
+Cost per model (encode time is one comparable run over the same 256 chunks; MiniLM's
+embed wall time came from an earlier phase and is not comparable, so it is omitted):
+
+| model | dims | embed wall | chunks/s | HNSW index |
+|---|--:|--:|--:|--:|
+| all-MiniLM-L6-v2 | 384 | — | 283 | 4,088 kB |
+| bge-small-en-v1.5 | 384 | 58.7 s | 127 | 4,088 kB |
+| gte-small | 384 | 83.8 s | 126 | 4,088 kB |
+| e5-small-v2 | 384 | 119.0 s | 80 | 4,088 kB |
+| bge-base-en-v1.5 | 768 | 219.8 s | 45 | 8,168 kB |
+
+Development nDCG@10 (52 questions; `*` = pooling-biased lower bound):
+
+| config | vector all | v. para | v. topical | hybrid all | hybrid_rerank all |
+|---|--:|--:|--:|--:|--:|
+| MiniLM (incumbent) | 0.876 | 0.883 | 0.699 | 0.877 | 0.940 |
+| **bge-base (768-d)** | **0.918** | **0.935** | 0.775* | **0.910** | 0.940 |
+| gte-small | 0.880 | 0.832 | 0.816* | 0.898 | 0.934 |
+| bge-small | 0.860 | 0.802 | 0.788* | 0.900 | 0.935 |
+| bge-small, no instruction | 0.855 | 0.797 | 0.777* | 0.887 | 0.939 |
+| e5-small (correct prefixes) | 0.852 | 0.823 | 0.714* | 0.877 | 0.913 |
+| e5-small, no prefix anywhere | 0.833 | 0.795 | 0.687* | 0.879 | 0.937 |
+| e5-small, **query prefix forgotten** | 0.823 | 0.767 | 0.700* | 0.873 | 0.942 |
+
+Lexical is 1.000 in every cell and is omitted.
+
+**The topical pools are MiniLM-specific.** Topical relevance is judged only inside a
+frozen pool built from MiniLM-based retrievers, so another encoder surfaces unjudged
+papers that score 0: 22–29 of 36 topical rows for the new encoders (mean 1.2–1.8 of
+each top-10) versus 4 of 36 for MiniLM. Every starred figure is therefore a lower
+bound. The topical column cannot rank the new encoders against each other; but since
+the bias runs against them, gte-small (0.816) and bge-base (0.775) beating MiniLM
+(0.699) on topical remains a valid one-directional conclusion. Paraphrase and lexical
+have no pool, so those columns are unbiased — which is where the headline sits.
+
+**The prefix controls quantify the brief's main trap.** Correct e5 (0.852) > no prefix
+anywhere (0.833) > **query prefix forgotten (0.823)**: indexing with `passage: ` and
+then querying bare is worse than never using prefixes at all. `--query-prefix` now
+defaults to the prefix recorded in the column's embedding run, so that failure cannot
+happen by omission — reproducing it required asking for it explicitly. bge's query
+instruction is worth only +0.005, matching its card's note that v1.5 was improved to
+work without it.
+
+Held-out, one read per configuration:
+
+| held-out (26) | MiniLM | bge-base | gap |
+|---|--:|--:|--:|
+| vector all | 0.894 | 0.912 | **+0.018** |
+| vector paraphrase (12) | 0.883 | 0.912 | +0.029 |
+| vector topical (6) | 0.776 | 0.795* | +0.019 |
+| **hybrid all** | 0.916 | 0.915 | **−0.001** |
+| hybrid_rerank all | 0.943 | 0.949 | +0.006 |
+| vector p50 / p95 ms | 26.7 / 50.5 | 51.3 / 85.0 | ~2× |
+
+Recall@10 is 1.000 for both on every type.
+
+**Finding: the encoder upgrade is real, and the pipeline absorbs it.** bge-base is the
+better encoder in isolation (+0.018 held-out on `vector`, +0.029 on paraphrase), but in
+the configuration actually served (`hybrid`) the held-out difference is −0.001, and
+under `hybrid_rerank` +0.006. Changing the encoder only changes the candidate list the
+cross-encoder re-scores, and every model converges to 0.913–0.942 under
+`hybrid_rerank` — including the deliberately broken prefix configuration at 0.942.
+
+**Recommendation: keep MiniLM-L6.** bge-base costs 3.7× the embed wall time, 6.3× the
+per-chunk encode time, 2× the index size and ~2× the query-time vector latency to
+return −0.001 on held-out hybrid. A product serving pure vector search should pick
+bge-base; this one does not. No default was changed.
+
 ## Protocol history
 
 The first report is retained because it showed keyword Recall@5 of 0.05 on

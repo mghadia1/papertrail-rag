@@ -1153,3 +1153,115 @@ Controls planned, beyond the four models:
 - `e5-small-query-prefix-missing` — the **main** e5 column (indexed with
   `passage: `) queried with no prefix. This is precisely the trap the brief names,
   and it costs nothing since it reuses the correct column.
+
+**H3 — five columns embedded, 2,039/2,039 each.** Wall times and index sizes:
+
+| model | dims | embed wall | encode 256 chunks | chunks/s | HNSW index |
+|---|--:|--:|--:|--:|--:|
+| all-MiniLM-L6-v2 | 384 | not measured here¹ | 0.90 s | 283 | 4,088 kB |
+| bge-small-en-v1.5 | 384 | 58.7 s | 2.01 s | 127 | 4,088 kB |
+| gte-small | 384 | 83.8 s | 2.04 s | 126 | 4,088 kB |
+| e5-small-v2 | 384 | 119.0 s | 3.21 s | 80 | 4,088 kB |
+| e5-small-v2 (no prefix) | 384 | 117.0 s | — | — | 4,088 kB |
+| bge-base-en-v1.5 | **768** | 219.8 s | 5.71 s | 45 | **8,168 kB** |
+
+¹ MiniLM's column was filled in an earlier phase on another day, so its embed wall
+time is not comparable (A10) and is not restated. The encode column is the
+comparable measure: one run, same 256 chunks, warm-up discarded. Database grew
+30 MB → 85 MB for five extra columns and their indexes.
+
+**Development nDCG@10** (52 questions, `--splits development` so held-out stayed
+reserved; `*` marks a pooling-biased lower bound, see below):
+
+| config | vector all | v. para | v. lex | v. topical | hybrid all | hybrid_rerank all |
+|---|--:|--:|--:|--:|--:|--:|
+| MiniLM (incumbent) | 0.876 | 0.883 | 1.000 | 0.699 | 0.877 | 0.940 |
+| **bge-base (768-d)** | **0.918** | **0.935** | 1.000 | 0.775* | **0.910** | 0.940 |
+| gte-small | 0.880 | 0.832 | 1.000 | 0.816* | 0.898 | 0.934 |
+| bge-small | 0.860 | 0.802 | 1.000 | 0.788* | 0.900 | 0.935 |
+| bge-small, no instruction | 0.855 | 0.797 | 1.000 | 0.777* | 0.887 | 0.939 |
+| e5-small (correct prefixes) | 0.852 | 0.823 | 1.000 | 0.714* | 0.877 | 0.913 |
+| e5-small, no prefix anywhere | 0.833 | 0.795 | 1.000 | 0.687* | 0.879 | 0.937 |
+| e5-small, **query prefix forgotten** | 0.823 | 0.767 | 1.000 | 0.700* | 0.873 | 0.942 |
+
+**The pools are MiniLM-specific, and this is the phase that exposed it.** Topical
+relevance is judged only inside a frozen pool built from MiniLM-based retrievers, so
+a different encoder surfaces papers nobody judged, scored grade 0:
+
+| config | topical rows with unjudged ids | mean unjudged per top-10 |
+|---|--:|--:|
+| MiniLM | 4 / 36 | 0.22 |
+| bge-small | 22 / 36 | 1.19 |
+| bge-base | 26 / 36 | 1.44 |
+| gte-small | 27 / 36 | 1.39 |
+| e5-small | 28 / 36 | 1.64 |
+
+So every starred topical figure is a **lower bound**, and the bias is much larger for
+the new encoders than for MiniLM. Two consequences, stated rather than glossed: the
+topical column cannot be used to rank the new encoders against *each other*; but
+because the bias runs *against* them, "gte-small (0.816) and bge-base (0.775) beat
+MiniLM (0.699) on topical" is still a valid one-directional conclusion. Paraphrase
+and lexical have no pool — relevance there is a fixed known-item set — so those
+columns are unbiased and are where the headline lives. The verifier now requires every
+out-of-pool id to be recorded per row on every mode, which is what turned this from an
+invisible understatement into a measured one (it first showed up as 8 of 10 files
+failing verification).
+
+**The prefix controls did their job.** On development vector `all`:
+correct e5 **0.852** > no prefix anywhere **0.833** > **query prefix forgotten 0.823**.
+Indexing with `passage: ` and then querying bare is worse than never using prefixes
+at all — the mismatch costs 0.029 against correct usage, and 0.010 against simply not
+bothering. That is the brief's named trap, measured. It also justifies the harness
+choice: `--query-prefix` now defaults to the prefix recorded in the column's
+embedding run, so this failure cannot happen by omission; producing it required
+passing `--query-prefix ""` deliberately.
+
+**bge's instruction is nearly free to omit**: 0.860 with it vs 0.855 without
+(+0.005). That matches the model card, which says v1.5 "enhance[s] its retrieval
+ability without instruction" and frames the instruction as for short queries — ours
+average ~24 content words.
+
+**Held-out, one read per configuration** (`phase-8-embed-{minilm,bge-base}-heldout.json`):
+
+| held-out (26) | MiniLM | bge-base | gap |
+|---|--:|--:|--:|
+| vector all | 0.894 | 0.912 | **+0.018** |
+| vector paraphrase (12) | 0.883 | 0.912 | +0.029 |
+| vector topical (6) | 0.776 | 0.795* | +0.019 |
+| **hybrid all** | 0.916 | 0.915 | **−0.001** |
+| hybrid paraphrase | 0.969 | 0.928 | −0.042 |
+| hybrid topical | 0.697 | 0.775* | +0.078 |
+| hybrid_rerank all | 0.943 | 0.949 | +0.006 |
+| vector p50 / p95 ms | 26.7 / 50.5 | 51.3 / 85.0 | ~2× |
+
+Recall@10 is 1.000 for both on every type.
+
+**Finding: the encoder upgrade is real and the pipeline absorbs it.** bge-base is
+clearly the better encoder in isolation — +0.042 development and +0.018 held-out on
+`vector`, +0.052 / +0.029 on paraphrase. In the configuration PaperTrail actually
+serves (`hybrid`), the held-out difference is **−0.001**; under `hybrid_rerank` it is
++0.006. Per the brief's trap note, changing the encoder changes only the candidate
+list the cross-encoder sees, and indeed every model converges to 0.913–0.942 under
+`hybrid_rerank` — including the deliberately broken prefix configuration at 0.942,
+which is the sharpest illustration that reranking masks encoder quality.
+
+**Recommendation: do not change the default.** bge-base costs 3.7× the embed wall
+time, 6.3× the per-chunk encode time, 2× the index size and ~2× the query-time vector
+latency, and returns −0.001 on held-out `hybrid`. The case for switching would be a
+product that serves pure vector search, which this one does not. No default changed
+(H5: Mayank decides).
+
+Worth naming as a cross-phase pattern, since it is now four for four: Phase 2 (a
+better reranker), Phase 3 (a better sparse ranker), Phase 4 (better fusion
+parameters) and Phase 5 (a better encoder) each produced a real component-level
+improvement that shrank to roughly nothing once measured end-to-end on held-out.
+The one change that did survive was a **bug fix** — the `ef_search` cap.
+
+**H4 — the frozen baseline is byte-identical.** `phase-8-retrieval-v3-baseline.json`
+still verifies, with 0 out-of-pool rows, and MiniLM's `embedding` column still holds
+2,039 vectors. Because the migration was additive, this is structural: no
+re-embedding of that column ever happened, so there is nothing for non-determinism
+to break.
+
+Post-run: 93 tests pass; all 10 new files verify plus every prior file (v2, v3
+baseline, 8 rerank, 10 sparse, 3 fusion, hnsw, gate, v2 RAG); manifest intact.

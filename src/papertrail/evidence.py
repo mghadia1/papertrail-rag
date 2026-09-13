@@ -132,15 +132,11 @@ def _verify_retrieval_evidence_v3(
             if pool is None:
                 continue
             out_of_pool = sorted(set(row["ranked_arxiv_ids"]) - pool)
-            if not out_of_pool:
-                continue
-            # Only a rerank mode over a pool deeper than the judged depth may reach
-            # outside the frozen pool; those ids are unjudged (scored grade 0) and
-            # must be recorded per row so the topical understatement is auditable.
-            if row["mode"] not in rerank_modes:
-                raise ValueError(
-                    f"ranked ids for {row['question_id']} fall outside its judged pool"
-                )
+            # Papers outside a topical question's frozen pool are unjudged and are
+            # scored grade 0. That is allowed — the pool was built from MiniLM-based
+            # retrievers, so a deeper rerank pool or a different encoder legitimately
+            # reaches past it — but it must be recorded per row, exactly, so the
+            # resulting understatement is auditable instead of silent.
             if sorted(row.get("unjudged_ranked_ids", [])) != out_of_pool:
                 raise ValueError(
                     f"{row['question_id']}/{row['mode']} unjudged_ranked_ids "
@@ -184,7 +180,10 @@ def _verify_retrieval_evidence_v3(
     if report.get("protocol", {}).get("rrf_k") != 60:
         raise ValueError("retrieval evidence does not use frozen RRF k=60")
     return {"verified": True, "kind": "retrieval", "raw_rows": len(rows),
-            "modes": modes, "splits": actual_splits}
+            "modes": modes, "splits": actual_splits,
+            "rows_with_unjudged_topical_ids": sum(
+                1 for row in rows if row.get("unjudged_ranked_ids")
+            )}
 
 
 def verify_retrieval_evidence(
