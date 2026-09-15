@@ -251,3 +251,21 @@ def test_fusion_verifier_checks_heldout_matches_the_dev_best(tmp_path) -> None:
     bad2.write_text(json.dumps(leaked))
     with pytest.raises(ValueError, match="declares splits"):
         verify_fusion_evidence(bad2, manifest, question_set=questions)
+
+
+def test_embed_cost_verifier_recomputes_summaries(tmp_path) -> None:
+    from papertrail.evidence import verify_embed_cost_evidence
+
+    manifest = CorpusManifest.read(ROOT / "docs/evidence/corpus-manifest-1000.json")
+    path = ROOT / "docs/evidence/phase-8-embed-costs.json"
+    assert verify_embed_cost_evidence(path, manifest) == {
+        "verified": True, "kind": "embed_costs", "columns": 5,
+    }
+
+    # A4: a cost figure edited in the summary without its raw timings must fail.
+    tampered = json.loads(path.read_text())
+    tampered["columns"]["embedding_bge_base"]["summary"]["vector_query_ms_p95"] = 60.0
+    bad = tmp_path / "edited-p95.json"
+    bad.write_text(json.dumps(tampered))
+    with pytest.raises(ValueError, match="query p95"):
+        verify_embed_cost_evidence(bad, manifest)

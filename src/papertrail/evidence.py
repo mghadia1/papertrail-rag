@@ -29,6 +29,7 @@ _GATE_SIGNAL_COST = {"cos_top": 0, "cos_margin": 0, "cos_mean_top3": 0,
                      "ce_top": 2, "ce_margin": 2, "ce_sigmoid_top": 2}
 from .generation import cited_arxiv_ids
 from .manifest import CorpusManifest
+from .models import EMBEDDING_COLUMNS
 
 
 def _close(actual: float, published: Any, field: str) -> None:
@@ -495,6 +496,39 @@ def verify_fusion_evidence(
     return {"verified": True, "kind": kind, "raw_rows": len(rows),
             "chosen_config_id": chosen_id,
             "sweep_cross_checked": True}
+
+
+def verify_embed_cost_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]:
+    """Recompute the Part H cost summary (A4) from its per-question timings."""
+    report = json.loads(path.read_text(encoding="utf-8"))
+    _verify_freeze_precedes_report(report)
+    if report.get("kind") != "embed_costs":
+        raise ValueError(f"not embed cost evidence: {report.get('kind')!r}")
+    if report.get("corpus_arxiv_ids_sha256") != manifest.arxiv_ids_sha256:
+        raise ValueError("embed cost evidence corpus hash does not match manifest")
+    columns = report.get("columns", {})
+    if sorted(columns) != sorted(report["protocol"]["columns"]):
+        raise ValueError("embed cost columns disagree with protocol.columns")
+    chunks = int(report["chunk_count"])
+    for column, entry in columns.items():
+        if EMBEDDING_COLUMNS.get(column) != int(entry["dimensions"]):
+            raise ValueError(f"{column} dimensions {entry['dimensions']} disagree with the schema")
+        rows = entry.get("per_question", [])
+        if not rows or len({r["question_id"] for r in rows}) != len(rows):
+            raise ValueError(f"{column} needs one timing row per question")
+        summary = entry["summary"]
+        total = [r["encode_ms"] + r["search_ms"] for r in rows]
+        _close(chunks / float(summary["passage_encode_seconds"]),
+               summary["passage_chunks_per_second"], f"{column} chunks/s")
+        _close(_percentile([r["encode_ms"] for r in rows], 0.50),
+               summary["query_encode_ms_p50"], f"{column} encode p50")
+        _close(_percentile([r["search_ms"] for r in rows], 0.50),
+               summary["vector_search_ms_p50"], f"{column} search p50")
+        _close(_percentile(total, 0.50), summary["vector_query_ms_p50"], f"{column} query p50")
+        _close(_percentile(total, 0.95), summary["vector_query_ms_p95"], f"{column} query p95")
+        if int(entry["hnsw_index_bytes"]) <= 0:
+            raise ValueError(f"{column} has no HNSW index size")
+    return {"verified": True, "kind": "embed_costs", "columns": len(columns)}
 
 
 def verify_gate_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]:

@@ -456,16 +456,25 @@ touched), plus two prefix controls. Development only for the comparison; held-ou
 once for the incumbent and the winner. Evidence: `docs/evidence/phase-8-embed-*.json`
 (10 files, all verified).
 
-Cost per model (encode time is one comparable run over the same 256 chunks; MiniLM's
-embed wall time came from an earlier phase and is not comparable, so it is omitted):
+Cost per model, from `docs/evidence/phase-8-embed-costs.json` (verified,
+`--kind embed-costs`): all five encoders timed back to back in one process on one
+machine, so the columns compare with each other and with nothing else (A10). Passage
+encode is all 2,039 chunks through the indexing path with no database writes; query
+latency is query encode plus `vector_search` (limit 10) over the 52 development
+questions, one warm-up discarded.
 
-| model | dims | embed wall | chunks/s | HNSW index |
-|---|--:|--:|--:|--:|
-| all-MiniLM-L6-v2 | 384 | — | 283 | 4,088 kB |
-| bge-small-en-v1.5 | 384 | 58.7 s | 127 | 4,088 kB |
-| gte-small | 384 | 83.8 s | 126 | 4,088 kB |
-| e5-small-v2 | 384 | 119.0 s | 80 | 4,088 kB |
-| bge-base-en-v1.5 | 768 | 219.8 s | 45 | 8,168 kB |
+| model | dims | passage encode | chunks/s | query encode p50 ms | vector query p50 ms | vector query p95 ms | HNSW index |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| all-MiniLM-L6-v2 | 384 | 7.2 s | 285 | 10.8 | 19.1 | 38.0 | 4,088 kB |
+| bge-small-en-v1.5 | 384 | 13.3 s | 153 | 15.3 | 22.6 | 47.5 | 4,088 kB |
+| gte-small | 384 | 12.1 s | 169 | 17.7 | 23.7 | 45.6 | 4,088 kB |
+| e5-small-v2 | 384 | 14.7 s | 138 | 15.9 | 23.7 | 40.2 | 4,088 kB |
+| bge-base-en-v1.5 | 768 | 138.5 s | 15 | 31.0 | 46.7 | 178.1 | 8,168 kB |
+
+The first version of this section gave embed wall times and a 256-chunk throughput
+copied from terminal output, which no evidence file backed (A4); the table above
+replaces it. Search itself is 6.5–12.7 ms p50 on every column; the query-time gap is
+mostly encoding.
 
 Development nDCG@10 (52 questions; `*` = pooling-biased lower bound):
 
@@ -519,9 +528,9 @@ under `hybrid_rerank` +0.006. Changing the encoder only changes the candidate li
 cross-encoder re-scores, and every model converges to 0.913–0.942 under
 `hybrid_rerank` — including the deliberately broken prefix configuration at 0.942.
 
-**Decided: keep MiniLM-L6.** bge-base costs 3.7× the embed wall time, 6.3× the
-per-chunk encode time, 2× the index size and ~2× the query-time vector latency to
-return −0.001 on held-out hybrid. A product serving pure vector search should pick
+**Decided: keep MiniLM-L6.** bge-base costs 19× the passage-encode time, 2× the index
+size, and 2.4× the p50 / 4.7× the p95 query-time vector latency to return −0.001 on
+held-out hybrid. A product serving pure vector search should pick
 bge-base; this one does not. Mayank reviewed the held-out table on 2026-09-13 and kept
 MiniLM, so no default changed. The alternative columns, their embedding runs and this
 evidence all remain, so the decision is reproducible and revisitable.

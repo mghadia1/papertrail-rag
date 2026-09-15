@@ -1170,6 +1170,11 @@ time is not comparable (A10) and is not restated. The encode column is the
 comparable measure: one run, same 256 chunks, warm-up discarded. Database grew
 30 MB → 85 MB for five extra columns and their indexes.
 
+> **Superseded 2026-09-15.** The wall times and throughput above were read off the
+> terminal and never written to evidence (an A4 violation found in the Phase 4–5
+> audit). They are replaced by `docs/evidence/phase-8-embed-costs.json` — see that
+> day's entry. The index sizes were confirmed exactly.
+
 **Development nDCG@10** (52 questions, `--splits development` so held-out stayed
 reserved; `*` marks a pooling-biased lower bound, see below):
 

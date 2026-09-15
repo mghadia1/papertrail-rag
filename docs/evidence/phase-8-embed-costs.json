@@ -1,0 +1,1414 @@
+{
+  "schema_version": 1,
+  "kind": "embed_costs",
+  "created_at_utc": "2026-09-15T21:11:50.138435Z",
+  "evaluation_set_frozen_at_utc": "2026-09-05T18:52:02.108316Z",
+  "corpus_arxiv_ids_sha256": "7308d240f717df7c9b17a1dfb7140c68615a462298b42866b95bc17f93250146",
+  "chunk_count": 2039,
+  "protocol": {
+    "columns": [
+      "embedding",
+      "embedding_bge_small",
+      "embedding_gte_small",
+      "embedding_e5_small",
+      "embedding_bge_base"
+    ],
+    "passage_batch_size": 32,
+    "passage_warmup_chunks_discarded": 32,
+    "passage_encode_scope": "encode only; no database writes",
+    "query_split": "development",
+    "query_warmups_discarded_per_column": 1,
+    "vector_search_limit": 10,
+    "ef_search": "server default",
+    "run": "all columns back to back in one process (A10)",
+    "machine": "Darwin arm64, Python 3.12.2"
+  },
+  "columns": {
+    "embedding": {
+      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+      "dimensions": 384,
+      "query_prefix": "",
+      "passage_prefix": "",
+      "hnsw_index_bytes": 4186112,
+      "summary": {
+        "passage_encode_seconds": 7.16373416595161,
+        "passage_chunks_per_second": 284.6280937797955,
+        "query_encode_ms_p50": 10.771000292152166,
+        "vector_search_ms_p50": 7.007624953985214,
+        "vector_query_ms_p50": 19.06700013205409,
+        "vector_query_ms_p95": 38.00483327358961
+      },
+      "per_question": [
+        {
+          "question_id": "v3q001",
+          "encode_ms": 9.915625210851431,
+          "search_ms": 5.754915997385979
+        },
+        {
+          "question_id": "v3q002",
+          "encode_ms": 17.171000130474567,
+          "search_ms": 14.699416235089302
+        },
+        {
+          "question_id": "v3q003",
+          "encode_ms": 21.997791714966297,
+          "search_ms": 11.80637488141656
+        },
+        {
+          "question_id": "v3q004",
+          "encode_ms": 18.82054191082716,
+          "search_ms": 9.102792013436556
+        },
+        {
+          "question_id": "v3q005",
+          "encode_ms": 16.137583181262016,
+          "search_ms": 10.004667099565268
+        },
+        {
+          "question_id": "v3q006",
+          "encode_ms": 9.149541612714529,
+          "search_ms": 7.44854100048542
+        },
+        {
+          "question_id": "v3q007",
+          "encode_ms": 25.03379201516509,
+          "search_ms": 14.225124847143888
+        },
+        {
+          "question_id": "v3q008",
+          "encode_ms": 27.160375379025936,
+          "search_ms": 10.844457894563675
+        },
+        {
+          "question_id": "v3q009",
+          "encode_ms": 10.25729114189744,
+          "search_ms": 7.290249690413475
+        },
+        {
+          "question_id": "v3q010",
+          "encode_ms": 9.475375059992075,
+          "search_ms": 9.591625072062016
+        },
+        {
+          "question_id": "v3q011",
+          "encode_ms": 9.302208665758371,
+          "search_ms": 7.049666251987219
+        },
+        {
+          "question_id": "v3q012",
+          "encode_ms": 21.351417060941458,
+          "search_ms": 8.69374955072999
+        },
+        {
+          "question_id": "v3q013",
+          "encode_ms": 17.04624993726611,
+          "search_ms": 6.180542055517435
+        },
+        {
+          "question_id": "v3q014",
+          "encode_ms": 14.881832990795374,
+          "search_ms": 3.5689999349415302
+        },
+        {
+          "question_id": "v3q015",
+          "encode_ms": 16.45041722804308,
+          "search_ms": 6.762666627764702
+        },
+        {
+          "question_id": "v3q016",
+          "encode_ms": 16.865957994014025,
+          "search_ms": 4.912750329822302
+        },
+        {
+          "question_id": "v3q017",
+          "encode_ms": 8.12383322045207,
+          "search_ms": 4.055459052324295
+        },
+        {
+          "question_id": "v3q018",
+          "encode_ms": 16.611416824162006,
+          "search_ms": 5.763042252510786
+        },
+        {
+          "question_id": "v3q019",
+          "encode_ms": 17.29137497022748,
+          "search_ms": 9.692083112895489
+        },
+        {
+          "question_id": "v3q020",
+          "encode_ms": 73.20074969902635,
+          "search_ms": 8.668584283441305
+        },
+        {
+          "question_id": "v3q021",
+          "encode_ms": 12.657624669373035,
+          "search_ms": 5.681875161826611
+        },
+        {
+          "question_id": "v3q022",
+          "encode_ms": 18.83983425796032,
+          "search_ms": 4.826082848012447
+        },
+        {
+          "question_id": "v3q023",
+          "encode_ms": 9.994624648243189,
+          "search_ms": 6.626666989177465
+        },
+        {
+          "question_id": "v3q024",
+          "encode_ms": 9.81099996715784,
+          "search_ms": 7.042791694402695
+        },
+        {
+          "question_id": "v3q025",
+          "encode_ms": 10.062457993626595,
+          "search_ms": 6.324333604425192
+        },
+        {
+          "question_id": "v3q026",
+          "encode_ms": 10.771000292152166,
+          "search_ms": 7.292541675269604
+        },
+        {
+          "question_id": "v3q027",
+          "encode_ms": 9.157125372439623,
+          "search_ms": 3.5488749854266644
+        },
+        {
+          "question_id": "v3q028",
+          "encode_ms": 17.7822089754045,
+          "search_ms": 8.334666024893522
+        },
+        {
+          "question_id": "v3q029",
+          "encode_ms": 17.477874644100666,
+          "search_ms": 10.455125011503696
+        },
+        {
+          "question_id": "v3q030",
+          "encode_ms": 10.131124872714281,
+          "search_ms": 9.16766608133912
+        },
+        {
+          "question_id": "v3q031",
+          "encode_ms": 9.205792099237442,
+          "search_ms": 5.039916839450598
+        },
+        {
+          "question_id": "v3q032",
+          "encode_ms": 9.372875094413757,
+          "search_ms": 6.024292204529047
+        },
+        {
+          "question_id": "v3q033",
+          "encode_ms": 17.014999873936176,
+          "search_ms": 6.706874817609787
+        },
+        {
+          "question_id": "v3q034",
+          "encode_ms": 18.558834213763475,
+          "search_ms": 6.014375016093254
+        },
+        {
+          "question_id": "v3q035",
+          "encode_ms": 11.030500289052725,
+          "search_ms": 5.869916640222073
+        },
+        {
+          "question_id": "v3q036",
+          "encode_ms": 9.362542070448399,
+          "search_ms": 6.356874946504831
+        },
+        {
+          "question_id": "v3q037",
+          "encode_ms": 8.650125004351139,
+          "search_ms": 7.007624953985214
+        },
+        {
+          "question_id": "v3q038",
+          "encode_ms": 8.656708057969809,
+          "search_ms": 16.499292105436325
+        },
+        {
+          "question_id": "v3q039",
+          "encode_ms": 8.470249827951193,
+          "search_ms": 15.927417203783989
+        },
+        {
+          "question_id": "v3q040",
+          "encode_ms": 9.649249725043774,
+          "search_ms": 7.156250067055225
+        },
+        {
+          "question_id": "v3q041",
+          "encode_ms": 8.824999909847975,
+          "search_ms": 5.627125035971403
+        },
+        {
+          "question_id": "v3q042",
+          "encode_ms": 9.334458969533443,
+          "search_ms": 6.115625146776438
+        },
+        {
+          "question_id": "v3q043",
+          "encode_ms": 20.279958844184875,
+          "search_ms": 9.179375134408474
+        },
+        {
+          "question_id": "v3q044",
+          "encode_ms": 8.14666599035263,
+          "search_ms": 10.71154186502099
+        },
+        {
+          "question_id": "v3q045",
+          "encode_ms": 8.729374967515469,
+          "search_ms": 6.256916094571352
+        },
+        {
+          "question_id": "v3q046",
+          "encode_ms": 8.447584230452776,
+          "search_ms": 6.69854087755084
+        },
+        {
+          "question_id": "v3q047",
+          "encode_ms": 7.465959060937166,
+          "search_ms": 10.194290895015001
+        },
+        {
+          "question_id": "v3q048",
+          "encode_ms": 8.570666890591383,
+          "search_ms": 8.426915854215622
+        },
+        {
+          "question_id": "v3q049",
+          "encode_ms": 22.515083197504282,
+          "search_ms": 6.487708073109388
+        },
+        {
+          "question_id": "v3q050",
+          "encode_ms": 20.474415738135576,
+          "search_ms": 5.372500047087669
+        },
+        {
+          "question_id": "v3q051",
+          "encode_ms": 19.824415910989046,
+          "search_ms": 6.1969999223947525
+        },
+        {
+          "question_id": "v3q052",
+          "encode_ms": 17.157625406980515,
+          "search_ms": 7.22245778888464
+        }
+      ]
+    },
+    "embedding_bge_small": {
+      "model_name": "BAAI/bge-small-en-v1.5",
+      "dimensions": 384,
+      "query_prefix": "Represent this sentence for searching relevant passages: ",
+      "passage_prefix": "",
+      "hnsw_index_bytes": 4186112,
+      "summary": {
+        "passage_encode_seconds": 13.299971415661275,
+        "passage_chunks_per_second": 153.30860016728997,
+        "query_encode_ms_p50": 15.280500054359436,
+        "vector_search_ms_p50": 6.479042116552591,
+        "vector_query_ms_p50": 22.640416864305735,
+        "vector_query_ms_p95": 47.535082791000605
+      },
+      "per_question": [
+        {
+          "question_id": "v3q001",
+          "encode_ms": 31.096667051315308,
+          "search_ms": 3.3032079227268696
+        },
+        {
+          "question_id": "v3q002",
+          "encode_ms": 22.996167186647654,
+          "search_ms": 29.490166809409857
+        },
+        {
+          "question_id": "v3q003",
+          "encode_ms": 17.14383391663432,
+          "search_ms": 12.380833271890879
+        },
+        {
+          "question_id": "v3q004",
+          "encode_ms": 15.81774977967143,
+          "search_ms": 11.124583892524242
+        },
+        {
+          "question_id": "v3q005",
+          "encode_ms": 14.795792289078236,
+          "search_ms": 15.499332919716835
+        },
+        {
+          "question_id": "v3q006",
+          "encode_ms": 13.515042141079903,
+          "search_ms": 7.73462513461709
+        },
+        {
+          "question_id": "v3q007",
+          "encode_ms": 41.92874999716878,
+          "search_ms": 5.606332793831825
+        },
+        {
+          "question_id": "v3q008",
+          "encode_ms": 11.52470801025629,
+          "search_ms": 5.337375216186047
+        },
+        {
+          "question_id": "v3q009",
+          "encode_ms": 10.906958021223545,
+          "search_ms": 9.936749935150146
+        },
+        {
+          "question_id": "v3q010",
+          "encode_ms": 13.206832576543093,
+          "search_ms": 4.082917235791683
+        },
+        {
+          "question_id": "v3q011",
+          "encode_ms": 12.258749920874834,
+          "search_ms": 4.525457974523306
+        },
+        {
+          "question_id": "v3q012",
+          "encode_ms": 15.033250208944082,
+          "search_ms": 4.037665668874979
+        },
+        {
+          "question_id": "v3q013",
+          "encode_ms": 15.067874919623137,
+          "search_ms": 3.9033330976963043
+        },
+        {
+          "question_id": "v3q014",
+          "encode_ms": 16.628749668598175,
+          "search_ms": 4.385792184621096
+        },
+        {
+          "question_id": "v3q015",
+          "encode_ms": 15.020749997347593,
+          "search_ms": 5.362249910831451
+        },
+        {
+          "question_id": "v3q016",
+          "encode_ms": 15.179708134382963,
+          "search_ms": 6.601625122129917
+        },
+        {
+          "question_id": "v3q017",
+          "encode_ms": 13.344207778573036,
+          "search_ms": 6.479042116552591
+        },
+        {
+          "question_id": "v3q018",
+          "encode_ms": 23.306707851588726,
+          "search_ms": 13.32333404570818
+        },
+        {
+          "question_id": "v3q019",
+          "encode_ms": 26.379333809018135,
+          "search_ms": 7.102624978870153
+        },
+        {
+          "question_id": "v3q020",
+          "encode_ms": 23.025000002235174,
+          "search_ms": 11.431375052779913
+        },
+        {
+          "question_id": "v3q021",
+          "encode_ms": 16.36070804670453,
+          "search_ms": 8.783041965216398
+        },
+        {
+          "question_id": "v3q022",
+          "encode_ms": 25.15387488529086,
+          "search_ms": 9.294457733631134
+        },
+        {
+          "question_id": "v3q023",
+          "encode_ms": 14.422750100493431,
+          "search_ms": 8.217666763812304
+        },
+        {
+          "question_id": "v3q024",
+          "encode_ms": 14.484874904155731,
+          "search_ms": 7.392042316496372
+        },
+        {
+          "question_id": "v3q025",
+          "encode_ms": 14.18954087421298,
+          "search_ms": 9.463958907872438
+        },
+        {
+          "question_id": "v3q026",
+          "encode_ms": 16.000666189938784,
+          "search_ms": 8.14474979415536
+        },
+        {
+          "question_id": "v3q027",
+          "encode_ms": 15.63266571611166,
+          "search_ms": 15.117875300347805
+        },
+        {
+          "question_id": "v3q028",
+          "encode_ms": 44.621458277106285,
+          "search_ms": 7.104999851435423
+        },
+        {
+          "question_id": "v3q029",
+          "encode_ms": 24.99204222112894,
+          "search_ms": 5.071875173598528
+        },
+        {
+          "question_id": "v3q030",
+          "encode_ms": 17.606208100914955,
+          "search_ms": 5.331125110387802
+        },
+        {
+          "question_id": "v3q031",
+          "encode_ms": 15.594041906297207,
+          "search_ms": 4.1098748333752155
+        },
+        {
+          "question_id": "v3q032",
+          "encode_ms": 13.527791947126389,
+          "search_ms": 4.23854123800993
+        },
+        {
+          "question_id": "v3q033",
+          "encode_ms": 23.043707944452763,
+          "search_ms": 5.20379189401865
+        },
+        {
+          "question_id": "v3q034",
+          "encode_ms": 22.589209023863077,
+          "search_ms": 5.994583014398813
+        },
+        {
+          "question_id": "v3q035",
+          "encode_ms": 15.665790997445583,
+          "search_ms": 5.150625016540289
+        },
+        {
+          "question_id": "v3q036",
+          "encode_ms": 13.554874807596207,
+          "search_ms": 4.206832963973284
+        },
+        {
+          "question_id": "v3q037",
+          "encode_ms": 13.264624867588282,
+          "search_ms": 3.624250181019306
+        },
+        {
+          "question_id": "v3q038",
+          "encode_ms": 13.329250272363424,
+          "search_ms": 4.300333093851805
+        },
+        {
+          "question_id": "v3q039",
+          "encode_ms": 13.560334220528603,
+          "search_ms": 4.83483262360096
+        },
+        {
+          "question_id": "v3q040",
+          "encode_ms": 13.562249951064587,
+          "search_ms": 4.302666988223791
+        },
+        {
+          "question_id": "v3q041",
+          "encode_ms": 13.383416924625635,
+          "search_ms": 3.0783750116825104
+        },
+        {
+          "question_id": "v3q042",
+          "encode_ms": 13.79041699692607,
+          "search_ms": 4.215500317513943
+        },
+        {
+          "question_id": "v3q043",
+          "encode_ms": 21.59137511625886,
+          "search_ms": 5.765833891928196
+        },
+        {
+          "question_id": "v3q044",
+          "encode_ms": 13.946791645139456,
+          "search_ms": 9.824666194617748
+        },
+        {
+          "question_id": "v3q045",
+          "encode_ms": 15.304124914109707,
+          "search_ms": 9.699167218059301
+        },
+        {
+          "question_id": "v3q046",
+          "encode_ms": 14.741292223334312,
+          "search_ms": 6.881416775286198
+        },
+        {
+          "question_id": "v3q047",
+          "encode_ms": 13.25075002387166,
+          "search_ms": 7.540749851614237
+        },
+        {
+          "question_id": "v3q048",
+          "encode_ms": 15.280500054359436,
+          "search_ms": 7.315874565392733
+        },
+        {
+          "question_id": "v3q049",
+          "encode_ms": 16.65437500923872,
+          "search_ms": 7.62399984523654
+        },
+        {
+          "question_id": "v3q050",
+          "encode_ms": 20.4198332503438,
+          "search_ms": 5.847582593560219
+        },
+        {
+          "question_id": "v3q051",
+          "encode_ms": 21.595291793346405,
+          "search_ms": 7.853916846215725
+        },
+        {
+          "question_id": "v3q052",
+          "encode_ms": 21.520416252315044,
+          "search_ms": 7.403833791613579
+        }
+      ]
+    },
+    "embedding_gte_small": {
+      "model_name": "thenlper/gte-small",
+      "dimensions": 384,
+      "query_prefix": "",
+      "passage_prefix": "",
+      "hnsw_index_bytes": 4186112,
+      "summary": {
+        "passage_encode_seconds": 12.060156624764204,
+        "passage_chunks_per_second": 169.06911439384942,
+        "query_encode_ms_p50": 17.723792232573032,
+        "vector_search_ms_p50": 7.036291994154453,
+        "vector_query_ms_p50": 23.651999887079,
+        "vector_query_ms_p95": 45.648583211004734
+      },
+      "per_question": [
+        {
+          "question_id": "v3q001",
+          "encode_ms": 16.685666050761938,
+          "search_ms": 3.284874837845564
+        },
+        {
+          "question_id": "v3q002",
+          "encode_ms": 23.771584033966064,
+          "search_ms": 30.956500209867954
+        },
+        {
+          "question_id": "v3q003",
+          "encode_ms": 24.267458356916904,
+          "search_ms": 21.38112485408783
+        },
+        {
+          "question_id": "v3q004",
+          "encode_ms": 27.27795811370015,
+          "search_ms": 11.497707571834326
+        },
+        {
+          "question_id": "v3q005",
+          "encode_ms": 22.85529114305973,
+          "search_ms": 9.000416845083237
+        },
+        {
+          "question_id": "v3q006",
+          "encode_ms": 14.09966591745615,
+          "search_ms": 10.101584251970053
+        },
+        {
+          "question_id": "v3q007",
+          "encode_ms": 24.701541289687157,
+          "search_ms": 8.289874996989965
+        },
+        {
+          "question_id": "v3q008",
+          "encode_ms": 22.840042132884264,
+          "search_ms": 6.8215420469641685
+        },
+        {
+          "question_id": "v3q009",
+          "encode_ms": 13.061124831438065,
+          "search_ms": 7.543459068983793
+        },
+        {
+          "question_id": "v3q010",
+          "encode_ms": 14.381499961018562,
+          "search_ms": 5.2756667137146
+        },
+        {
+          "question_id": "v3q011",
+          "encode_ms": 13.044832739979029,
+          "search_ms": 5.423916969448328
+        },
+        {
+          "question_id": "v3q012",
+          "encode_ms": 23.78320787101984,
+          "search_ms": 5.206083878874779
+        },
+        {
+          "question_id": "v3q013",
+          "encode_ms": 23.111875168979168,
+          "search_ms": 5.94358379021287
+        },
+        {
+          "question_id": "v3q014",
+          "encode_ms": 23.660624865442514,
+          "search_ms": 8.02070926874876
+        },
+        {
+          "question_id": "v3q015",
+          "encode_ms": 27.326291892677546,
+          "search_ms": 11.769458185881376
+        },
+        {
+          "question_id": "v3q016",
+          "encode_ms": 27.58187521249056,
+          "search_ms": 12.259374838322401
+        },
+        {
+          "question_id": "v3q017",
+          "encode_ms": 13.79687525331974,
+          "search_ms": 8.65891668945551
+        },
+        {
+          "question_id": "v3q018",
+          "encode_ms": 24.952000007033348,
+          "search_ms": 9.120582602918148
+        },
+        {
+          "question_id": "v3q019",
+          "encode_ms": 23.862875066697598,
+          "search_ms": 5.179707892239094
+        },
+        {
+          "question_id": "v3q020",
+          "encode_ms": 40.69937486201525,
+          "search_ms": 14.38950002193451
+        },
+        {
+          "question_id": "v3q021",
+          "encode_ms": 17.81812496483326,
+          "search_ms": 7.57387513294816
+        },
+        {
+          "question_id": "v3q022",
+          "encode_ms": 26.122333016246557,
+          "search_ms": 6.113333161920309
+        },
+        {
+          "question_id": "v3q023",
+          "encode_ms": 17.723792232573032,
+          "search_ms": 5.928207654505968
+        },
+        {
+          "question_id": "v3q024",
+          "encode_ms": 15.974082984030247,
+          "search_ms": 5.585999693721533
+        },
+        {
+          "question_id": "v3q025",
+          "encode_ms": 14.881416223943233,
+          "search_ms": 5.642499774694443
+        },
+        {
+          "question_id": "v3q026",
+          "encode_ms": 18.659624736756086,
+          "search_ms": 3.970375284552574
+        },
+        {
+          "question_id": "v3q027",
+          "encode_ms": 16.156166791915894,
+          "search_ms": 3.760749939829111
+        },
+        {
+          "question_id": "v3q028",
+          "encode_ms": 24.013458751142025,
+          "search_ms": 4.418166354298592
+        },
+        {
+          "question_id": "v3q029",
+          "encode_ms": 22.7100420743227,
+          "search_ms": 5.645958241075277
+        },
+        {
+          "question_id": "v3q030",
+          "encode_ms": 15.04558278247714,
+          "search_ms": 3.792042378336191
+        },
+        {
+          "question_id": "v3q031",
+          "encode_ms": 14.313457999378443,
+          "search_ms": 3.931124694645405
+        },
+        {
+          "question_id": "v3q032",
+          "encode_ms": 13.08479206636548,
+          "search_ms": 3.756333142518997
+        },
+        {
+          "question_id": "v3q033",
+          "encode_ms": 23.27674999833107,
+          "search_ms": 3.59812518581748
+        },
+        {
+          "question_id": "v3q034",
+          "encode_ms": 22.241041995584965,
+          "search_ms": 3.5500829108059406
+        },
+        {
+          "question_id": "v3q035",
+          "encode_ms": 14.179833233356476,
+          "search_ms": 3.866374958306551
+        },
+        {
+          "question_id": "v3q036",
+          "encode_ms": 13.012458104640245,
+          "search_ms": 3.3507500775158405
+        },
+        {
+          "question_id": "v3q037",
+          "encode_ms": 12.912916019558907,
+          "search_ms": 6.026292219758034
+        },
+        {
+          "question_id": "v3q038",
+          "encode_ms": 13.083333615213633,
+          "search_ms": 7.682666182518005
+        },
+        {
+          "question_id": "v3q039",
+          "encode_ms": 13.389042112976313,
+          "search_ms": 5.868540611118078
+        },
+        {
+          "question_id": "v3q040",
+          "encode_ms": 13.85575020685792,
+          "search_ms": 6.4859590493142605
+        },
+        {
+          "question_id": "v3q041",
+          "encode_ms": 13.798499945551157,
+          "search_ms": 7.321374956518412
+        },
+        {
+          "question_id": "v3q042",
+          "encode_ms": 13.129000086337328,
+          "search_ms": 7.122915703803301
+        },
+        {
+          "question_id": "v3q043",
+          "encode_ms": 22.60924968868494,
+          "search_ms": 8.111500181257725
+        },
+        {
+          "question_id": "v3q044",
+          "encode_ms": 12.80179200693965,
+          "search_ms": 8.98566609248519
+        },
+        {
+          "question_id": "v3q045",
+          "encode_ms": 14.218875207006931,
+          "search_ms": 7.442499976605177
+        },
+        {
+          "question_id": "v3q046",
+          "encode_ms": 14.228041283786297,
+          "search_ms": 7.036291994154453
+        },
+        {
+          "question_id": "v3q047",
+          "encode_ms": 12.919832952320576,
+          "search_ms": 7.34145799651742
+        },
+        {
+          "question_id": "v3q048",
+          "encode_ms": 13.836791273206472,
+          "search_ms": 7.268124725669622
+        },
+        {
+          "question_id": "v3q049",
+          "encode_ms": 21.99820801615715,
+          "search_ms": 7.036333903670311
+        },
+        {
+          "question_id": "v3q050",
+          "encode_ms": 24.028333369642496,
+          "search_ms": 11.233625002205372
+        },
+        {
+          "question_id": "v3q051",
+          "encode_ms": 24.628333747386932,
+          "search_ms": 7.720000110566616
+        },
+        {
+          "question_id": "v3q052",
+          "encode_ms": 24.18158296495676,
+          "search_ms": 8.238499984145164
+        }
+      ]
+    },
+    "embedding_e5_small": {
+      "model_name": "intfloat/e5-small-v2",
+      "dimensions": 384,
+      "query_prefix": "query: ",
+      "passage_prefix": "passage: ",
+      "hnsw_index_bytes": 4186112,
+      "summary": {
+        "passage_encode_seconds": 14.736532791983336,
+        "passage_chunks_per_second": 138.36361841567066,
+        "query_encode_ms_p50": 15.85762482136488,
+        "vector_search_ms_p50": 7.311957888305187,
+        "vector_query_ms_p50": 23.706082720309496,
+        "vector_query_ms_p95": 40.22270813584328
+      },
+      "per_question": [
+        {
+          "question_id": "v3q001",
+          "encode_ms": 18.62649992108345,
+          "search_ms": 3.7999581545591354
+        },
+        {
+          "question_id": "v3q002",
+          "encode_ms": 18.433375284075737,
+          "search_ms": 15.934667084366083
+        },
+        {
+          "question_id": "v3q003",
+          "encode_ms": 26.035166811197996,
+          "search_ms": 11.260916013270617
+        },
+        {
+          "question_id": "v3q004",
+          "encode_ms": 22.227415814995766,
+          "search_ms": 6.7099593579769135
+        },
+        {
+          "question_id": "v3q005",
+          "encode_ms": 21.11908420920372,
+          "search_ms": 8.062541019171476
+        },
+        {
+          "question_id": "v3q006",
+          "encode_ms": 15.685665886849165,
+          "search_ms": 5.232542287558317
+        },
+        {
+          "question_id": "v3q007",
+          "encode_ms": 17.872542142868042,
+          "search_ms": 5.388457793742418
+        },
+        {
+          "question_id": "v3q008",
+          "encode_ms": 17.165709286928177,
+          "search_ms": 4.5042079873383045
+        },
+        {
+          "question_id": "v3q009",
+          "encode_ms": 15.17975004389882,
+          "search_ms": 4.480958916246891
+        },
+        {
+          "question_id": "v3q010",
+          "encode_ms": 15.841249842196703,
+          "search_ms": 5.308084189891815
+        },
+        {
+          "question_id": "v3q011",
+          "encode_ms": 13.866249937564135,
+          "search_ms": 3.842458128929138
+        },
+        {
+          "question_id": "v3q012",
+          "encode_ms": 19.136750139296055,
+          "search_ms": 6.6865417174994946
+        },
+        {
+          "question_id": "v3q013",
+          "encode_ms": 17.267209012061357,
+          "search_ms": 7.367207668721676
+        },
+        {
+          "question_id": "v3q014",
+          "encode_ms": 21.529332734644413,
+          "search_ms": 7.5587499886751175
+        },
+        {
+          "question_id": "v3q015",
+          "encode_ms": 44.70470827072859,
+          "search_ms": 9.206749964505434
+        },
+        {
+          "question_id": "v3q016",
+          "encode_ms": 20.833708811551332,
+          "search_ms": 6.5591661259531975
+        },
+        {
+          "question_id": "v3q017",
+          "encode_ms": 13.82795860990882,
+          "search_ms": 8.905665948987007
+        },
+        {
+          "question_id": "v3q018",
+          "encode_ms": 16.26083394512534,
+          "search_ms": 9.689624886959791
+        },
+        {
+          "question_id": "v3q019",
+          "encode_ms": 19.789417274296284,
+          "search_ms": 8.02375003695488
+        },
+        {
+          "question_id": "v3q020",
+          "encode_ms": 17.06025004386902,
+          "search_ms": 9.910416789352894
+        },
+        {
+          "question_id": "v3q021",
+          "encode_ms": 14.371207915246487,
+          "search_ms": 9.33487480506301
+        },
+        {
+          "question_id": "v3q022",
+          "encode_ms": 23.809249978512526,
+          "search_ms": 12.02454138547182
+        },
+        {
+          "question_id": "v3q023",
+          "encode_ms": 14.895542059093714,
+          "search_ms": 12.02133297920227
+        },
+        {
+          "question_id": "v3q024",
+          "encode_ms": 14.221249613910913,
+          "search_ms": 8.307042066007853
+        },
+        {
+          "question_id": "v3q025",
+          "encode_ms": 13.617458287626505,
+          "search_ms": 7.09508266299963
+        },
+        {
+          "question_id": "v3q026",
+          "encode_ms": 15.130041167140007,
+          "search_ms": 6.832833867520094
+        },
+        {
+          "question_id": "v3q027",
+          "encode_ms": 15.253541991114616,
+          "search_ms": 8.299000095576048
+        },
+        {
+          "question_id": "v3q028",
+          "encode_ms": 17.464417032897472,
+          "search_ms": 10.29474986717105
+        },
+        {
+          "question_id": "v3q029",
+          "encode_ms": 14.201791025698185,
+          "search_ms": 6.904166657477617
+        },
+        {
+          "question_id": "v3q030",
+          "encode_ms": 15.193166676908731,
+          "search_ms": 7.728375028818846
+        },
+        {
+          "question_id": "v3q031",
+          "encode_ms": 15.234166290611029,
+          "search_ms": 8.148249704390764
+        },
+        {
+          "question_id": "v3q032",
+          "encode_ms": 13.160916976630688,
+          "search_ms": 8.240874856710434
+        },
+        {
+          "question_id": "v3q033",
+          "encode_ms": 15.119667164981365,
+          "search_ms": 10.040166787803173
+        },
+        {
+          "question_id": "v3q034",
+          "encode_ms": 16.85449993237853,
+          "search_ms": 7.2662499733269215
+        },
+        {
+          "question_id": "v3q035",
+          "encode_ms": 14.77429224178195,
+          "search_ms": 14.124124776571989
+        },
+        {
+          "question_id": "v3q036",
+          "encode_ms": 15.355125069618225,
+          "search_ms": 4.939749836921692
+        },
+        {
+          "question_id": "v3q037",
+          "encode_ms": 14.363542199134827,
+          "search_ms": 7.311957888305187
+        },
+        {
+          "question_id": "v3q038",
+          "encode_ms": 15.62599977478385,
+          "search_ms": 6.303832866251469
+        },
+        {
+          "question_id": "v3q039",
+          "encode_ms": 16.70625014230609,
+          "search_ms": 6.226084195077419
+        },
+        {
+          "question_id": "v3q040",
+          "encode_ms": 25.553791783750057,
+          "search_ms": 4.349750000983477
+        },
+        {
+          "question_id": "v3q041",
+          "encode_ms": 15.509250108152628,
+          "search_ms": 24.056083988398314
+        },
+        {
+          "question_id": "v3q042",
+          "encode_ms": 14.490791130810976,
+          "search_ms": 43.47966704517603
+        },
+        {
+          "question_id": "v3q043",
+          "encode_ms": 25.09912522509694,
+          "search_ms": 15.123582910746336
+        },
+        {
+          "question_id": "v3q044",
+          "encode_ms": 17.19845784828067,
+          "search_ms": 4.715582821518183
+        },
+        {
+          "question_id": "v3q045",
+          "encode_ms": 15.85762482136488,
+          "search_ms": 4.62466711178422
+        },
+        {
+          "question_id": "v3q046",
+          "encode_ms": 14.837166760116816,
+          "search_ms": 3.2979161478579044
+        },
+        {
+          "question_id": "v3q047",
+          "encode_ms": 13.681749813258648,
+          "search_ms": 3.7567922845482826
+        },
+        {
+          "question_id": "v3q048",
+          "encode_ms": 15.313041862100363,
+          "search_ms": 5.565250292420387
+        },
+        {
+          "question_id": "v3q049",
+          "encode_ms": 19.43720830604434,
+          "search_ms": 7.615416776388884
+        },
+        {
+          "question_id": "v3q050",
+          "encode_ms": 23.496333975344896,
+          "search_ms": 6.113207899034023
+        },
+        {
+          "question_id": "v3q051",
+          "encode_ms": 17.563833855092525,
+          "search_ms": 6.6440412774682045
+        },
+        {
+          "question_id": "v3q052",
+          "encode_ms": 22.597000002861023,
+          "search_ms": 7.3249158449471
+        }
+      ]
+    },
+    "embedding_bge_base": {
+      "model_name": "BAAI/bge-base-en-v1.5",
+      "dimensions": 768,
+      "query_prefix": "Represent this sentence for searching relevant passages: ",
+      "passage_prefix": "",
+      "hnsw_index_bytes": 8364032,
+      "summary": {
+        "passage_encode_seconds": 138.4903720826842,
+        "passage_chunks_per_second": 14.723045142680654,
+        "query_encode_ms_p50": 30.950165819376707,
+        "vector_search_ms_p50": 12.716833036392927,
+        "vector_query_ms_p50": 46.73558380454779,
+        "vector_query_ms_p95": 178.078040946275
+      },
+      "per_question": [
+        {
+          "question_id": "v3q001",
+          "encode_ms": 285.49962490797043,
+          "search_ms": 13.733957894146442
+        },
+        {
+          "question_id": "v3q002",
+          "encode_ms": 221.35920776054263,
+          "search_ms": 54.73158322274685
+        },
+        {
+          "question_id": "v3q003",
+          "encode_ms": 51.13612487912178,
+          "search_ms": 41.69399989768863
+        },
+        {
+          "question_id": "v3q004",
+          "encode_ms": 80.75804123654962,
+          "search_ms": 97.31999970972538
+        },
+        {
+          "question_id": "v3q005",
+          "encode_ms": 95.09612526744604,
+          "search_ms": 28.698832727968693
+        },
+        {
+          "question_id": "v3q006",
+          "encode_ms": 28.679458890110254,
+          "search_ms": 17.214708030223846
+        },
+        {
+          "question_id": "v3q007",
+          "encode_ms": 61.86574976891279,
+          "search_ms": 18.94983323290944
+        },
+        {
+          "question_id": "v3q008",
+          "encode_ms": 49.6157081797719,
+          "search_ms": 17.104124650359154
+        },
+        {
+          "question_id": "v3q009",
+          "encode_ms": 25.989666115492582,
+          "search_ms": 13.370458967983723
+        },
+        {
+          "question_id": "v3q010",
+          "encode_ms": 30.950165819376707,
+          "search_ms": 13.864084146916866
+        },
+        {
+          "question_id": "v3q011",
+          "encode_ms": 19.260916858911514,
+          "search_ms": 16.814417205750942
+        },
+        {
+          "question_id": "v3q012",
+          "encode_ms": 73.72454227879643,
+          "search_ms": 12.716833036392927
+        },
+        {
+          "question_id": "v3q013",
+          "encode_ms": 48.28104097396135,
+          "search_ms": 17.66879204660654
+        },
+        {
+          "question_id": "v3q014",
+          "encode_ms": 120.87062513455749,
+          "search_ms": 36.48262517526746
+        },
+        {
+          "question_id": "v3q015",
+          "encode_ms": 122.94991593807936,
+          "search_ms": 19.709709100425243
+        },
+        {
+          "question_id": "v3q016",
+          "encode_ms": 55.507916025817394,
+          "search_ms": 32.541375141590834
+        },
+        {
+          "question_id": "v3q017",
+          "encode_ms": 21.131000015884638,
+          "search_ms": 8.781041018664837
+        },
+        {
+          "question_id": "v3q018",
+          "encode_ms": 63.4641251526773,
+          "search_ms": 19.233749713748693
+        },
+        {
+          "question_id": "v3q019",
+          "encode_ms": 51.53687531128526,
+          "search_ms": 10.994916781783104
+        },
+        {
+          "question_id": "v3q020",
+          "encode_ms": 41.3834173232317,
+          "search_ms": 7.7714999206364155
+        },
+        {
+          "question_id": "v3q021",
+          "encode_ms": 24.973334278911352,
+          "search_ms": 7.941124960780144
+        },
+        {
+          "question_id": "v3q022",
+          "encode_ms": 41.01662524044514,
+          "search_ms": 10.830790735781193
+        },
+        {
+          "question_id": "v3q023",
+          "encode_ms": 22.375583183020353,
+          "search_ms": 7.563957944512367
+        },
+        {
+          "question_id": "v3q024",
+          "encode_ms": 23.964792024344206,
+          "search_ms": 17.123875208199024
+        },
+        {
+          "question_id": "v3q025",
+          "encode_ms": 23.319832980632782,
+          "search_ms": 8.441542275249958
+        },
+        {
+          "question_id": "v3q026",
+          "encode_ms": 29.750416986644268,
+          "search_ms": 10.374917183071375
+        },
+        {
+          "question_id": "v3q027",
+          "encode_ms": 22.03133422881365,
+          "search_ms": 6.692749913781881
+        },
+        {
+          "question_id": "v3q028",
+          "encode_ms": 42.676249984651804,
+          "search_ms": 10.433916933834553
+        },
+        {
+          "question_id": "v3q029",
+          "encode_ms": 46.06520803645253,
+          "search_ms": 8.418416604399681
+        },
+        {
+          "question_id": "v3q030",
+          "encode_ms": 36.16870893165469,
+          "search_ms": 13.587958179414272
+        },
+        {
+          "question_id": "v3q031",
+          "encode_ms": 19.51924990862608,
+          "search_ms": 10.836208239197731
+        },
+        {
+          "question_id": "v3q032",
+          "encode_ms": 17.85829197615385,
+          "search_ms": 11.498333420604467
+        },
+        {
+          "question_id": "v3q033",
+          "encode_ms": 64.324458129704,
+          "search_ms": 9.754749946296215
+        },
+        {
+          "question_id": "v3q034",
+          "encode_ms": 61.64479209110141,
+          "search_ms": 21.58320788294077
+        },
+        {
+          "question_id": "v3q035",
+          "encode_ms": 27.356750331819057,
+          "search_ms": 11.79308257997036
+        },
+        {
+          "question_id": "v3q036",
+          "encode_ms": 26.55575005337596,
+          "search_ms": 10.336124803870916
+        },
+        {
+          "question_id": "v3q037",
+          "encode_ms": 21.880583371967077,
+          "search_ms": 12.039374560117722
+        },
+        {
+          "question_id": "v3q038",
+          "encode_ms": 24.79304140433669,
+          "search_ms": 19.779291935265064
+        },
+        {
+          "question_id": "v3q039",
+          "encode_ms": 24.476708844304085,
+          "search_ms": 8.322416339069605
+        },
+        {
+          "question_id": "v3q040",
+          "encode_ms": 24.779375176876783,
+          "search_ms": 7.357374764978886
+        },
+        {
+          "question_id": "v3q041",
+          "encode_ms": 22.620125208050013,
+          "search_ms": 10.15562517568469
+        },
+        {
+          "question_id": "v3q042",
+          "encode_ms": 24.29008297622204,
+          "search_ms": 12.802042067050934
+        },
+        {
+          "question_id": "v3q043",
+          "encode_ms": 44.39383279532194,
+          "search_ms": 9.772709105163813
+        },
+        {
+          "question_id": "v3q044",
+          "encode_ms": 24.03795812278986,
+          "search_ms": 13.609458692371845
+        },
+        {
+          "question_id": "v3q045",
+          "encode_ms": 28.688583988696337,
+          "search_ms": 18.04699981585145
+        },
+        {
+          "question_id": "v3q046",
+          "encode_ms": 26.963999960571527,
+          "search_ms": 8.9822500012815
+        },
+        {
+          "question_id": "v3q047",
+          "encode_ms": 17.18812482431531,
+          "search_ms": 17.277707811444998
+        },
+        {
+          "question_id": "v3q048",
+          "encode_ms": 19.972582813352346,
+          "search_ms": 9.6432501450181
+        },
+        {
+          "question_id": "v3q049",
+          "encode_ms": 42.00775036588311,
+          "search_ms": 8.008749689906836
+        },
+        {
+          "question_id": "v3q050",
+          "encode_ms": 52.740625105798244,
+          "search_ms": 7.575708907097578
+        },
+        {
+          "question_id": "v3q051",
+          "encode_ms": 38.29037491232157,
+          "search_ms": 15.330750029534101
+        },
+        {
+          "question_id": "v3q052",
+          "encode_ms": 42.64820786193013,
+          "search_ms": 24.423833936452866
+        }
+      ]
+    }
+  },
+  "claim_boundary": "One local run on one machine. Latencies and throughput are comparable across columns within this file only (A10); they are not production latencies. Passage encode time excludes database writes, so it is not the full wall time of `papertrail embed`."
+}
