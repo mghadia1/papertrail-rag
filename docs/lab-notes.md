@@ -1275,3 +1275,63 @@ to break.
 
 Post-run: 93 tests pass; all 10 new files verify plus every prior file (v2, v3
 baseline, 8 rerank, 10 sparse, 3 fusion, hnsw, gate, v2 RAG); manifest intact.
+
+## 2026-09-15 — Phase 4–5 completeness audit
+
+Checked both phases against the brief line by line. Nothing that was reported was
+wrong, but eight things were incomplete, and my earlier "complete" reports had
+glossed over them. Fixed in three commits:
+
+1. **G5 was skippable** (`2a41376`). `verify_fusion_evidence` checked the dev-best
+   claim only when `--sweep` was passed, and otherwise returned `verified: true` with
+   `sweep_cross_checked: false`. The brief says the verifier *must* check it, so a
+   held-out fusion file now fails without its sweep. Both held-out files still verify
+   with it.
+2. **The Part H trap was still open in two callers** (`2a41376`). `gate_signal` called
+   `vector_search` without a column and without `require_vector_search_ready`, and
+   neither it nor `answer_question` passed a column to `retrieve`. Harmless while
+   MiniLM is the only served encoder, but it is exactly the mixing H names. Both now
+   take `embedding_column` and forward it to every vector read; a test asserts no
+   call sees any other column.
+3. **Phase 5 cost numbers had no evidence file** (`1444459`). Embed wall time,
+   throughput and index size came off the terminal (A4). `eval/tools/embed_costs.py`
+   re-measured all five encoders back to back in one process into
+   `phase-8-embed-costs.json`, with a verifier. Index sizes matched the old prose
+   exactly. Throughput did not: over all 2,039 chunks bge-base encodes at 15 chunks/s,
+   not the 45 the 256-chunk sample suggested, so the "6.3× per-chunk encode" claim
+   becomes 19×. The conclusion only gets stronger, but the old figure was wrong.
+4. **H5 per-model vector p95 was missing** from results.md; it now comes from the same
+   file (MiniLM 38.0 ms, bge-base 178.1 ms).
+5. **Part I labels** — added below.
+6. **README had no Phase 4 fusion section**; added (3 sentences).
+7. **README Phase 5 section ran past 3 sentences**; trimmed.
+8. **Stale test count** — README and `docs/status.md` said 49 local tests; there are
+   95. `status.md` was also dated August 5; updated.
+
+**Phase 4 — Design choice:** fetch each question's vector and keyword candidate lists
+once per (pool, keyword strategy) and fuse every configuration from those same cached
+lists, so any difference between cells is caused by fusion alone. The cost, accepted
+knowingly, is no per-configuration latency.
+
+**Phase 4 — Failure mode found:** `SET LOCAL` lasts for the whole transaction, and
+`vector_search` only set `hnsw.ef_search` when asked. Running two configurations back
+to back in one session let the baseline inherit ef=200, so it saw 50 candidates and
+looked uncapped; I drew a wrong conclusion ("the cap never binds") from it before a
+review caught it. Separately, production had been silently capped at 40 vector
+candidates while asking for 50–200 — the one change from Phases 1–5 that was adopted.
+
+**Phase 5 — Design choice:** one additive column per model instead of re-embedding the
+`embedding` column. The frozen MiniLM vectors are never rewritten, so H4 (the v3
+baseline stays byte-identical) is guaranteed by construction rather than by hoping
+re-embedding is deterministic.
+
+**Phase 5 — Failure mode found:** the topical judgment pools were built from
+MiniLM-based retrievers, so every other encoder surfaces papers nobody judged and they
+score 0 — 22–28 of 36 topical rows for the new encoders against 4 for MiniLM. It
+first showed up as 8 of 10 evidence files failing verification. Topical scores for
+non-MiniLM encoders are therefore lower bounds and cannot rank those encoders against
+each other. A second, deliberately reproduced failure: indexing e5 with `passage: `
+and querying without `query: ` scores worse than using no prefix anywhere.
+
+Post-fix: 95 tests pass in `.venv-ml` and in `.venv` (no numpy, the CI proxy);
+`phase-8-embed-costs.json` and both held-out fusion files verify.

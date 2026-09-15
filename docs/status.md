@@ -1,6 +1,6 @@
 # Project status
 
-Date: August 5, 2026
+Date: September 15, 2026
 
 - E1–E6: complete and locally verified.
 - E7: complete; public repository and GitHub Actions are verified.
@@ -9,7 +9,12 @@ Date: August 5, 2026
 - Corpus: 1,000 exact versioned arXiv IDs, 2,039 chunks, 2,039 normalized
   MiniLM vectors.
 - Retrieval: vector, keyword, and deterministic `k=60` hybrid RRF through CLI
-  and FastAPI.
+  and FastAPI; `retrieve()` sets `hnsw.ef_search` to `max(candidate_limit, 40)`
+  so the vector side actually returns the pool it asks for (Phase 4 fix).
+- Retrieval-upgrade studies (Phases 1–5, `docs/results.md`): HNSW recall, gate
+  signals, reranker, sparse retrieval, fusion, and embedding model. Each measured
+  component upgrade was left off after held-out; only the `ef_search` bug fix was
+  adopted.
 - Generation: Groq `openai/gpt-oss-120b` (Groq retired the earlier Llama 3.3 70B
   on/before 2026-09; see docs/lab-notes.md), retrieved-ID citation enforcement,
   validation-selected abstention, and bounded transient-error retry.
@@ -18,8 +23,9 @@ Date: August 5, 2026
 - Held-out abstention: 8/10 answerable accepted and 5/5 out-of-domain refused.
 - Reliable RAG run: 8 answers, zero provider/enforcement errors, all emitted
   citations present in retrieved sets.
-- Verification: 49 local tests; evidence verifier passes all 90 retrieval rows
-  and 15 RAG records; CPU-only Docker image builds.
+- Verification: 95 local tests (4 skip without a database); every evidence file
+  under `docs/evidence/` verifies with `papertrail verify-evidence`; CPU-only
+  Docker image builds.
 
 A `hybrid_rerank` mode and an optional statement-level faithfulness check exist in
 code. The faithfulness check is a token-overlap heuristic (`HeuristicOverlapJudge`),
