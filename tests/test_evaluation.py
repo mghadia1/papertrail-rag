@@ -230,6 +230,11 @@ def test_fusion_verifier_checks_heldout_matches_the_dev_best(tmp_path) -> None:
     )
     assert result["verified"] is True and result["sweep_cross_checked"] is True
 
+    # G5: the dev-best check is mandatory, not opt-in — a held-out file verified
+    # without its sweep must fail rather than pass on recomputed metrics alone.
+    with pytest.raises(ValueError, match="needs the development sweep"):
+        verify_fusion_evidence(heldout, manifest, question_set=questions)
+
     # G5: a held-out file naming a configuration that is not the development-best
     # under the pre-registered rule must be rejected.
     tampered = json.loads(heldout.read_text())

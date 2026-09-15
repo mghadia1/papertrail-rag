@@ -474,21 +474,27 @@ def verify_fusion_evidence(
     chosen_id = report.get("chosen_config_id")
     if not chosen_id:
         raise ValueError("held-out fusion evidence must name chosen_config_id")
-    if sweep_path is not None:
-        sweep = json.loads(Path(sweep_path).read_text(encoding="utf-8"))
-        expected = select_fusion_config(sweep["by_config"])
-        if expected != chosen_id:
-            raise ValueError(
-                f"held-out configuration {chosen_id!r} is not the development-best "
-                f"{expected!r} under the pre-registered selection rule"
-            )
-        swept = {k: v for k, v in sweep["by_config"][chosen_id].items() if k != "aggregates"}
-        for key, value in swept.items():
-            if report["chosen_config"].get(key) != value:
-                raise ValueError(f"chosen_config.{key} disagrees with the sweep entry")
+    if sweep_path is None:
+        # G5 says the verifier *must* check the dev-best claim, so a held-out file
+        # cannot pass on its own recomputed metrics alone.
+        raise ValueError(
+            "held-out fusion evidence needs the development sweep (--sweep) to "
+            "confirm chosen_config_id is the development-best"
+        )
+    sweep = json.loads(Path(sweep_path).read_text(encoding="utf-8"))
+    expected = select_fusion_config(sweep["by_config"])
+    if expected != chosen_id:
+        raise ValueError(
+            f"held-out configuration {chosen_id!r} is not the development-best "
+            f"{expected!r} under the pre-registered selection rule"
+        )
+    swept = {k: v for k, v in sweep["by_config"][chosen_id].items() if k != "aggregates"}
+    for key, value in swept.items():
+        if report["chosen_config"].get(key) != value:
+            raise ValueError(f"chosen_config.{key} disagrees with the sweep entry")
     return {"verified": True, "kind": kind, "raw_rows": len(rows),
             "chosen_config_id": chosen_id,
-            "sweep_cross_checked": sweep_path is not None}
+            "sweep_cross_checked": True}
 
 
 def verify_gate_evidence(path: Path, manifest: CorpusManifest) -> dict[str, Any]:

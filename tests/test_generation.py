@@ -178,6 +178,45 @@ def test_rrf_gate_over_nonhybrid_mode_recomputes_from_hybrid(monkeypatch) -> Non
     assert result.abstained is False
 
 
+def test_embedding_column_reaches_every_vector_read(monkeypatch) -> None:
+    # Part H trap: a non-default encoder must never be compared against the
+    # MiniLM column. answer_question and every gate_signal retrieval path must
+    # forward the column they were given, including the direct vector_search.
+    import papertrail.gate as gate_module
+
+    columns = []
+
+    def fake_retrieve(*args, **kwargs):
+        columns.append(("retrieve", kwargs.get("embedding_column")))
+        return retrieved(score=7.63)
+
+    def fake_ready(session, *, model_name, dimensions, column):
+        columns.append(("ready", column))
+
+    def fake_vector_search(session, embedding, *, limit, column):
+        columns.append(("vector_search", column))
+        return retrieved(score=0.9)
+
+    monkeypatch.setattr(generation, "retrieve", fake_retrieve)
+    monkeypatch.setattr(gate_module, "retrieve", fake_retrieve)
+    monkeypatch.setattr(gate_module, "require_vector_search_ready", fake_ready)
+    monkeypatch.setattr(gate_module, "vector_search", fake_vector_search)
+
+    answer_question(
+        object(),
+        "question",
+        encoder=FakeEncoder(),
+        generator=FakeGenerator("Answer [2401.01234v2]."),
+        threshold=0.0,
+        retrieval_mode="hybrid_rerank",
+        gate_signal_name="cos_top",
+        embedding_column="embedding_bge_base",
+    )
+    assert ("vector_search", "embedding_bge_base") in columns
+    assert ("ready", "embedding_bge_base") in columns
+    assert all(column == "embedding_bge_base" for _, column in columns), columns
+
+
 def test_groq_retries_rate_limits_without_exposing_key(monkeypatch) -> None:
     requests = []
     request = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")

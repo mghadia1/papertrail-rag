@@ -14,7 +14,7 @@ import math
 import statistics
 
 from .embedding import Encoder
-from .repository import keyword_search, vector_search
+from .repository import keyword_search, require_vector_search_ready, vector_search
 from .retrieval import retrieve
 
 # (low, high); None means unbounded on that side.
@@ -89,21 +89,33 @@ def gate_signal(
     name: str,
     *,
     hybrid_hits: list[dict] | None = None,
+    embedding_column: str = "embedding",
 ) -> float:
     """Fetch only the retrievals the signal needs, then compute it.
 
     Pass ``hybrid_hits`` when the caller already ran hybrid retrieval (the common
-    ``rrf_top`` case) to avoid a redundant query.
+    ``rrf_top`` case) to avoid a redundant query. ``embedding_column`` must be the
+    column ``encoder`` indexed: every vector read goes through it, so a query
+    embedding is never compared against another model's vectors (brief Part H).
     """
     needs = _retrievals_needed(name)
     hyb = hybrid_hits
     if "hybrid" in needs and hyb is None:
-        hyb = retrieve(session, query, mode="hybrid", limit=5, encoder=encoder)
-    vec = (
-        vector_search(session, encoder.encode([query], batch_size=1)[0], limit=50)
-        if "vector" in needs
+        hyb = retrieve(session, query, mode="hybrid", limit=5, encoder=encoder,
+                       embedding_column=embedding_column)
+    vec = None
+    if "vector" in needs:
+        require_vector_search_ready(
+            session, model_name=encoder.model_name, dimensions=encoder.dimensions,
+            column=embedding_column,
+        )
+        vec = vector_search(session, encoder.encode([query], batch_size=1)[0], limit=50,
+                            column=embedding_column)
+    kw = keyword_search(session, query, limit=50) if "keyword" in needs else None
+    rr = (
+        retrieve(session, query, mode="hybrid_rerank", limit=5, encoder=encoder,
+                 embedding_column=embedding_column)
+        if "rerank" in needs
         else None
     )
-    kw = keyword_search(session, query, limit=50) if "keyword" in needs else None
-    rr = retrieve(session, query, mode="hybrid_rerank", limit=5, encoder=encoder) if "rerank" in needs else None
     return signal_from_hits(name, hybrid_hits=hyb, vector_hits=vec, keyword_hits=kw, rerank_hits=rr)

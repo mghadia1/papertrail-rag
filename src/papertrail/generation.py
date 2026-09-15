@@ -138,6 +138,7 @@ def answer_question(
     gate_signal_name: str = "rrf_top",
     verify_entailment: bool = False,
     min_faithfulness: float = 0.80,
+    embedding_column: str = "embedding",
 ) -> AnswerResult:
     from .gate import gate_signal, signal_from_hits, validate_threshold
 
@@ -145,7 +146,8 @@ def answer_question(
     # replaces the old hardcoded [0,1] check.
     validate_threshold(gate_signal_name, threshold)
     hits = retrieve(
-        session, question, mode=retrieval_mode, limit=top_k, encoder=encoder
+        session, question, mode=retrieval_mode, limit=top_k, encoder=encoder,
+        embedding_column=embedding_column,
     )
     retrieved_ids = tuple(str(hit["arxiv_id"]) for hit in hits)
     top_score = float(hits[0]["score"]) if hits else None
@@ -165,7 +167,9 @@ def answer_question(
         # is not an RRF score (e.g. a cross-encoder logit from hybrid_rerank) —
         # must recompute the signal from its own retrieval, so the gate is never
         # compared on the wrong scale (F4).
-        gate_score = gate_signal(session, question, encoder, gate_signal_name)
+        gate_score = gate_signal(
+            session, question, encoder, gate_signal_name, embedding_column=embedding_column
+        )
     if not hits or gate_score is None or gate_score < threshold:
         return AnswerResult(
             question=question,

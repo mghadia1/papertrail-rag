@@ -143,8 +143,8 @@ def build_parser() -> argparse.ArgumentParser:
     evidence.add_argument("--manifest", type=Path, required=True)
     evidence.add_argument("--questions", type=Path)
     evidence.add_argument("--sweep", type=Path,
-                          help="fusion sweep evidence, so a held-out fusion file can be "
-                               "checked against the development-best configuration")
+                          help="fusion sweep evidence; required for a held-out fusion file, which "
+                               "is checked against the development-best configuration")
     evidence.add_argument("--abstain-threshold", type=float, default=None,
                           help="expected RAG abstain threshold (defaults to the config value)")
     return parser
