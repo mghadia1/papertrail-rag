@@ -10,8 +10,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    # On localhost only: the app reaches it on the Compose network, and
+    # tools on this machine at localhost:5432. Not the whole network.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - papertrail-postgres:/var/lib/postgresql/data
 
